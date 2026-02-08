@@ -5,6 +5,7 @@ namespace Onyx.Oms.Core.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
-    DbSet<Courier> Couriers { get; } // Example
+    DbSet<Courier> Couriers { get; }
+    DbSet<Customer> Customers { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -2,7 +2,6 @@ using Onyx.Oms.Core;
 using Onyx.Oms.Infrastructure;
 using Onyx.Oms.Web.Extensions;
 using Scalar.AspNetCore;
-using Asp.Versioning;
 
 
 var builder = WebApplication.CreateBuilder(args);

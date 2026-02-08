@@ -1,0 +1,6 @@
+@Onyx.Oms.Web_HostAddress = http://localhost:5240
+
+GET {{Onyx.Oms.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

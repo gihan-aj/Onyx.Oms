@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Onyx.Oms.Core/Onyx.Oms.Core.csproj" />
+    <Project Path="src/Onyx.Oms.Infrastructure/Onyx.Oms.Infrastructure.csproj" />
+    <Project Path="src/Onyx.Oms.Web/Onyx.Oms.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>

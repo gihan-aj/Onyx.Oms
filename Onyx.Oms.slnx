@@ -4,5 +4,7 @@
     <Project Path="src/Onyx.Oms.Infrastructure/Onyx.Oms.Infrastructure.csproj" />
     <Project Path="src/Onyx.Oms.Web/Onyx.Oms.Web.csproj" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/Onyx.Oms.UnitTests/Onyx.Oms.UnitTests.csproj" Id="e408655c-cd03-41dc-bae4-64b4669d8106" />
+  </Folder>
 </Solution>

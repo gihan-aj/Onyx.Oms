@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Onyx.Oms.Web.Features.Customers.UpdateCustomer;
 
 public record UpdateCustomerCommand(
-    [property: JsonIgnore] Guid Id,
+    Guid Id,
     string Name,
     string? Email,
     string PrimaryPhone,

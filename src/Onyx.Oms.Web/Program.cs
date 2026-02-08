@@ -41,7 +41,7 @@ if (app.Environment.IsDevelopment())
     {
         options
             .WithTitle("ONYX OMS API")
-            .WithTheme(ScalarTheme.BluePlanet)
+            .WithTheme(ScalarTheme.Kepler)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
 }

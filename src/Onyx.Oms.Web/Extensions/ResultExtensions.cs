@@ -80,4 +80,19 @@ public static class ResultExtensions
 
          return result.ToProblemDetails();
     }
+
+    public static IResult ToMinimalApiResult(this Result result)
+    {
+         if (result.IsSuccess)
+         {
+             return Results.NoContent();
+         }
+
+         if (result is IValidationResult validationResult)
+         {
+             return validationResult.ToProblemDetails();
+         }
+
+         return result.ToProblemDetails();
+    }
 }

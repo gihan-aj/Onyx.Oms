@@ -19,12 +19,7 @@ public class DeactivateCourierEndpoint : IEndpoint
         {
             Result result = await sender.Send(new DeactivateCourierCommand(id));
 
-            if(result.IsSuccess)
-            {
-                return Results.NoContent();
-            }
-
-            return result.ToProblemDetails();
+            return result.ToMinimalApiResult();
         })
         .WithTags("Couriers")
         .WithName("DeactivateCourier")

@@ -19,12 +19,7 @@ public class ActivateCourierEndpoint : IEndpoint
         {
             Result result = await sender.Send(new ActivateCourierCommand(id));
 
-            if(result.IsSuccess)
-            {
-                return Results.NoContent();
-            }
-
-            return result.ToProblemDetails();
+            return result.ToMinimalApiResult();
         })
         .WithTags("Couriers")
         .WithName("ActivateCourier")

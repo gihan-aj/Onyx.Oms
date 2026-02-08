@@ -24,12 +24,7 @@ public class UpdateCourierEndpoint : IEndpoint
 
             Result result = await sender.Send(command);
 
-            if(result.IsSuccess)
-            {
-                return Results.NoContent();
-            }
-
-            return result.ToProblemDetails();
+            return result.ToMinimalApiResult();
         })
         .WithTags("Couriers")
         .WithName("UpdateCourier")

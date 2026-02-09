@@ -18,6 +18,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
 
     public DbSet<Courier> Couriers { get; set; }
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<ProductCategory> ProductCategories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

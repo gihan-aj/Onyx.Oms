@@ -7,5 +7,6 @@ public interface IApplicationDbContext
 {
     DbSet<Courier> Couriers { get; }
     DbSet<Customer> Customers { get; }
+    DbSet<ProductCategory> ProductCategories { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

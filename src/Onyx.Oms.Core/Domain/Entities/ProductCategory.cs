@@ -213,6 +213,16 @@ public class ProductCategory : AuditableEntity
         return Result.Success();
     }
 
+    public Result UpdateSubCategoriesPaths()
+    {
+        foreach (var child in _subCategories)
+        {
+             var result = child.UpdatePathFromParent(Path, NamePath, Level);
+             if (result.IsFailure) return result;
+        }
+        return Result.Success();
+    }
+
     public void Activate() => IsActive = true;
 
     public void Deactivate()

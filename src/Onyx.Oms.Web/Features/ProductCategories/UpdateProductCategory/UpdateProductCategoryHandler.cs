@@ -35,6 +35,8 @@ public class UpdateProductCategoryHandler : IRequestHandler<UpdateProductCategor
                 return Result.Failure(Error.Conflict("ProductCategory.DuplicateName", $"A category named '{command.Name}' already exists under the same parent category."));
         }
 
+        bool nameChanged = category.Name != command.Name;
+
         category.UpdateDetails(command.Name, command.Description, command.DisplayOrder, command.IconUrl, command.Color);
 
         // Handle Parent Change
@@ -59,6 +61,16 @@ public class UpdateProductCategoryHandler : IRequestHandler<UpdateProductCategor
 
             var moveResult = category.ChangeParent(newParent);
             if (moveResult.IsFailure) return moveResult;
+        }
+        else if (nameChanged)
+        {
+            // Parent didn't change, but Name did. We must update the NamePath of all descendants.
+            var descendents = await _context.ProductCategories
+                .Where(c => c.Path.StartsWith(category.Path) && c.Id != category.Id)
+                .ToListAsync(cancellationToken);
+
+            var updateResult = category.UpdateSubCategoriesPaths();
+            if (updateResult.IsFailure) return updateResult;
         }
 
         await _context.SaveChangesAsync(cancellationToken);

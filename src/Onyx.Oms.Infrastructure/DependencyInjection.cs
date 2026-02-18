@@ -6,8 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Infrastructure.Identity;
+using Onyx.Oms.Infrastructure.Identity.IdP;
 using Onyx.Oms.Infrastructure.Persistence;
 using Onyx.Oms.Infrastructure.Persistence.Interceptors;
+using Onyx.Oms.Infrastructure.Persistence.Seeding;
+using Refit;
 
 namespace Onyx.Oms.Infrastructure;
 
@@ -31,12 +34,24 @@ public static class DependencyInjection
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
+        // IdP Services
+        services.AddTransient<IdPTokenHandler>();
+
+        services.AddRefitClient<IIdentityProviderApi>()
+            .ConfigureHttpClient((sp, client) =>
+            {
+                var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AuthenticationOptions>>().Value;
+                client.BaseAddress = new Uri(options.Authority);
+            })
+            .AddHttpMessageHandler<IdPTokenHandler>();
+
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddScoped<PermissionSeeder>();
 
         // Authentication Configuration
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));

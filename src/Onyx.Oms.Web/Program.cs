@@ -32,6 +32,13 @@ builder.Services.AddApiVersioning(options =>
 
 var app = builder.Build();
 
+// Run Seeder
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.PermissionSeeder>();
+    await seeder.SeedAsync();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

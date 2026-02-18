@@ -1,0 +1,36 @@
+namespace Onyx.Oms.Core.Domain.Constants;
+
+public static class Permissions
+{
+    public static class Users
+    {
+        public const string View = "Permissions.Users.View";
+        public const string Create = "Permissions.Users.Create";
+        public const string Edit = "Permissions.Users.Edit";
+        public const string Delete = "Permissions.Users.Delete";
+    }
+
+    public static class Roles
+    {
+        public const string View = "Permissions.Roles.View";
+        public const string Create = "Permissions.Roles.Create";
+        public const string Edit = "Permissions.Roles.Edit";
+        public const string Delete = "Permissions.Roles.Delete";
+    }
+
+    public static class Products
+    {
+        public const string View = "Permissions.Products.View";
+        public const string Create = "Permissions.Products.Create";
+        public const string Edit = "Permissions.Products.Edit";
+        public const string Delete = "Permissions.Products.Delete";
+    }
+
+    public static class Couriers
+    {
+        public const string View = "Permissions.Couriers.View";
+        public const string Create = "Permissions.Couriers.Create";
+        public const string Edit = "Permissions.Couriers.Edit";
+        public const string Delete = "Permissions.Couriers.Delete";
+    }
+}

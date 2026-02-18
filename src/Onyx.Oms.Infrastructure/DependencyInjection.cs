@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,18 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<AuditableEntityInterceptor>();
+
+        // Permission Services
+        services.AddScoped<PermissionService>();
+        services.AddScoped<IPermissionService>(provider => 
+            new CachedPermissionService(
+                provider.GetRequiredService<PermissionService>(),
+                provider.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>()));
+
+        services.AddMemoryCache(); // Required for caching decorator
+
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(

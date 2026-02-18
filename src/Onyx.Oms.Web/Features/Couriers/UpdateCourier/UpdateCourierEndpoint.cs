@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -29,6 +30,7 @@ public class UpdateCourierEndpoint : IEndpoint
         .WithTags("Couriers")
         .WithName("UpdateCourier")
         .WithSummary("Update a courier")
-        .WithDescription("Updates an existing courier. Checks for name uniqueness if name is changed.");
+        .WithDescription("Updates an existing courier. Checks for name uniqueness if name is changed.")
+        .HasPermission(Permissions.Couriers.Edit);
     }
 }

@@ -3,7 +3,7 @@ using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class ProductVariant : AuditableEntity
+public class ProductVariant : AuditableEntity<Guid>
 {
     private ProductVariant() { }
 

@@ -2,7 +2,7 @@ using Onyx.Oms.Core.Common.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class ProductImage : Entity
+public class ProductImage : Entity<Guid>
 {
     public ProductImage(Guid id, Guid productId, string url, int displayOrder, bool isMain) : base(id)
     {

@@ -1,13 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 
 namespace Onyx.Oms.Infrastructure.Persistence.Interceptors;
 
 public class AuditableEntityInterceptor : SaveChangesInterceptor
 {
-    // In strict VSA/clean architecture, we might inject ICurrentUserService here to get the real user.
-    // For now we will use a placeholder or "System".
+    private readonly ICurrentUserService _currentUserService;
+
+    public AuditableEntityInterceptor(ICurrentUserService currentUserService)
+    {
+        _currentUserService = currentUserService;
+    }
     
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -21,22 +26,22 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private static void UpdateEntities(DbContext? context)
+    private void UpdateEntities(DbContext? context)
     {
         if (context == null) return;
 
-        foreach (var entry in context.ChangeTracker.Entries<AuditableEntity>())
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>())
         {
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreatedOnUtc = DateTimeOffset.UtcNow;
-                entry.Entity.CreatedBy = "System"; // TODO: Replace with user service
+                entry.Entity.CreatedBy = _currentUserService.UserId ?? "System";
             }
 
             if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
             {
                 entry.Entity.LastModifiedOnUtc = DateTimeOffset.UtcNow;
-                entry.Entity.LastModifiedBy = "System"; // TODO: Replace with user service
+                entry.Entity.LastModifiedBy = _currentUserService.UserId ?? "System";
             }
         }
     }

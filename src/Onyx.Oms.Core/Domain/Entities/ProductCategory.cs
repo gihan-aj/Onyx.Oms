@@ -3,7 +3,7 @@ using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class ProductCategory : AuditableEntity
+public class ProductCategory : AuditableEntity<Guid>
 {
     public const int MaxDepth = 2; // 0=Root, 1=Sub, 2=SubSub
     public const char PathSeparator = '/';

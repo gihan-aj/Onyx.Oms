@@ -4,7 +4,7 @@ using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Customer : AuditableEntity
+public class Customer : AuditableEntity<Guid>
 {
     public string Name { get; private set; } = string.Empty;
     public string? Email { get; private set; }

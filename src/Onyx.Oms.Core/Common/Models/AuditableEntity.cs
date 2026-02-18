@@ -1,8 +1,8 @@
 namespace Onyx.Oms.Core.Common.Models;
 
-public abstract class AuditableEntity : Entity
+public abstract class AuditableEntity<TId> : Entity<TId>, IAuditableEntity
 {
-    protected AuditableEntity(Guid id) : base(id)
+    protected AuditableEntity(TId id) : base(id)
     {
     }
 

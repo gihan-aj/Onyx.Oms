@@ -47,6 +47,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseMiddleware<Onyx.Oms.Infrastructure.Middleware.UserMirrorMiddleware>();
+
 app.MapEndpoints();
 
 app.Run();

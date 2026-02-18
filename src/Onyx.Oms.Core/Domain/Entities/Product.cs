@@ -4,7 +4,7 @@ using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Product : AuditableEntity
+public class Product : AuditableEntity<Guid>
 {
     private Product() { }
 

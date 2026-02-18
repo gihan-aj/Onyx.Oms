@@ -3,7 +3,7 @@ using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Courier : AuditableEntity
+public class Courier : AuditableEntity<Guid>
 {
     public string Name { get; private set; } = string.Empty;
     public string? ContactPerson { get; private set; }

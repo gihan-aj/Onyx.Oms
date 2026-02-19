@@ -17,8 +17,8 @@ All API endpoints require an OAuth 2.0 Access Token obtained via the **Client Cr
 | Parameter | Value | Description |
 | :--- | :--- | :--- |
 | `grant_type` | `client_credentials` | Required. |
-| `client_id` | `{your_client_id}` | Your assigned Client ID (e.g., `order-system`). |
-| `client_secret` | `{your_client_secret}` | Your assigned Client Secret. |
+| `client_id` | `onyx-oms` | The Backend Client ID (M2M). |
+| `client_secret` | `[YOUR_SECRET]` | The Backend Client Secret. |
 | `scope` | `idp_roles_manage` | Required scope for these APIs. |
 
 **Response:**
@@ -37,16 +37,19 @@ All API endpoints require an OAuth 2.0 Access Token obtained via the **Client Cr
 
 ### Create Role
 Defines a new role within the Identity Provider.
-> **Note:** The role name will be automatically prefixed with your Client ID (e.g., sending `RefundClerk` creates `OrderSystem_RefundClerk`) to avoid collisions with other systems.
+> **Note:** The role name will be automatically prefixed with your Client ID. 
+> To create a role for a *different* client (e.g., the Frontend App), provide `targetClientId`.
 
 **Endpoint:** `POST /api/roles`
 
 **Request Body:**
 ```json
 {
-  "name": "RefundClerk"
+  "name": "RefundClerk",
+  "targetClientId": "order-system" 
 }
 ```
+*Creates: `order-system_RefundClerk`*
 
 **Response:** `200 OK`
 ```json
@@ -90,10 +93,11 @@ Creates a new user account, sends a welcome email with a password setup link, an
   "email": "john@company.com",
   "roleName": "RefundClerk",
   "firstName": "John",
-  "lastName": "Doe"
+  "lastName": "Doe",
+  "targetClientId": "order-system"
 }
 ```
-*Note: `roleName` should be the short name (e.g., "RefundClerk"). The system will automatically look for `OrderSystem_RefundClerk`.*
+*Note: `roleName` should be the short name (e.g., "RefundClerk"). The system will automatically look for `order-system_RefundClerk`.*
 
 **Response:** `200 OK`
 ```json
@@ -117,7 +121,8 @@ Assigns an additional role to an existing user.
 **Request Body:**
 ```json
 {
-  "roleName": "InventoryManager"
+  "roleName": "InventoryManager",
+  "targetClientId": "order-system"
 }
 ```
 

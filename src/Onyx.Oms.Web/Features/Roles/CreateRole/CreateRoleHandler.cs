@@ -12,11 +12,16 @@ public class CreateRoleHandler : IRequestHandler<CreateRoleCommand, Result<Guid>
 {
     private readonly IApplicationDbContext _context;
     private readonly IIdentityProviderApi _idpApi;
+    private readonly ICurrentUserService _currentUserService;
 
-    public CreateRoleHandler(IApplicationDbContext context, IIdentityProviderApi idpApi)
+    public CreateRoleHandler(
+        IApplicationDbContext context, 
+        IIdentityProviderApi idpApi,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _idpApi = idpApi;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<Guid>> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
@@ -27,19 +32,22 @@ public class CreateRoleHandler : IRequestHandler<CreateRoleCommand, Result<Guid>
             return Result.Failure<Guid>(Error.Conflict("Role.Exists", $"Role '{request.Name}' already exists."));
         }
 
-        // 2. Call IdP to create role
-        // We do this BEFORE saving locally. If IdP fails, we abort.
-        // IdP handles idempotency (if exists, it might return success or we handle error). 
-        // Our IdP API wrapper returns IApiResponse.
+        // 2. Determine Target Client ID (The User's Client)
+        var targetClientId = _currentUserService.ClientId;
+        
+        if (string.IsNullOrEmpty(targetClientId))
+        {
+             return Result.Failure<Guid>(Error.Failure("Identity.ClientIdMissing", 
+                 "Could not determine Client ID from current user context."));
+        }
+
+        // 3. Call IdP to create role
         try
         {
-            var idpResponse = await _idpApi.CreateRoleAsync(new CreateRoleRequest(request.Name));
+            var idpResponse = await _idpApi.CreateRoleAsync(new CreateRoleRequest(request.Name, targetClientId));
             
             if (!idpResponse.IsSuccessStatusCode)
             {
-                // If 409 Conflict, it might be okay (already exists in IdP but not locally?) 
-                // But for now, let's treat it as an error to be safe or sync issue.
-                // Or maybe strictly fail.
                 return Result.Failure<Guid>(Error.Failure("Identity.RoleCreation", 
                     $"Failed to create role in IdP. Status: {idpResponse.StatusCode}"));
             }
@@ -50,12 +58,10 @@ public class CreateRoleHandler : IRequestHandler<CreateRoleCommand, Result<Guid>
                  $"Failed to connect to Identity Provider: {ex.Message}"));
         }
 
-        // 3. Create Local Role
+        // 4. Create Local Role
         var role = Role.Create(request.Name, request.Description);
 
-        // 4. Add Permissions
-        // Validate permissions exist in our constant list? For now assumie trusted input or just string storage.
-        // Ideally we validate against defined permissions.
+        // 5. Add Permissions
         foreach (var perm in request.Permissions)
         {
              role.AddPermission(perm);

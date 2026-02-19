@@ -22,5 +22,9 @@ public class CurrentUserService : ICurrentUserService
     public string? Email => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value 
                             ?? _httpContextAccessor.HttpContext?.User?.FindFirst("email")?.Value;
 
+    // Looking for 'client_id' (standard) or 'azp' (Authorized Party - common in OIDC for the client)
+    public string? ClientId => _httpContextAccessor.HttpContext?.User?.FindFirst("client_id")?.Value 
+                               ?? _httpContextAccessor.HttpContext?.User?.FindFirst("azp")?.Value;
+
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 }

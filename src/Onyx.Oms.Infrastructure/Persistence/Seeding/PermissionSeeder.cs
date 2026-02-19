@@ -1,7 +1,9 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Entities;
+using Onyx.Oms.Infrastructure.Identity;
 using Onyx.Oms.Infrastructure.Identity.IdP;
 
 namespace Onyx.Oms.Infrastructure.Persistence.Seeding;
@@ -10,11 +12,16 @@ public class PermissionSeeder
 {
     private readonly AppDbContext _context;
     private readonly IIdentityProviderApi _idpApi;
+    private readonly AuthenticationOptions _authOptions;
 
-    public PermissionSeeder(AppDbContext context, IIdentityProviderApi idpApi)
+    public PermissionSeeder(
+        AppDbContext context, 
+        IIdentityProviderApi idpApi,
+        IOptions<AuthenticationOptions> authOptions)
     {
         _context = context;
         _idpApi = idpApi;
+        _authOptions = authOptions.Value;
     }
 
     public async Task SeedAsync()
@@ -35,7 +42,7 @@ public class PermissionSeeder
             // Try to create in IdP (fire and forget or log error if exists)
             try 
             {
-                var response = await _idpApi.CreateRoleAsync(new CreateRoleRequest(superAdminRoleName));
+                await _idpApi.CreateRoleAsync(new CreateRoleRequest(superAdminRoleName, _authOptions.ClientId));
             }
             catch 
             {
@@ -44,7 +51,6 @@ public class PermissionSeeder
         }
 
         // 3. Sync Permissions: Ensure SuperAdmin has ALL permissions
-        // We do this every startup to ensure new permissions are added automatically
         var currentPermissions = new HashSet<string>(superAdminRole.Permissions);
         var missingPermissions = allPermissions.Except(currentPermissions).ToList();
         var obsoletePermissions = currentPermissions.Except(allPermissions).ToList();
@@ -56,8 +62,6 @@ public class PermissionSeeder
                 superAdminRole.AddPermission(perm);
             }
 
-            // Optional: Remove obsolete permissions? 
-            // Better to keep them in case code is rolled back, but for "SuperAdmin" standardizing is fine.
             foreach (var perm in obsoletePermissions)
             {
                 superAdminRole.RemovePermission(perm);
@@ -72,7 +76,6 @@ public class PermissionSeeder
         var permissions = new HashSet<string>();
         var rootType = typeof(Permissions);
 
-        // Iterate through nested classes (Users, Roles, Couriers, etc.)
         foreach (var nestedType in rootType.GetNestedTypes(BindingFlags.Public | BindingFlags.Static))
         {
             foreach (var field in nestedType.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))

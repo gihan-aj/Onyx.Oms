@@ -14,8 +14,8 @@ public interface IIdentityProviderApi
     Task<IApiResponse> AssignRoleAsync(Guid userId, [Body] AssignRoleRequest request);
 }
 
-public record CreateRoleRequest(string Name);
-public record InviteUserRequest(string Email, string RoleName, string FirstName, string LastName);
-public record AssignRoleRequest(string RoleName);
+public record CreateRoleRequest(string Name, string TargetClientId);
+public record InviteUserRequest(string Email, string RoleName, string FirstName, string LastName, string TargetClientId);
+public record AssignRoleRequest(string RoleName, string TargetClientId);
 
 public record UserDto(Guid Id, string Email, string FirstName, string LastName, bool IsActive);

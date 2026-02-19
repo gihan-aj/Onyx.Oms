@@ -1,23 +1,20 @@
-using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
-using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 using Onyx.Oms.Infrastructure.Identity.IdP;
+using Microsoft.EntityFrameworkCore;
+using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Web.Features.Roles.CreateRole;
 
-public class CreateRoleHandler : IRequestHandler<CreateRoleCommand, Result<Guid>>
+public class CreateRoleHandler : ICommandHandler<CreateRoleCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
     private readonly IIdentityProviderApi _idpApi;
     private readonly ICurrentUserService _currentUserService;
 
-    public CreateRoleHandler(
-        IApplicationDbContext context, 
-        IIdentityProviderApi idpApi,
-        ICurrentUserService currentUserService)
+    public CreateRoleHandler(IApplicationDbContext context, IIdentityProviderApi idpApi, ICurrentUserService currentUserService)
     {
         _context = context;
         _idpApi = idpApi;

@@ -14,7 +14,7 @@ public class CachedPermissionService : IPermissionService
         _memoryCache = memoryCache;
     }
 
-    public async Task<HashSet<string>?> GetPermissionsAsync(int userId)
+    public async Task<HashSet<string>?> GetPermissionsAsync(Guid userId)
     {
         string key = $"permissions-{userId}";
         

@@ -1,12 +1,13 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
-namespace Onyx.Oms.Web.Features.Roles.CreateRole;
+namespace Onyx.Oms.Web.Features.Roles.GetRoles;
 
-public class CreateRoleEndpoint : IEndpoint
+public class GetRolesEndpoint : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -14,15 +15,15 @@ public class CreateRoleEndpoint : IEndpoint
             .WithApiVersionSet(app.NewApiVersionSet("Roles").Build())
             .HasApiVersion(1);
 
-        group.MapPost("", async (ISender sender, CreateRoleCommand command) =>
+        group.MapGet("", async (ISender sender, [AsParameters] GetRolesQuery query) =>
         {
-            var result = await sender.Send(command);
+            var result = await sender.Send(query);
             return result.ToMinimalApiResult();
         })
         .WithTags("Roles")
-        .WithName("CreateRole")
-        .WithSummary("Create a new role")
-        .WithDescription("Creates a new role locally and syncs it with the Identity Provider.")
-        .HasPermission(Permissions.Roles.Create);
+        .WithName("GetRoles")
+        .WithSummary("Get all roles")
+        .WithDescription("Retrieves a paginated list of roles.")
+        .HasPermission(Permissions.Roles.View);
     }
 }

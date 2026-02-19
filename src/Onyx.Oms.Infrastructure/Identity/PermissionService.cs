@@ -12,11 +12,12 @@ public class PermissionService : IPermissionService
         _context = context;
     }
 
-    public async Task<HashSet<string>?> GetPermissionsAsync(int userId)
+    public async Task<HashSet<string>?> GetPermissionsAsync(Guid userId)
     {
         // 1. Get the user's roles
         var user = await _context.AppUsers
             .AsNoTracking()
+            .Include(u => u.Roles) // Include roles from M2M table
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null || !user.Roles.Any())
@@ -24,14 +25,8 @@ public class PermissionService : IPermissionService
             return new HashSet<string>();
         }
 
-        // 2. Get the permissions for those roles
-        var roles = await _context.Roles
-            .AsNoTracking()
-            .Where(r => user.Roles.Contains(r.Name))
-            .ToListAsync();
-
-        // 3. Flatten into a distinct set of permissions
-        var permissions = roles
+        // 2. Flatten into a distinct set of permissions from all roles
+        var permissions = user.Roles
             .SelectMany(r => r.Permissions)
             .ToHashSet();
 

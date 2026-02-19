@@ -8,32 +8,22 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
 {
     public void Configure(EntityTypeBuilder<AppUser> builder)
     {
-        builder.HasKey(u => u.Id); // Int ID
+        builder.ToTable("AppUsers");
 
-        builder.Property(u => u.IdentityUserId)
-            .HasMaxLength(100)
+        builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.IdentityUserId)
+            .HasMaxLength(36)
             .IsRequired();
 
-        builder.HasIndex(u => u.IdentityUserId)
-            .IsUnique();
-
-        builder.Property(u => u.Email)
+        builder.Property(x => x.Email)
             .HasMaxLength(200)
             .IsRequired();
-            
-        builder.HasIndex(u => u.Email);
+        
+        builder.HasIndex(x => x.Email).IsUnique();
 
-        builder.Property(u => u.DisplayName)
-            .HasMaxLength(200)
-            .IsRequired();
-
-        builder.Property(u => u.Roles)
-            .HasMaxLength(1000);
-
-        // JSON Storage for Roles
-        builder.PrimitiveCollection(u => u.Roles)
-            .ElementType()
-            .HasMaxLength(100);
+        builder.Property(x => x.FirstName).HasMaxLength(100);
+        builder.Property(x => x.LastName).HasMaxLength(100);
 
         builder.Property(c => c.CreatedBy)
             .HasMaxLength(36);
@@ -41,5 +31,10 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.Property(c => c.LastModifiedBy)
             .HasMaxLength(36)
             .IsRequired(false);
+
+        // Many-to-Many Relationship Configuration
+        builder.HasMany(x => x.Roles)
+            .WithMany(x => x.Users)
+            .UsingEntity(j => j.ToTable("AppUserRoles"));
     }
 }

@@ -2,58 +2,69 @@ using Onyx.Oms.Core.Common.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class AppUser : AuditableEntity<int>
+public class AppUser : AuditableEntity<Guid>
 {
-    public string IdentityUserId { get; private set; } = string.Empty;
+    public string IdentityUserId { get; private set; } = string.Empty; // Maps to Identity's User ID
     public string Email { get; private set; } = string.Empty;
-    public string DisplayName { get; private set; } = string.Empty;
-    public DateTimeOffset? LastLoginUtc { get; private set; }
+    public string FirstName { get; private set; } = string.Empty;
+    public string? LastName { get; private set; } = string.Empty;
+    public DateTime? LastLoginUtc { get; private set; }
+    public bool IsActive { get; private set; }
+
+    // Navigation property for Many-to-Many
+    private readonly List<Role> _roles = new();
+    public IReadOnlyCollection<Role> Roles => _roles.AsReadOnly();
+
+    private AppUser() : base(Guid.Empty) { }
+
+    private AppUser(Guid id, string identityUserdId, string email, string firstName, string? lastName) : base(id)
+    {
+        IdentityUserId = identityUserdId;
+        Email = email;
+        FirstName = firstName;
+        LastName = lastName;
+        IsActive = true;
+    }
+
+    public static AppUser Create(string identityUserdId, string email, string firstName, string? lastName = null)
+    {
+        return new AppUser(Guid.NewGuid(), identityUserdId, email, firstName, lastName);
+    }
+
+    public void Update(string firstName, string lastName)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+    }
+
+    public void UpdateLastLoginTime()
+    {
+        LastLoginUtc = DateTime.UtcNow;
+    }
     
-    // Stored as JSON via PrimitiveCollection
-    private readonly List<string> _roles = new();
-    public IReadOnlyCollection<string> Roles => _roles.AsReadOnly();
-
-    // EF Core constructor
-    private AppUser() : base(0) { }
-
-    private AppUser(string identityUserId, string email, string displayName) : base(0)
+    public void AssignRole(Role role)
     {
-        IdentityUserId = identityUserId;
-        Email = email;
-        DisplayName = displayName;
-        LastLoginUtc = DateTimeOffset.UtcNow;
-    }
-
-    public static AppUser Create(string identityUserId, string email, string displayName)
-    {
-        // Simple create, validation can be added if needed
-        return new AppUser(identityUserId, email, displayName);
-    }
-
-    public void UpdateDetails(string email, string displayName)
-    {
-        Email = email;
-        DisplayName = displayName;
-    }
-
-    public void RecordLogin()
-    {
-        LastLoginUtc = DateTimeOffset.UtcNow;
-    }
-
-    public void AssignRole(string roleName)
-    {
-        if (!_roles.Contains(roleName))
+        if (!_roles.Contains(role))
         {
-            _roles.Add(roleName);
+            _roles.Add(role);
         }
     }
 
-    public void RemoveRole(string roleName)
+    public void RemoveRole(Role role)
     {
-        if (_roles.Contains(roleName))
+        if (_roles.Contains(role))
         {
-            _roles.Remove(roleName);
+            _roles.Remove(role);
         }
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
     }
 }

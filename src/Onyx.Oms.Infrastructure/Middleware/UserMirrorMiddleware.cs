@@ -50,7 +50,7 @@ public class UserMirrorMiddleware
                     // Update valid user login time
                     if (user.LastLoginUtc == null || user.LastLoginUtc < DateTime.UtcNow.AddMinutes(-5))
                     {
-                        user.RecordLogin();
+                        user.UpdateLastLoginTime();
                         await db.SaveChangesAsync(CancellationToken.None);
                     }
                 }

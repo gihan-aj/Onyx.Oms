@@ -2,10 +2,11 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Couriers.GetCouriers;
 
-public class GetCouriersHandler : IRequestHandler<GetCouriersQuery, Result<IEnumerable<CourierDto>>>
+public class GetCouriersHandler : IQueryHandler<GetCouriersQuery, IEnumerable<CourierDto>>
 {
     private readonly IApplicationDbContext _context;
 

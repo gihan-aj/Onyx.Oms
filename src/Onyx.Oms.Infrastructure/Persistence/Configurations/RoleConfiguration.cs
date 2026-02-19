@@ -8,25 +8,19 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {
     public void Configure(EntityTypeBuilder<Role> builder)
     {
-        builder.HasKey(r => r.Id); // Guid ID
+        builder.ToTable("Roles");
 
-        builder.Property(r => r.Name)
-            .HasMaxLength(200)
+        builder.HasKey(x => x.Id);
+        // ID is int, so it will be Identity by default in SQL Server
+
+        builder.Property(x => x.Name)
+            .HasMaxLength(50)
             .IsRequired();
+            
+        builder.HasIndex(x => x.Name).IsUnique();
 
-        builder.HasIndex(r => r.Name)
-            .IsUnique();
-
-        builder.Property(r => r.Description)
-            .HasMaxLength(500);
-
-        builder.Property(u => u.Permissions)
-            .HasMaxLength(1000);
-
-        // JSON Storage for Permissions
-        builder.PrimitiveCollection(r => r.Permissions)
-            .ElementType()
-            .HasMaxLength(100);
+        builder.Property(x => x.Description)
+            .HasMaxLength(200);
 
         builder.Property(c => c.CreatedBy)
             .HasMaxLength(36);
@@ -34,5 +28,8 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(c => c.LastModifiedBy)
             .HasMaxLength(36)
             .IsRequired(false);
+
+        // Configure Permissions as JSON
+        builder.PrimitiveCollection(r => r.Permissions);
     }
 }

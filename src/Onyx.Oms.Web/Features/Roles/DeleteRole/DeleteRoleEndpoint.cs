@@ -4,9 +4,9 @@ using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
-namespace Onyx.Oms.Web.Features.Roles.CreateRole;
+namespace Onyx.Oms.Web.Features.Roles.DeleteRole;
 
-public class CreateRoleEndpoint : IEndpoint
+public class DeleteRoleEndpoint : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -14,15 +14,15 @@ public class CreateRoleEndpoint : IEndpoint
             .WithApiVersionSet(app.NewApiVersionSet("Roles").Build())
             .HasApiVersion(1);
 
-        group.MapPost("", async (ISender sender, CreateRoleCommand command) =>
+        group.MapDelete("{id:guid}", async (ISender sender, Guid id) =>
         {
-            var result = await sender.Send(command);
+            var result = await sender.Send(new DeleteRoleCommand(id));
             return result.ToMinimalApiResult();
         })
         .WithTags("Roles")
-        .WithName("CreateRole")
-        .WithSummary("Create a new role")
-        .WithDescription("Creates a new role locally and syncs it with the Identity Provider.")
-        .HasPermission(Permissions.Roles.Create);
+        .WithName("DeleteRole")
+        .WithSummary("Delete a role")
+        .WithDescription("Deletes a role locally and removes it from the Identity Provider.")
+        .HasPermission(Permissions.Roles.Delete);
     }
 }

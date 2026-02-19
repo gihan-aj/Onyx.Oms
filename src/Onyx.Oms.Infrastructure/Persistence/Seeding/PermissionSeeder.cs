@@ -1,33 +1,23 @@
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Entities;
-using Onyx.Oms.Infrastructure.Identity;
-using Onyx.Oms.Infrastructure.Identity.IdP;
 
 namespace Onyx.Oms.Infrastructure.Persistence.Seeding;
 
 public class PermissionSeeder
 {
-    private readonly AppDbContext _context;
-    private readonly IIdentityProviderApi _idpApi;
-    private readonly AuthenticationOptions _authOptions;
+    private readonly IApplicationDbContext _context;
 
-    public PermissionSeeder(
-        AppDbContext context, 
-        IIdentityProviderApi idpApi,
-        IOptions<AuthenticationOptions> authOptions)
+    public PermissionSeeder(IApplicationDbContext context)
     {
         _context = context;
-        _idpApi = idpApi;
-        _authOptions = authOptions.Value;
     }
 
     public async Task SeedAsync()
     {
-        // 1. Get all defined permissions via reflection
-        var allPermissions = GetAllDefinedPermissions();
+        // 1. Get all defined permissions from Constants
+        var allPermissions = Permissions.GetAllPermissions();
 
         // 2. Ensure SuperAdmin role exists locally
         var superAdminRoleName = "SuperAdmin";
@@ -39,15 +29,10 @@ public class PermissionSeeder
             superAdminRole = Role.Create(superAdminRoleName, "God Mode Role - Has all permissions");
             _context.Roles.Add(superAdminRole);
             
-            // Try to create in IdP (fire and forget or log error if exists)
-            try 
-            {
-                await _idpApi.CreateRoleAsync(new CreateRoleRequest(superAdminRoleName, _authOptions.ClientId));
-            }
-            catch 
-            {
-                // Likely already exists in IdP, ignore
-            }
+            // NOTE: We do NOT sync this role to IdP automatically.
+            // Why? Because we don't know the Front-end Client ID here (this runs in backend context),
+            // so we can't create the role with the correct prefix (e.g. "OrderSystem_SuperAdmin").
+            // The IdP Admin should manually create this role for the Frontend Client if needed.
         }
 
         // 3. Sync Permissions: Ensure SuperAdmin has ALL permissions
@@ -62,34 +47,22 @@ public class PermissionSeeder
                 superAdminRole.AddPermission(perm);
             }
 
+            // Optional: Remove obsolete permissions if they were removed from code constants
             foreach (var perm in obsoletePermissions)
             {
                 superAdminRole.RemovePermission(perm);
             }
             
-            await _context.SaveChangesAsync();
+            // If the role was just added, it might not track changes correctly without this?
+            // Actually EF Core tracks the entity. 
         }
-    }
-
-    private static HashSet<string> GetAllDefinedPermissions()
-    {
-        var permissions = new HashSet<string>();
-        var rootType = typeof(Permissions);
-
-        foreach (var nestedType in rootType.GetNestedTypes(BindingFlags.Public | BindingFlags.Static))
+        
+        // Ensure SuperAdmin is active
+        if (!superAdminRole.IsActive)
         {
-            foreach (var field in nestedType.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
-            {
-                if (field.IsLiteral && !field.IsInitOnly && field.FieldType == typeof(string))
-                {
-                    if (field.GetValue(null) is string value)
-                    {
-                        permissions.Add(value);
-                    }
-                }
-            }
+            superAdminRole.Activate();
         }
 
-        return permissions;
+        await _context.SaveChangesAsync(CancellationToken.None);
     }
 }

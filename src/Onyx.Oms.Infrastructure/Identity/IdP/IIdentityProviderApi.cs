@@ -6,12 +6,6 @@ public interface IIdentityProviderApi
 {
     [Post("/api/roles")]
     Task<IApiResponse> CreateRoleAsync([Body] CreateRoleRequest request);
-
-    [Put("/api/roles/{name}/activate")]
-    Task<IApiResponse> ActivateRoleAsync(string name, [Body] RoleStatusRequest request);
-
-    [Put("/api/roles/{name}/deactivate")]
-    Task<IApiResponse> DeactivateRoleAsync(string name, [Body] RoleStatusRequest request);
     
     [Put("/api/roles/{name}/name")]
     Task<IApiResponse> UpdateRoleNameAsync(string name, [Body] UpdateRoleNameRequest request);
@@ -27,7 +21,6 @@ public interface IIdentityProviderApi
 }
 
 public record CreateRoleRequest(string Name, string TargetClientId);
-public record RoleStatusRequest(string TargetClientId); 
 public record UpdateRoleNameRequest(string NewName, string TargetClientId);
 public record InviteUserRequest(string Email, string RoleName, string FirstName, string LastName, string TargetClientId);
 public record AssignRoleRequest(string RoleName, string TargetClientId);

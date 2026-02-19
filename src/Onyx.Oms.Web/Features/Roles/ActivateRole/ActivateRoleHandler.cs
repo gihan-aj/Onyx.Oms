@@ -28,25 +28,7 @@ public class ActivateRoleHandler : ICommandHandler<ActivateRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
-        var targetClientId = _currentUserService.ClientId;
-        if (string.IsNullOrEmpty(targetClientId))
-        {
-            return Result.Failure(Error.Failure("Identity.ClientIdMissing", "Could not determine Client ID."));
-        }
-
-        try
-        {
-            var response = await _idpApi.ActivateRoleAsync(role.Name, new RoleStatusRequest(targetClientId));
-            if (!response.IsSuccessStatusCode)
-            {
-                 return Result.Failure(Error.Failure("Identity.ActivationFailed", $"IdP failed to activate role. Status: {response.StatusCode}"));
-            }
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure(Error.Failure("Identity.Connection", $"Failed to connect to IdP: {ex.Message}"));
-        }
-
+        // Local Only Activation
         role.Activate();
         await _context.SaveChangesAsync(cancellationToken);
 

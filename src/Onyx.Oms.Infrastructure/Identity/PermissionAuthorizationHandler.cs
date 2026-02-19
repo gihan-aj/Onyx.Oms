@@ -31,7 +31,6 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
             return;
         }
 
-        // We need the INT userId for our permission service, but the token has the GUID (sub)
         var sub = _currentUserService.UserId;
         if (string.IsNullOrEmpty(sub))
         {
@@ -39,7 +38,6 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
             return;
         }
 
-        // Resolve int ID from GUID
         // NOTE: In a real high-scale app, we might cache this mapping too or put the int ID in the token claims
         var user = await _context.AppUsers
             .Where(u => u.IdentityUserId == sub)

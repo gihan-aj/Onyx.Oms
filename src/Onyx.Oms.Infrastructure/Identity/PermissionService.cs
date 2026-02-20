@@ -27,6 +27,7 @@ public class PermissionService : IPermissionService
 
         // 2. Flatten into a distinct set of permissions from all roles
         var permissions = user.Roles
+            .Where(r => r.IsActive)
             .SelectMany(r => r.Permissions)
             .ToHashSet();
 

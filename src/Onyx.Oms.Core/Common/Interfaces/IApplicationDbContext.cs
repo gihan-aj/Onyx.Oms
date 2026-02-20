@@ -13,5 +13,6 @@ public interface IApplicationDbContext
     DbSet<ProductImage> ProductImages { get; }
     DbSet<AppUser> AppUsers { get; }
     DbSet<Role> Roles { get; }
+    Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

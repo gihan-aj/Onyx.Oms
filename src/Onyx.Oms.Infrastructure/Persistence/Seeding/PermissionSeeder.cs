@@ -21,6 +21,7 @@ public class PermissionSeeder
 
         // 2. Ensure SuperAdmin role exists locally
         var superAdminRoleName = "SuperAdmin";
+
         var superAdminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == superAdminRoleName);
 
         if (superAdminRole == null)

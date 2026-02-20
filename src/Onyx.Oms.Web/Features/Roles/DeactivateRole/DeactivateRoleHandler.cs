@@ -28,6 +28,12 @@ public class DeactivateRoleHandler : ICommandHandler<DeactivateRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
+        // Don not allow deactivation of the SuperAdmin role
+        if (role.Name == "SuperAdmin")
+        {
+            return Result.Failure(Error.Unauthorized("Role.SuperAdmin", "The SuperAdmin role cannot be deactivated."));
+        }
+
         // Local Only Deactivation
         role.Deactivate();
         await _context.SaveChangesAsync(cancellationToken);

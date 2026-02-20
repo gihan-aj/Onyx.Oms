@@ -28,6 +28,12 @@ public class DeleteRoleHandler : ICommandHandler<DeleteRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
+        // Do not delete SuperAdmin role
+        if (role.Name == "SuperAdmin")
+        {
+            return Result.Failure(Error.Unauthorized("Role.DeletionForbidden", "The SuperAdmin role cannot be deleted."));
+        }
+
         var targetClientId = _currentUserService.ClientId;
         if (string.IsNullOrEmpty(targetClientId))
         {

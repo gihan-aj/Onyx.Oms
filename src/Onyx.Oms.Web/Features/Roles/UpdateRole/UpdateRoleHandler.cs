@@ -29,6 +29,12 @@ public class UpdateRoleHandler : ICommandHandler<UpdateRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
+        // Do not let edit SuperAdmin role
+        if (role.Name == "SuperAdmin")
+        {
+            return Result.Failure(Error.Unauthorized("Role.EditForbidden", "Editing the SuperAdmin role is not allowed."));
+        }
+
         // Handle Renaming
         if (role.Name != request.Name)
         {

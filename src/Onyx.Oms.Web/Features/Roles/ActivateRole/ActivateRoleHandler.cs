@@ -28,6 +28,12 @@ public class ActivateRoleHandler : ICommandHandler<ActivateRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
+        // Do not let the user change SuperAdmin role
+        if (role.Name == "SuperAdmin")
+        {
+            return Result.Success(); // does not allow deactivation of SuperAdmin, so we can just return success here
+        }
+
         // Local Only Activation
         role.Activate();
         await _context.SaveChangesAsync(cancellationToken);

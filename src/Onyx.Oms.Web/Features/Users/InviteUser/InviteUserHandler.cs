@@ -23,11 +23,12 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
 
     public async Task<Result<Guid>> Handle(InviteUserCommand request, CancellationToken cancellationToken)
     {
-        // 1. Validate Role exists locally using Guid ID
-        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == request.RoleId, cancellationToken);
-        if (role == null)
+        // 1. Validate Roles exist locally using Guid IDs
+        var requestRoleIds = request.RoleIds.Distinct().ToList();
+        var roles = await _context.Roles.Where(r => requestRoleIds.Contains(r.Id)).ToListAsync(cancellationToken);
+        if (roles.Count != requestRoleIds.Count)
         {
-            return Result.Failure<Guid>(Error.NotFound("Role.NotFound", $"Role with Id {request.RoleId} was not found."));
+            return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "One or more specified roles were not found."));
         }
 
         // 2. Get Target Client ID
@@ -37,15 +38,16 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
             return Result.Failure<Guid>(Error.Failure("Identity.ClientIdMissing", "Could not determine Client ID."));
         }
 
-        // 3. Call IdP to Invite User and Assign Role
-        // The IdP's InviteUser endpoint handles creating the user (if new) and assigning the role.
+        // 3. Call IdP to Invite User and Assign Roles
+        // The IdP's InviteUser endpoint handles creating the user (if new) and assigning the roles.
         Guid userId = Guid.Empty;
+        IEnumerable<string> assignedRoleNames = Enumerable.Empty<string>();
 
         try
         {
             var idpRequest = new InviteUserRequest(
                 request.Email,
-                role.Name, // Pass the role name (e.g., "OrderSystem_Admin")
+                roles.Select(r => r.Name), // Pass the role names
                 request.FirstName,
                 request.LastName,
                 targetClientId
@@ -55,15 +57,43 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
 
             if (!response.IsSuccessStatusCode)
             {
-                return Result.Failure<Guid>(Error.Failure("Identity.InviteFailed", $"IdP failed to invite user. Status: {response.StatusCode}"));
-            }
+                if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                {
+                    // User already exists in IdP, gracefully handle by fetching the user and assigning roles
+                    var userResponse = await _idpApi.GetUserByEmailAsync(request.Email);
+                    if (!userResponse.IsSuccessStatusCode || userResponse.Content == null)
+                    {
+                        return Result.Failure<Guid>(Error.Failure("Identity.UserFetchFailed", $"Failed to fetch existing user. Status: {userResponse.StatusCode}"));
+                    }
+                    
+                    userId = userResponse.Content.Id;
 
-            if (response.Content == null)
+                    // Assign roles to existing user
+                    var assignRolesRequest = new AssignRolesRequest(roles.Select(r => r.Name), targetClientId);
+                    var assignResponse = await _idpApi.AssignRolesAsync(userId, assignRolesRequest);
+
+                    if (!assignResponse.IsSuccessStatusCode || assignResponse.Content == null)
+                    {
+                         return Result.Failure<Guid>(Error.Failure("Identity.RoleAssignmentFailed", $"IdP failed to assign roles to existing user. Status: {assignResponse.StatusCode}"));
+                    }
+
+                    assignedRoleNames = assignResponse.Content.AssignedRoles ?? Enumerable.Empty<string>();
+                }
+                else
+                {
+                    return Result.Failure<Guid>(Error.Failure("Identity.InviteFailed", $"IdP failed to invite user. Status: {response.StatusCode}"));
+                }
+            }
+            else
             {
-                 return Result.Failure<Guid>(Error.Failure("Identity.InvalidResponse", "IdP returned null content."));
-            }
+                if (response.Content == null)
+                {
+                    return Result.Failure<Guid>(Error.Failure("Identity.InvalidResponse", "IdP returned null content."));
+                }
 
-            userId = response.Content.Id;
+                userId = response.Content.Id;
+                assignedRoleNames = response.Content.AssignedRoles ?? Enumerable.Empty<string>();
+            }
         }
         catch (Exception ex)
         {
@@ -77,22 +107,7 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
             .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken); // Match by Email or IdentityUserId if we had it initially
 
         if (localUser == null)
-        {
-            // Create new local user
-            // Note: AppUser.Id should probably match IdP User Id if possible, or be a new local Guid?
-            // Domain Entity AppUser is `AuditableEntity<Guid>`.
-            // The `InviteUserAsync` returns `UserDto` with `Id`. We should use that `Id`.
-            // But `AppUser` constructor or factory might need adjustment if it generates a new Guid by default.
-            // Let's check AppUser.Create.
-            
-            // AppUser.Create(string identityUserId, string email, string firstName, string? lastName) -> new AppUser(Guid.NewGuid()...)
-            // We want to use the GUID from the IdP if our system shares the same GUIDs or if IdentityUserId is the link.
-            // In `AppUser.cs`:
-            // `public string IdentityUserId { get; private set; }`
-            // `private AppUser(Guid id, ...)` called by Create.
-            // We should use the IdP's ID as `IdentityUserId`. The local `Id` (PK) can be generated or same.
-            // Ideally, to avoid confusion, let's keep local ID auto-generated or separate, and link via IdentityUserId.
-            
+        {          
             localUser = AppUser.Create(userId.ToString(), request.Email, request.FirstName, request.LastName);
             _context.AppUsers.Add(localUser);
         }
@@ -102,11 +117,16 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
             localUser.Update(request.FirstName, request.LastName);
         }
 
-        // 5. Assign Role Locally
-        // Verify we aren't duplicating
-        if (!localUser.Roles.Any(r => r.Id == role.Id))
+        // 5. Assign Roles Locally
+        // Verify we aren't duplicating and only assign roles the IDP successfully assigned
+        var rolesToAssignLocally = roles.Where(r => assignedRoleNames.Contains(r.Name)).ToList();
+
+        foreach (var role in rolesToAssignLocally)
         {
-            localUser.AssignRole(role);
+            if (!localUser.Roles.Any(r => r.Id == role.Id))
+            {
+                localUser.AssignRole(role);
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);

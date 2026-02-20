@@ -13,16 +13,20 @@ public interface IIdentityProviderApi
     [Delete("/api/roles/{name}")]
     Task<IApiResponse> DeleteRoleAsync(string name, [AliasAs("targetClientId")] string targetClientId);
 
+    [Get("/api/users")]
+    Task<IApiResponse<UserDto>> GetUserByEmailAsync([Query] string email);
+
     [Post("/api/users")]
     Task<IApiResponse<UserDto>> InviteUserAsync([Body] InviteUserRequest request);
     
     [Post("/api/users/{userId}/roles")]
-    Task<IApiResponse> AssignRoleAsync(Guid userId, [Body] AssignRoleRequest request);
+    Task<IApiResponse<AssignRolesResponse>> AssignRolesAsync(Guid userId, [Body] AssignRolesRequest request);
 }
 
 public record CreateRoleRequest(string Name, string TargetClientId);
 public record UpdateRoleNameRequest(string NewName, string TargetClientId);
-public record InviteUserRequest(string Email, string RoleName, string FirstName, string LastName, string TargetClientId);
-public record AssignRoleRequest(string RoleName, string TargetClientId);
+public record InviteUserRequest(string Email, IEnumerable<string> RoleNames, string FirstName, string LastName, string TargetClientId);
+public record AssignRolesRequest(IEnumerable<string> RoleNames, string TargetClientId);
 
-public record UserDto(Guid Id, string Email, string FirstName, string LastName, bool IsActive);
+public record UserDto(Guid Id, string Email, string FirstName, string LastName, bool IsActive, IEnumerable<string>? AssignedRoles = null);
+public record AssignRolesResponse(string Message, IEnumerable<string> AssignedRoles);

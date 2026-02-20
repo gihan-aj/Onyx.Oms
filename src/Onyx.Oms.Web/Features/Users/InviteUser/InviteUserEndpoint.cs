@@ -23,7 +23,7 @@ public class InviteUserEndpoint : IEndpoint
         .WithTags("Users")
         .WithName("InviteUser")
         .WithSummary("Invite a user")
-        .WithDescription("Invites a user via the Identity Provider and assigns them a role.")
+        .WithDescription("Invites a user via the Identity Provider and assigns them roles.")
         .HasPermission(Permissions.Users.Create);
     }
 }

@@ -6,4 +6,4 @@ public record InviteUserCommand(
     string Email,
     string FirstName,
     string LastName,
-    Guid RoleId) : ICommand<Guid>;
+    IEnumerable<Guid> RoleIds) : ICommand<Guid>;

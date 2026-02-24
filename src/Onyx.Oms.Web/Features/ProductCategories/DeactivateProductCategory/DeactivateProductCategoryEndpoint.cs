@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class DeactivateProductCategoryEndpoint : IEndpoint
         .WithTags("ProductCategories")
         .WithName("DeactivateProductCategory")
         .WithSummary("Deactivate a product category")
-        .WithDescription("Deactivates a product category and recursively deactivates all its sub-categories.");
+        .WithDescription("Deactivates a product category and recursively deactivates all its sub-categories.")
+        .HasPermission(Permissions.ProductCategories.Deactivate);
     }
 }

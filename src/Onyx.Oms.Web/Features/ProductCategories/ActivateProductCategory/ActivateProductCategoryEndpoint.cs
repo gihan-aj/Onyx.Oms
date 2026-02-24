@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class ActivateProductCategoryEndpoint : IEndpoint
         .WithTags("ProductCategories")
         .WithName("ActivateProductCategory")
         .WithSummary("Activate a product category")
-        .WithDescription("Activates a product category. Does NOT recursively activate children.");
+        .WithDescription("Activates a product category. Does NOT recursively activate children.")
+        .HasPermission(Permissions.ProductCategories.Activate);
     }
 }

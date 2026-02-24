@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class GetCourierByIdEndpoint : IEndpoint
         .WithTags("Couriers")
         .WithName("GetCourierById")
         .WithSummary("Get courier details")
-        .WithDescription("Retrieves details of a specific courier by ID.");
+        .WithDescription("Retrieves details of a specific courier by ID.")
+        .HasPermission(Permissions.Couriers.View);
     }
 }

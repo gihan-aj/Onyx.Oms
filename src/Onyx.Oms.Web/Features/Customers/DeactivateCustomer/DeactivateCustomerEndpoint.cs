@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class DeactivateCustomerEndpoint : IEndpoint
         .WithTags("Customers")
         .WithName("DeactivateCustomer")
         .WithSummary("Deactivate a customer")
-        .WithDescription("Deactivates a customer.");
+        .WithDescription("Deactivates a customer.")
+        .HasPermission(Permissions.Customers.Deactivate);
     }
 }

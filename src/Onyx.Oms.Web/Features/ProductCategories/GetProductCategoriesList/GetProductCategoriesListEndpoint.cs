@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -24,6 +25,7 @@ public class GetProductCategoriesListEndpoint : IEndpoint
         .WithTags("ProductCategories")
         .WithName("GetProductCategories")
         .WithSummary("Get product categories list")
-        .WithDescription("Retrieves a flat list of product categories, optionally filtered to only include leaf categories (those with no sub-categories).");
+        .WithDescription("Retrieves a flat list of product categories, optionally filtered to only include leaf categories (those with no sub-categories).")
+        .HasPermission(Permissions.ProductCategories.View);
     }
 }

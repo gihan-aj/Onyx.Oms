@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class GetProductCategoryTreeEndpoint : IEndpoint
         .WithTags("ProductCategories")
         .WithName("GetProductCategoryTree")
         .WithSummary("Get product category tree")
-        .WithDescription("Retrieves the full hierarchy of product categories as a tree.");
+        .WithDescription("Retrieves the full hierarchy of product categories as a tree.")
+        .HasPermission(Permissions.ProductCategories.View);
     }
 }

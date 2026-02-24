@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -24,6 +25,7 @@ public class CreateProductCategoryEndpoint : IEndpoint
         .WithTags("ProductCategories")
         .WithName("CreateProductCategory")
         .WithSummary("Create a new product category")
-        .WithDescription("Creates a new product category. Supports hierarchy.");
+        .WithDescription("Creates a new product category. Supports hierarchy.")
+        .HasPermission(Permissions.ProductCategories.Create);
     }
 }

@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class DeleteCustomerEndpoint : IEndpoint
         .WithTags("Customers")
         .WithName("DeleteCustomer")
         .WithSummary("Delete a customer")
-        .WithDescription("Deletes a customer by their unique identifier.");
+        .WithDescription("Deletes a customer by their unique identifier.")
+        .HasPermission(Permissions.Customers.Delete);
     }
 }

@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class GetCustomerByIdEndpoint : IEndpoint
         .WithTags("Customers")
         .WithName("GetCustomerById")
         .WithSummary("Get customer by ID")
-        .WithDescription("Retrieves a customer's details by their unique identifier.");
+        .WithDescription("Retrieves a customer's details by their unique identifier.")
+        .HasPermission(Permissions.Customers.View);
     }
 }

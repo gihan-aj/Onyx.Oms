@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -29,6 +30,7 @@ public class UpdateProductCategoryEndpoint : IEndpoint
         .WithTags("ProductCategories")
         .WithName("UpdateProductCategory")
         .WithSummary("Update a product category")
-        .WithDescription("Updates a product category. Handles moving categories (and their subtrees) to new parents.");
+        .WithDescription("Updates a product category. Handles moving categories (and their subtrees) to new parents.")
+        .HasPermission(Permissions.ProductCategories.Edit);
     }
 }

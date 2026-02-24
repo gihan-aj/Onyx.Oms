@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 using Onyx.Oms.Web.Features.Couriers.GetCouriers;
@@ -24,6 +25,7 @@ public class GetCouriersPagedEndpoint : IEndpoint
         .WithTags("Couriers")
         .WithName("GetCouriersPaged")
         .WithSummary("Search couriers")
-        .WithDescription("Retrieves a paginated list of couriers with optional searching, sorting, and filtering.");
+        .WithDescription("Retrieves a paginated list of couriers with optional searching, sorting, and filtering.")
+        .HasPermission(Permissions.Couriers.View);
     }
 }

@@ -1,7 +1,5 @@
-using Asp.Versioning;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -24,6 +22,7 @@ public class GetProductsPagedEndpoint : IEndpoint
         .WithTags("Products")
         .WithName("GetProductsPaged")
         .WithSummary("Get products (paged)")
-        .WithDescription("Retrieves a paged list of products. Supports search by name/sku/brand and filtering by category.");
+        .WithDescription("Retrieves a paged list of products. Supports search by name/sku/brand and filtering by category.")
+        .HasPermission(Permissions.ProductCategories.View);
     }
 }

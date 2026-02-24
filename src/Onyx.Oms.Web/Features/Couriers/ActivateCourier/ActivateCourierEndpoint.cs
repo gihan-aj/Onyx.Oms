@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -24,6 +25,7 @@ public class ActivateCourierEndpoint : IEndpoint
         .WithTags("Couriers")
         .WithName("ActivateCourier")
         .WithSummary("Activate a courier")
-        .WithDescription("Activates a courier account.");
+        .WithDescription("Activates a courier account.")
+        .HasPermission(Permissions.Couriers.Activate);
     }
 }

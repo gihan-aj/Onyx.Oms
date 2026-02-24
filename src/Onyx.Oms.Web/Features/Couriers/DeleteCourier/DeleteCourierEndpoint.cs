@@ -1,5 +1,6 @@
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -27,6 +28,7 @@ public class DeleteCourierEndpoint : IEndpoint
         .WithTags("Couriers")
         .WithName("DeleteCourier")
         .WithSummary("Delete a courier")
-        .WithDescription("Deletes an existing courier.");
+        .WithDescription("Deletes an existing courier.")
+        .HasPermission(Permissions.Couriers.Delete);
     }
 }

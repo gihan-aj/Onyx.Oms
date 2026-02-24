@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -23,6 +24,7 @@ public class DeleteProductCategoryEndpoint : IEndpoint
         .WithTags("ProductCategories")
         .WithName("DeleteProductCategory")
         .WithSummary("Delete a product category")
-        .WithDescription("Deletes a product category if it has no children.");
+        .WithDescription("Deletes a product category if it has no children.")
+        .HasPermission(Permissions.ProductCategories.Delete);
     }
 }

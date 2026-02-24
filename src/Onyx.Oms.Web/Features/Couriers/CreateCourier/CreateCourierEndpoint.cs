@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 using Onyx.Oms.Web.Features.Couriers.CreateCourier;
@@ -25,6 +26,7 @@ public class CreateCourierEndpoint : IEndpoint
         .WithTags("Couriers")
         .WithName("CreateCourier")
         .WithSummary("Create a new courier")
-        .WithDescription("Creates a new courier record. Name must be unique.");
+        .WithDescription("Creates a new courier record. Name must be unique.")
+        .HasPermission(Permissions.Couriers.Create);
     }
 }

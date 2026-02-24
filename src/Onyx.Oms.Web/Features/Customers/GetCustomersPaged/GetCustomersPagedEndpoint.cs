@@ -1,5 +1,6 @@
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -22,6 +23,7 @@ public class GetCustomersPagedEndpoint : IEndpoint
         .WithTags("Customers")
         .WithName("GetCustomersPaged")
         .WithSummary("Search customers")
-        .WithDescription("Retrieves a paginated list of customers with optional searching (Name, Email, Phone) and sorting.");
+        .WithDescription("Retrieves a paginated list of customers with optional searching (Name, Email, Phone) and sorting.")
+        .HasPermission(Permissions.Customers.View);
     }
 }

@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -24,6 +25,7 @@ public class CreateProductEndpoint : IEndpoint
         .WithTags("Products")
         .WithName("CreateProduct")
         .WithSummary("Create a new product")
-        .WithDescription("Creates a new product with its variants and image references.");
+        .WithDescription("Creates a new product with its variants and image references.")
+        .HasPermission(Permissions.Products.Create);
     }
 }

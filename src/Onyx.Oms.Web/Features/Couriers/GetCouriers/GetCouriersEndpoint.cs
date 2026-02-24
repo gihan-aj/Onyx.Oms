@@ -1,5 +1,6 @@
 using MediatR;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -22,7 +23,8 @@ public class GetCouriersEndpoint : IEndpoint
         .WithTags("Couriers")
         .WithName("GetCouriers")
         .WithSummary("Get a list of couriers")
-        .WithDescription("Retrieves all couriers with optional filtering by active status.");
+        .WithDescription("Retrieves all couriers with optional filtering by active status.")
+        .HasPermission(Permissions.Couriers.View);
     }
 
     // Helper record for query parameters binding

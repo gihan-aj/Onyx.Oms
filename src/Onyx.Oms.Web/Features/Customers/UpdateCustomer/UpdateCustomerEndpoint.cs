@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -29,6 +30,7 @@ public class UpdateCustomerEndpoint : IEndpoint
         .WithTags("Customers")
         .WithName("UpdateCustomer")
         .WithSummary("Update a customer")
-        .WithDescription("Updates an existing customer's details.");
+        .WithDescription("Updates an existing customer's details.")
+        .HasPermission(Permissions.Customers.Edit);
     }
 }

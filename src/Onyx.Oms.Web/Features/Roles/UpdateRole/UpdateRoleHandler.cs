@@ -32,7 +32,19 @@ public class UpdateRoleHandler : ICommandHandler<UpdateRoleCommand>
         // Do not let edit SuperAdmin role
         if (role.Name == "SuperAdmin")
         {
-            return Result.Failure(Error.Unauthorized("Role.EditForbidden", "Editing the SuperAdmin role is not allowed."));
+            return Result.Failure(Error.Forbidden("Role.Protected", "Modifying the SuperAdmin role is not allowed."));
+        }
+
+        // Prevent users from modifying their own roles
+        var currentUserId = _currentUserService.UserId;
+        var isCurrentUserRole = await _context.AppUsers
+            .Where(u => u.IdentityUserId == currentUserId)
+            .SelectMany(u => u.Roles)
+            .AnyAsync(r => r.Id == request.Id, cancellationToken);
+
+        if (isCurrentUserRole)
+        {
+            return Result.Failure(Error.Forbidden("Role.ModifyOwn", "You cannot modify a role that is currently assigned to you."));
         }
 
         // Handle Renaming

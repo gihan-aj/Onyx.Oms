@@ -28,10 +28,22 @@ public class DeleteRoleHandler : ICommandHandler<DeleteRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
-        // Do not delete SuperAdmin role
+        // Protect SuperAdmin role
         if (role.Name == "SuperAdmin")
         {
-            return Result.Failure(Error.Unauthorized("Role.DeletionForbidden", "The SuperAdmin role cannot be deleted."));
+            return Result.Failure(Error.Forbidden("Role.Protected", "Modifying the SuperAdmin role is not allowed."));
+        }
+
+        // Prevent users from modifying their own roles
+        var currentUserId = _currentUserService.UserId;
+        var isCurrentUserRole = await _context.AppUsers
+            .Where(u => u.IdentityUserId == currentUserId)
+            .SelectMany(u => u.Roles)
+            .AnyAsync(r => r.Id == request.Id, cancellationToken);
+
+        if (isCurrentUserRole)
+        {
+            return Result.Failure(Error.Forbidden("Role.ModifyOwn", "You cannot modify a role that is currently assigned to you."));
         }
 
         var targetClientId = _currentUserService.ClientId;

@@ -13,6 +13,9 @@ builder.Services
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<Onyx.Oms.Web.Middleware.GlobalExceptionHandler>();
+
 builder.Services.AddEndpoints(typeof(Program).Assembly);
 
 builder.Services.AddApiVersioning(options =>
@@ -53,6 +56,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();

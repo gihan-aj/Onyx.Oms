@@ -10,6 +10,7 @@ using Onyx.Oms.Infrastructure.Identity.IdP;
 using Onyx.Oms.Infrastructure.Persistence;
 using Onyx.Oms.Infrastructure.Persistence.Interceptors;
 using Onyx.Oms.Infrastructure.Persistence.Seeding;
+using Onyx.Oms.Infrastructure.Services;
 using Refit;
 
 namespace Onyx.Oms.Infrastructure;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<AuditableEntityInterceptor>();
+        services.AddScoped<IAppSequenceService, AppSequenceService>();
 
         // Permission Services
         services.AddScoped<PermissionService>();

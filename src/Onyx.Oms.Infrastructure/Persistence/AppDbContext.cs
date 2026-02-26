@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Domain.Entities;
+using Onyx.Oms.Infrastructure.Persistence.Entities;
 using Onyx.Oms.Infrastructure.Persistence.Interceptors;
 
 namespace Onyx.Oms.Infrastructure.Persistence;
@@ -24,6 +25,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<AppUser> AppUsers => Set<AppUser>();
     public DbSet<Role> Roles => Set<Role>();
+    public DbSet<AppSequence> AppSequences => Set<AppSequence>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -60,6 +60,13 @@ public static class Permissions
         public const string Delete = "Permissions.Customers.Delete";
     }
 
+    public static class AppSequences
+    {
+        public const string View = "Permissions.AppSequences.View";
+        public const string Create = "Permissions.AppSequences.Create";
+        public const string Edit = "Permissions.AppSequences.Edit";
+    }
+
     public static List<string> GetAllPermissions()
     {
         var permissions = new List<string>();

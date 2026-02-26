@@ -1,13 +1,13 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.ProductCategories.CreateProductCategory;
 
-public class CreateProductCategoryHandler : IRequestHandler<CreateProductCategoryCommand, Result<Guid>>
+public class CreateProductCategoryHandler : ICommandHandler<CreateProductCategoryCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 

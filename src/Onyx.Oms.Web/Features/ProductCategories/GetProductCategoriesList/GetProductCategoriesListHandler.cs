@@ -1,11 +1,11 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.ProductCategories.GetProductCategoriesList;
 
-public class GetProductCategoriesListHandler : IRequestHandler<GetProductCategoriesListQuery, Result<List<ProductCategoryDto>>>
+public class GetProductCategoriesListHandler : IQueryHandler<GetProductCategoriesListQuery, List<ProductCategoryDto>>
 {
     private readonly IApplicationDbContext _context;
 

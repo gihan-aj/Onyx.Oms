@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.ProductCategories.GetProductCategoryTree;
 
-public class GetProductCategoryTreeHandler : IRequestHandler<GetProductCategoryTreeQuery, Result<List<ProductCategoryTreeDto>>>
+public class GetProductCategoryTreeHandler : IQueryHandler<GetProductCategoryTreeQuery, List<ProductCategoryTreeDto>>
 {
     private readonly IApplicationDbContext _context;
 
@@ -54,6 +54,7 @@ public class GetProductCategoryTreeHandler : IRequestHandler<GetProductCategoryT
             category.Id,
             category.Name,
             category.Description,
+            category.NamePath,
             category.Level,
             category.IconUrl,
             category.Color,

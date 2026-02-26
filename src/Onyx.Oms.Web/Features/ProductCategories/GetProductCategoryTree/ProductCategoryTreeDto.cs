@@ -4,6 +4,7 @@ public record ProductCategoryTreeDto(
     Guid Id,
     string Name,
     string? Description,
+    string NamePath,
     int Level,
     string? IconUrl,
     string? Color,

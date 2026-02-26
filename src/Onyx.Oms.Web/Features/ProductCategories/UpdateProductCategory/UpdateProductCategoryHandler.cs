@@ -1,13 +1,13 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.ProductCategories.UpdateProductCategory;
 
-public class UpdateProductCategoryHandler : IRequestHandler<UpdateProductCategoryCommand, Result>
+public class UpdateProductCategoryHandler : ICommandHandler<UpdateProductCategoryCommand>
 {
     private readonly IApplicationDbContext _context;
 
@@ -51,6 +51,9 @@ public class UpdateProductCategoryHandler : IRequestHandler<UpdateProductCategor
 
                 if (newParent == null)
                     return Result.Failure(Error.NotFound("ProductCategory.ParentNotFound", "New parent category not found."));
+
+                if(newParent.IsActive == false && category.IsActive)
+                    return Result.Failure(Error.Validation("ProductCategory.InvalidParent", "Cannot move an active category under an inactive parent category."));
             }
 
             // Load descendants to ensure "ChangeParent" can recurse through them via navigation property fix-up

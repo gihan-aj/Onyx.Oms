@@ -1,6 +1,7 @@
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
@@ -11,16 +12,18 @@ public class Product : AuditableEntity<Guid>
     internal Product(
         Guid id,
         string name,
+        string baseSku,
         string? description,
         Guid categoryId,
         string? brand,
         string? material,
         Gender gender,
-        decimal basePrice,
-        decimal baseCost,
-        decimal? baseWeight) : base(id)
+        Money baseCost,
+        Money basePrice,
+        Weight baseWeight) : base(id)
     {
         Name = name;
+        BaseSku = baseSku;
         Description = description;
         CategoryId = categoryId;
         Brand = brand;
@@ -33,16 +36,17 @@ public class Product : AuditableEntity<Guid>
     }
 
     public string Name { get; private set; } = string.Empty;
+    public string BaseSku { get; private set; } = string.Empty; // Can be auto-generated or set by user
     public string? Description { get; private set; }
     public Guid CategoryId { get; private set; }
     public string? Brand { get; private set; }
     public string? Material { get; private set; }
     public Gender Gender { get; private set; }
 
-    // Financials (Base/Defaults)
-    public decimal BasePrice { get; private set; }
-    public decimal BaseCost { get; private set; }
-    public decimal? BaseWeight { get; private set; }
+    // Financials & Measurements
+    public Money BaseCost { get; private set; } = Money.Zero();
+    public Money BasePrice { get; private set; } = Money.Zero();
+    public Weight BaseWeight { get; private set; } = Weight.Zero();
 
     public bool IsActive { get; private set; }
 
@@ -60,14 +64,15 @@ public class Product : AuditableEntity<Guid>
 
     public static Result<Product> Create(
         string name,
+        string baseSku,
+        string? description,
         Guid categoryId,
-        decimal basePrice,
-        decimal baseCost,
-        string? description = null,
-        string? brand = null,
-        string? material = null,
-        Gender gender = Gender.Unisex,
-        decimal? baseWeight = null,
+        string? brand,
+        string? material,
+        Gender gender,
+        Money baseCost,
+        Money basePrice,
+        Weight baseWeight,
         List<string>? tags = null)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -76,22 +81,17 @@ public class Product : AuditableEntity<Guid>
         if (categoryId == Guid.Empty)
             return Result.Failure<Product>(Error.Validation("Product.CategoryRequired", "Category is required."));
 
-        if (basePrice < 0)
-            return Result.Failure<Product>(Error.Validation("Product.InvalidBasePrice", "Base price cannot be negative."));
-
-        if (baseCost < 0)
-            return Result.Failure<Product>(Error.Validation("Product.InvalidBaseCost", "Base cost cannot be negative."));
-
         var product = new Product(
             Guid.NewGuid(),
             name,
+            baseSku,
             description,
             categoryId,
             brand,
             material,
             gender,
-            basePrice,
             baseCost,
+            basePrice,
             baseWeight);
 
         if (tags != null && tags.Any())
@@ -109,9 +109,10 @@ public class Product : AuditableEntity<Guid>
         string? brand,
         string? material,
         Gender gender,
-        decimal basePrice,
-        decimal baseCost,
-        decimal? baseWeight)
+        Money baseCost,
+        Money basePrice,
+        Weight baseWeight,
+        List<string>? tags = null)
     {
         Name = name;
         Description = description;
@@ -119,9 +120,24 @@ public class Product : AuditableEntity<Guid>
         Brand = brand;
         Material = material;
         Gender = gender;
-        BasePrice = basePrice;
         BaseCost = baseCost;
+        BasePrice = basePrice;
         BaseWeight = baseWeight;
+
+        _tags.Clear();
+        if (tags != null && tags.Any())
+        {
+            _tags.AddRange(tags);
+        }
+    }
+
+    public Result ChangeBaseSku(string newBaseSku)
+    {
+        if (string.IsNullOrEmpty(newBaseSku))
+            return Result.Failure(Error.Validation("Product.SkuRequired", "Product SKU cannot be empty."));
+
+        BaseSku = newBaseSku.ToUpperInvariant();
+        return Result.Success();
     }
 
     public void Activate() => IsActive = true;

@@ -67,6 +67,12 @@ public static class Permissions
         public const string Edit = "Permissions.AppSequences.Edit";
     }
 
+    public static class TenantSettings
+    {
+        public const string View = "Permissions.TenantSettings.View";
+        public const string Edit = "Permissions.TenantSettings.Edit";
+    }
+
     public static List<string> GetAllPermissions()
     {
         var permissions = new List<string>();

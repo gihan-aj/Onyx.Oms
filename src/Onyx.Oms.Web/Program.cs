@@ -13,6 +13,9 @@ builder.Services
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.Configure<Onyx.Oms.Web.Common.Settings.DefaultTenantProfileSettings>(
+    builder.Configuration.GetSection(Onyx.Oms.Web.Common.Settings.DefaultTenantProfileSettings.SectionName));
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<Onyx.Oms.Web.Middleware.GlobalExceptionHandler>();
 

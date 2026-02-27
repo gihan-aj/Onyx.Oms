@@ -10,12 +10,17 @@ public class UpdateAppSequenceValueEndpoint : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/v{version:apiVersion}/settings/sequences/{id}", async (string id, [FromBody] long newValue, ISender sender) =>
+        var group = app.MapGroup("api/v{version:apiVersion}/settings/sequences")
+            .WithApiVersionSet(app.NewApiVersionSet("AppSequences").Build()) 
+            .HasApiVersion(1);
+
+        group.MapPut("{id}", async (string id, [FromBody] long newValue, ISender sender) =>
         {
             var result = await sender.Send(new UpdateAppSequenceValueCommand(id.ToUpperInvariant(), newValue));
             return result.ToMinimalApiResult();
         })
         .WithTags("Settings")
+        .WithName("UpdateAppSequence")
         .WithSummary("Update current sequence value")
         .WithDescription("Updates the current value for a given sequence ID. The new value cannot be less than the existing current value.")
         .Produces(StatusCodes.Status204NoContent)

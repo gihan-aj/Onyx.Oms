@@ -9,12 +9,17 @@ public class GetAppSequenceValueEndpoint : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/v{version:apiVersion}/settings/sequences/{id}", async (string id, ISender sender) =>
+        var group = app.MapGroup("api/v{version:apiVersion}/settings/sequences")
+            .WithApiVersionSet(app.NewApiVersionSet("AppSequences").Build()) 
+            .HasApiVersion(1);
+
+        group.MapGet("{id}", async (string id, ISender sender) =>
         {
             var result = await sender.Send(new GetAppSequenceValueQuery(id.ToUpperInvariant()));
             return result.ToMinimalApiResult();
         })
         .WithTags("Settings")
+        .WithName("GetAppSequence")
         .WithSummary("Get current sequence value")
         .WithDescription("Retrieves the current value for a given sequence ID (e.g., ORD, SKU).")
         .Produces<long>(StatusCodes.Status200OK)

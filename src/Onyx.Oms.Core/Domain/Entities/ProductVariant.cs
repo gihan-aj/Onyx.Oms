@@ -1,5 +1,6 @@
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
@@ -11,21 +12,19 @@ public class ProductVariant : AuditableEntity<Guid>
         Guid id,
         Guid productId,
         string sku,
-        string name,
-        string size,
         string color,
-        decimal price,
-        decimal cost,
-        decimal? weight,
+        string size,
+        Money cost,
+        Money price,
+        Weight weight,
         int stockOnHand) : base(id)
     {
         ProductId = productId;
         Sku = sku;
-        Name = name;
-        Size = size;
         Color = color;
-        Price = price;
+        Size = size;
         Cost = cost;
+        Price = price;
         Weight = weight;
         StockOnHand = stockOnHand;
         ReservedQuantity = 0;
@@ -34,14 +33,21 @@ public class ProductVariant : AuditableEntity<Guid>
 
     public Guid ProductId { get; private set; }
     public string Sku { get; private set; } = string.Empty;
-    public string Name { get; private set; } = string.Empty; // e.g. "Medium - Red"
-    public string Size { get; private set; } = string.Empty;
     public string Color { get; private set; } = string.Empty;
+    public string Size { get; private set; } = string.Empty;
+    public string DisplayName
+    {
+        get
+        {
+            string baseName = Product?.Name ?? "Unknown Product";
+            return $"{baseName} - {Color} - {Size}";
+        }
+    }
 
     // Overrides
-    public decimal Price { get; private set; }
-    public decimal Cost { get; private set; }
-    public decimal? Weight { get; private set; }
+    public Money Cost { get; private set; } = Money.Zero();
+    public Money Price { get; private set; } = Money.Zero();
+    public Weight Weight { get; private set; } = Weight.Zero();
 
     // Inventory
     public int StockOnHand { get; private set; }
@@ -56,12 +62,14 @@ public class ProductVariant : AuditableEntity<Guid>
     public static Result<ProductVariant> Create(
         Guid productId,
         string sku,
-        string name,
-        string size,
         string color,
-        decimal price,
-        decimal cost,
-        decimal? weight = null,
+        string size,
+        Money baseCost,
+        Money basePrice,
+        Weight baseWeight,
+        Money? variantCost,
+        Money? variantPrice,
+        Weight? variantWeight,
         int stockOnHand = 0)
     {
         if (string.IsNullOrWhiteSpace(sku))
@@ -73,33 +81,53 @@ public class ProductVariant : AuditableEntity<Guid>
         if (string.IsNullOrWhiteSpace(color))
             return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.ColorRequired", "Color is required."));
 
-        if (price < 0)
-            return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.InvalidPrice", "Price cannot be negative."));
-
         var variant = new ProductVariant(
             Guid.NewGuid(),
             productId,
             sku,
-            name,
-            size,
             color,
-            price,
-            cost,
-            weight,
+            size,
+            variantCost ?? baseCost,
+            variantPrice ?? basePrice,
+            variantWeight ?? baseWeight,
             stockOnHand);
 
         return Result.Success(variant);
     }
 
-    public void UpdateDetails(string sku, string name, string size, string color, decimal price, decimal cost, decimal? weight)
+    public Result UpdateDetails(
+        string color, 
+        string size,
+        Money baseCost,
+        Money basePrice,
+        Weight baseWeight,
+        Money? variantCost, 
+        Money? variantPrice, 
+        Weight? variantWeight)
     {
-        Sku = sku;
-        Name = name;
-        Size = size;
+        if (string.IsNullOrWhiteSpace(size))
+            return Result.Failure(Error.Validation("ProductVariant.SizeRequired", "Size is required."));
+
+        if (string.IsNullOrWhiteSpace(color))
+            return Result.Failure(Error.Validation("ProductVariant.ColorRequired", "Color is required."));
+
+
         Color = color;
-        Price = price;
-        Cost = cost;
-        Weight = weight;
+        Size = size;
+        Cost = variantCost ?? baseCost;
+        Price = variantPrice ?? basePrice;
+        Weight = variantWeight ?? baseWeight;
+
+        return Result.Success();
+    }
+
+    public Result ChangeSku(string newSku)
+    {
+        if(string.IsNullOrWhiteSpace(newSku))
+            return Result.Failure(Error.Validation("ProductVariant.SkuRequired", "SKU cannot be empty."));
+
+        Sku = newSku;
+        return Result.Success();
     }
 
     public void AdjustStock(int quantityAdjustment)
@@ -107,19 +135,15 @@ public class ProductVariant : AuditableEntity<Guid>
         StockOnHand += quantityAdjustment;
     }
 
-    public Result ReserveStock(int quantity)
+    public Result<int> ReserveStock(int requestedQuantity)
     {
-        if (AvailableQuantity < quantity)
-        {
-             // For some businesses, they might want to allow reservation even if stock is 0 (backorder).
-             // Given the user requirement: "if not in stock... manufacture it".
-             // So we CAN reserve it, which pushes Available into negative? Or we just track "Status"?
-             // User said: "if not items in stock we have to add products that needs to fulfill separatey".
-             // So we can reserve.
-             // But traditionally, "Reserved" implies "Held for Order".
-        }
-        ReservedQuantity += quantity;
-        return Result.Success();
+        int allocatableQuantity = Math.Min(requestedQuantity, AvailableQuantity);
+
+        ReservedQuantity += allocatableQuantity;
+
+        int unfulfilledQuantity = requestedQuantity - allocatableQuantity;
+
+        return Result.Success(unfulfilledQuantity);
     }
 
     public void ReleaseReservation(int quantity)

@@ -27,6 +27,9 @@ Units and currencies are strictly controlled to prevent data corruption between 
 
 ### 1.4 Command Handler Validations
 To maintain the purity of the Domain Model, certain contextual validations must be performed by Command Handlers (Application Layer) before mutating Domain entities:
+* **Base SKU Auto-Generation:**
+    * If `BaseSku` is not provided in the command, the handler uses an injected `IAppSequenceService` to sequentially generate one (e.g., `PROD-0004`).
+    * If `BaseSku` is provided, the handler enforces global uniqueness against the database.
 * **Variant Creation/Update:** 
     * If `Product.HasColor` is true, `ProductVariant` must contain a non-empty `Color`. If false, `Color` should ideally be null.
     * If `Product.HasSize` is true, `ProductVariant` must contain a non-empty `Size`. If false, `Size` should ideally be null.

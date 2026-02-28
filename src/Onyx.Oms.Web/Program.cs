@@ -41,8 +41,11 @@ var app = builder.Build();
 // Run Seeder
 using (var scope = app.Services.CreateScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.PermissionSeeder>();
-    await seeder.SeedAsync();
+    var permissionSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.PermissionSeeder>();
+    await permissionSeeder.SeedAsync();
+
+    var sequenceSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.AppSequenceSeeder>();
+    await sequenceSeeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.

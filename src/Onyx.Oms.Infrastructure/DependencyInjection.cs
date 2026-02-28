@@ -54,6 +54,7 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<PermissionSeeder>();
+        services.AddScoped<AppSequenceSeeder>();
 
         // Authentication Configuration
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));

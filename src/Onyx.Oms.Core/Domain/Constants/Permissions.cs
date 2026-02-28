@@ -63,7 +63,6 @@ public static class Permissions
     public static class AppSequences
     {
         public const string View = "Permissions.AppSequences.View";
-        public const string Create = "Permissions.AppSequences.Create";
         public const string Edit = "Permissions.AppSequences.Edit";
     }
 

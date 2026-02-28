@@ -20,7 +20,9 @@ public class Product : AuditableEntity<Guid>
         Gender gender,
         Money baseCost,
         Money basePrice,
-        Weight baseWeight) : base(id)
+        Weight baseWeight,
+        bool hasColor,
+        bool hasSize) : base(id)
     {
         Name = name;
         BaseSku = baseSku;
@@ -33,6 +35,8 @@ public class Product : AuditableEntity<Guid>
         BaseCost = baseCost;
         BaseWeight = baseWeight;
         IsActive = true;
+        HasColor = hasColor;
+        HasSize = hasSize;
     }
 
     public string Name { get; private set; } = string.Empty;
@@ -47,6 +51,10 @@ public class Product : AuditableEntity<Guid>
     public Money BaseCost { get; private set; } = Money.Zero();
     public Money BasePrice { get; private set; } = Money.Zero();
     public Weight BaseWeight { get; private set; } = Weight.Zero();
+
+    // Structure flags
+    public bool HasColor { get; private set; }
+    public bool HasSize { get; private set; }
 
     public bool IsActive { get; private set; }
 
@@ -73,6 +81,8 @@ public class Product : AuditableEntity<Guid>
         Money baseCost,
         Money basePrice,
         Weight baseWeight,
+        bool hasColor,
+        bool hasSize,
         List<string>? tags = null)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -92,7 +102,9 @@ public class Product : AuditableEntity<Guid>
             gender,
             baseCost,
             basePrice,
-            baseWeight);
+            baseWeight,
+            hasColor,
+            hasSize);
 
         if (tags != null && tags.Any())
         {
@@ -102,7 +114,7 @@ public class Product : AuditableEntity<Guid>
         return Result.Success(product);
     }
 
-    public void UpdateDetails(
+    public Result UpdateDetails(
         string name,
         string? description,
         Guid categoryId,
@@ -114,6 +126,12 @@ public class Product : AuditableEntity<Guid>
         Weight baseWeight,
         List<string>? tags = null)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure(Error.Validation("Product.NameRequired", "Product name is required."));
+
+        if (categoryId == Guid.Empty)
+            return Result.Failure(Error.Validation("Product.CategoryRequired", "Category is required."));
+
         Name = name;
         Description = description;
         CategoryId = categoryId;
@@ -129,6 +147,19 @@ public class Product : AuditableEntity<Guid>
         {
             _tags.AddRange(tags);
         }
+
+        return Result.Success();
+    }
+
+    public Result UpdateStructure(bool hasColor, bool hasSize)
+    {
+        // Domain Rule: Cannot change structure if variants exist
+        if (_variants.Any())
+            return Result.Failure(Error.Validation("Product.StructureLocked", "Cannot change Color/Size settings because variants already exist. Delete all variants first."));
+
+        HasColor = hasColor;
+        HasSize = hasSize;
+        return Result.Success();
     }
 
     public Result ChangeBaseSku(string newBaseSku)

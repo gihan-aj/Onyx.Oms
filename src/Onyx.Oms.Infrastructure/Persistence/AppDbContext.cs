@@ -20,9 +20,9 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<Courier> Couriers { get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
-    //public DbSet<Product> Products => Set<Product>();
-    //public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
-    //public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<AppUser> AppUsers => Set<AppUser>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<AppSequence> AppSequences => Set<AppSequence>();

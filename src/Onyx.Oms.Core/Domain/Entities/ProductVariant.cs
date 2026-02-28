@@ -12,8 +12,8 @@ public class ProductVariant : AuditableEntity<Guid>
         Guid id,
         Guid productId,
         string sku,
-        string color,
-        string size,
+        string? color,
+        string? size,
         Money cost,
         Money price,
         Weight weight,
@@ -33,14 +33,16 @@ public class ProductVariant : AuditableEntity<Guid>
 
     public Guid ProductId { get; private set; }
     public string Sku { get; private set; } = string.Empty;
-    public string Color { get; private set; } = string.Empty;
-    public string Size { get; private set; } = string.Empty;
+    public string? Color { get; private set; }
+    public string? Size { get; private set; }
     public string DisplayName
     {
         get
         {
-            string baseName = Product?.Name ?? "Unknown Product";
-            return $"{baseName} - {Color} - {Size}";
+            var parts = new List<string> { Product?.Name ?? "Unknown Product" };
+            if (!string.IsNullOrEmpty(Color)) parts.Add(Color);
+            if (!string.IsNullOrEmpty(Size)) parts.Add(Size);
+            return string.Join(" - ", parts);
         }
     }
 
@@ -62,8 +64,8 @@ public class ProductVariant : AuditableEntity<Guid>
     public static Result<ProductVariant> Create(
         Guid productId,
         string sku,
-        string color,
-        string size,
+        string? color,
+        string? size,
         Money baseCost,
         Money basePrice,
         Weight baseWeight,
@@ -75,11 +77,7 @@ public class ProductVariant : AuditableEntity<Guid>
         if (string.IsNullOrWhiteSpace(sku))
             return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.SkuRequired", "SKU is required."));
 
-        if (string.IsNullOrWhiteSpace(size))
-            return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.SizeRequired", "Size is required."));
-
-        if (string.IsNullOrWhiteSpace(color))
-            return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.ColorRequired", "Color is required."));
+        // Validation for required fields is handled by the caller/command handler based on product structure
 
         var variant = new ProductVariant(
             Guid.NewGuid(),
@@ -96,8 +94,8 @@ public class ProductVariant : AuditableEntity<Guid>
     }
 
     public Result UpdateDetails(
-        string color, 
-        string size,
+        string? color, 
+        string? size,
         Money baseCost,
         Money basePrice,
         Weight baseWeight,
@@ -105,13 +103,7 @@ public class ProductVariant : AuditableEntity<Guid>
         Money? variantPrice, 
         Weight? variantWeight)
     {
-        if (string.IsNullOrWhiteSpace(size))
-            return Result.Failure(Error.Validation("ProductVariant.SizeRequired", "Size is required."));
-
-        if (string.IsNullOrWhiteSpace(color))
-            return Result.Failure(Error.Validation("ProductVariant.ColorRequired", "Color is required."));
-
-
+        // Validation for required fields is handled by the caller/command handler based on product structure
         Color = color;
         Size = size;
         Cost = variantCost ?? baseCost;

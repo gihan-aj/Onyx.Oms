@@ -22,7 +22,7 @@ public class AppSequenceService : IAppSequenceService
         try
         {
             var currentValNullable = await _dbContext.Database.SqlQueryRaw<long?>(
-                "SELECT CAST(CurrentValue AS bigint) FROM AppSequences WITH (UPDLOCK) WHERE Id = {0}", sequenceId)
+                "SELECT CAST(CurrentValue AS bigint) AS Value FROM AppSequences WITH (UPDLOCK) WHERE Id = {0}", sequenceId)
                 .SingleOrDefaultAsync(ct);
 
             long nextValue;

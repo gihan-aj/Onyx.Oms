@@ -24,8 +24,4 @@
     <ProjectReference Include="..\Onyx.Oms.Infrastructure\Onyx.Oms.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\Products\" />
-  </ItemGroup>
-
 </Project>

@@ -203,123 +203,6 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     b.ToTable("Customers");
                 });
 
-            modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.Product", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("BaseSku")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Brand")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(36)
-                        .HasColumnType("nvarchar(36)");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<int>("Gender")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("HasColor")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("HasSize")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(36)
-                        .HasColumnType("nvarchar(36)");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Material")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.PrimitiveCollection<string>("Tags")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Tags");
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "BaseCost", "Onyx.Oms.Core.Domain.Entities.Product.BaseCost#Money", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("BaseCostAmount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("nvarchar(3)")
-                                .HasColumnName("BaseCostCurrency");
-                        });
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "BasePrice", "Onyx.Oms.Core.Domain.Entities.Product.BasePrice#Money", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("BasePriceAmount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("nvarchar(3)")
-                                .HasColumnName("BasePriceCurrency");
-                        });
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "BaseWeight", "Onyx.Oms.Core.Domain.Entities.Product.BaseWeight#Weight", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<string>("Unit")
-                                .IsRequired()
-                                .HasMaxLength(10)
-                                .HasColumnType("nvarchar(10)")
-                                .HasColumnName("BaseWeightUnit");
-
-                            b1.Property<decimal>("Value")
-                                .HasPrecision(10, 3)
-                                .HasColumnType("decimal(10,3)")
-                                .HasColumnName("BaseWeightValue");
-                        });
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("Products", (string)null);
-                });
-
             modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductCategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -386,140 +269,6 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     b.HasIndex("Path");
 
                     b.ToTable("ProductCategories");
-                });
-
-            modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductImage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Color")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsMain")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductImages", (string)null);
-                });
-
-            modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductVariant", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Color")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(36)
-                        .HasColumnType("nvarchar(36)");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasMaxLength(36)
-                        .HasColumnType("nvarchar(36)");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("ReservedQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Size")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Sku")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("StockOnHand")
-                        .HasColumnType("int");
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Cost", "Onyx.Oms.Core.Domain.Entities.ProductVariant.Cost#Money", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("CostAmount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("nvarchar(3)")
-                                .HasColumnName("CostCurrency");
-                        });
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Price", "Onyx.Oms.Core.Domain.Entities.ProductVariant.Price#Money", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("PriceAmount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("nvarchar(3)")
-                                .HasColumnName("PriceCurrency");
-                        });
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Weight", "Onyx.Oms.Core.Domain.Entities.ProductVariant.Weight#Weight", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<string>("Unit")
-                                .IsRequired()
-                                .HasMaxLength(10)
-                                .HasColumnType("nvarchar(10)")
-                                .HasColumnName("WeightUnit");
-
-                            b1.Property<decimal>("Value")
-                                .HasPrecision(10, 3)
-                                .HasColumnType("decimal(10,3)")
-                                .HasColumnName("WeightValue");
-                        });
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("Sku")
-                        .IsUnique();
-
-                    b.ToTable("ProductVariants", (string)null);
                 });
 
             modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.Role", b =>
@@ -746,17 +495,6 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.Product", b =>
-                {
-                    b.HasOne("Onyx.Oms.Core.Domain.Entities.ProductCategory", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductCategory", b =>
                 {
                     b.HasOne("Onyx.Oms.Core.Domain.Entities.ProductCategory", "ParentCategory")
@@ -764,36 +502,41 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ParentCategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.OwnsMany("Onyx.Oms.Core.Domain.ValueObjects.SpecDefinition", "Specifications", b1 =>
+                        {
+                            b1.Property<Guid>("ProductCategoryId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAddOrUpdate();
+
+                            b1.Property<bool>("IsRequired");
+
+                            b1.Property<string>("Key")
+                                .IsRequired();
+
+                            b1.Property<string>("Label")
+                                .IsRequired();
+
+                            b1.PrimitiveCollection<string>("Options")
+                                .IsRequired();
+
+                            b1.Property<int>("Type");
+
+                            b1.HasKey("ProductCategoryId", "__synthesizedOrdinal");
+
+                            b1.ToTable("ProductCategories");
+
+                            b1
+                                .ToJson("Specifications")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductCategoryId");
+                        });
+
                     b.Navigation("ParentCategory");
-                });
 
-            modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductImage", b =>
-                {
-                    b.HasOne("Onyx.Oms.Core.Domain.Entities.Product", "Product")
-                        .WithMany("Images")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductVariant", b =>
-                {
-                    b.HasOne("Onyx.Oms.Core.Domain.Entities.Product", "Product")
-                        .WithMany("Variants")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.Product", b =>
-                {
-                    b.Navigation("Images");
-
-                    b.Navigation("Variants");
+                    b.Navigation("Specifications");
                 });
 
             modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductCategory", b =>

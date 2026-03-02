@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+using Onyx.Oms.Core.Domain.ValueObjects;
 using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.ProductCategories.UpdateProductCategory;
@@ -10,4 +10,5 @@ public record UpdateProductCategoryCommand(
     Guid? ParentCategoryId,
     int DisplayOrder,
     string? IconUrl,
-    string? Color) : ICommand;
+    string? Color,
+    List<SpecDefinition>? Specifications) : ICommand;

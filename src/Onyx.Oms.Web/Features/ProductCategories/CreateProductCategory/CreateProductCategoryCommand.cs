@@ -1,3 +1,4 @@
+using Onyx.Oms.Core.Domain.ValueObjects;
 using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.ProductCategories.CreateProductCategory;
@@ -8,4 +9,5 @@ public record CreateProductCategoryCommand(
     Guid? ParentCategoryId,
     int DisplayOrder,
     string? IconUrl,
-    string? Color) : ICommand<Guid>;
+    string? Color,
+    List<SpecDefinition>? Specifications) : ICommand<Guid>;

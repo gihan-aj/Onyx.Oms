@@ -28,7 +28,12 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
 
         builder.Property(c => c.Color)
             .HasMaxLength(20);
-            
+
+        builder.OwnsMany(c => c.Specifications, sb =>
+        {
+            sb.ToJson(); // Maps to a single database column in the database
+        });  
+
         builder.Property(c => c.CreatedBy)
             .HasMaxLength(36);
 

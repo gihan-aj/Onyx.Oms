@@ -1,5 +1,6 @@
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
@@ -23,7 +24,8 @@ public class ProductCategory : AuditableEntity<Guid>
         Guid? parentCategoryId,
         int displayOrder,
         string? iconUrl,
-        string? color) : base(id)
+        string? color,
+        List<SpecDefinition>? specifications = null) : base(id)
     {
         Name = name;
         Description = description;
@@ -35,6 +37,11 @@ public class ProductCategory : AuditableEntity<Guid>
         Path = path;
         NamePath = namePath;
         IsActive = true;
+
+        if(specifications != null)
+        {
+            _specifications.AddRange(specifications);
+        }
     }
 
     public string Name { get; private set; } = string.Empty;
@@ -56,6 +63,11 @@ public class ProductCategory : AuditableEntity<Guid>
     // Breadcrumb: "Root / Child / GrandChild"
     public string NamePath { get; private set; } = string.Empty;
 
+    // Dynamic Specifications
+    // Stored as json in the database
+    private readonly List<SpecDefinition> _specifications = new();
+    public virtual IReadOnlyCollection<SpecDefinition> Specifications => _specifications.AsReadOnly();
+
     // Navigation properties
     public virtual ProductCategory? ParentCategory { get; private set; }
 
@@ -68,7 +80,8 @@ public class ProductCategory : AuditableEntity<Guid>
         ProductCategory? parent = null,
         int displayOrder = 0,
         string? iconUrl = null,
-        string? color = null)
+        string? color = null,
+        List<SpecDefinition>? specifications = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Result.Failure<ProductCategory>(Error.Validation("ProductCategory.NameRequired", "Category name is required."));
@@ -102,7 +115,7 @@ public class ProductCategory : AuditableEntity<Guid>
             ? name
             : $"{parentNamePath}{NameSeparator}{name}";
 
-        var category = new ProductCategory(id, name, level, path, namePath, description, parentId, displayOrder, iconUrl, color);
+        var category = new ProductCategory(id, name, level, path, namePath, description, parentId, displayOrder, iconUrl, color, specifications);
 
         return Result.Success(category);
     }
@@ -220,6 +233,22 @@ public class ProductCategory : AuditableEntity<Guid>
              var result = child.UpdatePathFromParent(Path, NamePath, Level);
              if (result.IsFailure) return result;
         }
+        return Result.Success();
+    }
+
+    public Result UpdateSpecifications(List<SpecDefinition> newSpecs)
+    {
+        var duplicateKeys = newSpecs
+            .GroupBy(x => x.Key)
+            .Where(g => g.Count() > 1)
+            .Select(y => y.Key).ToList();
+
+        if (duplicateKeys.Any())
+            return Result.Failure(Error.Validation("ProductCategory.DuplicateSpecKeys", $"Duplicate specification keys found: {string.Join(", ", duplicateKeys)}"));
+
+        _specifications.Clear();
+        _specifications.AddRange(newSpecs);
+
         return Result.Success();
     }
 

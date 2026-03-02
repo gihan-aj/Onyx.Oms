@@ -45,7 +45,8 @@ public class CreateProductCategoryHandler : ICommandHandler<CreateProductCategor
             parentCategory,
             request.DisplayOrder,
             request.IconUrl,
-            request.Color
+            request.Color,
+            request.Specifications
         );
 
         if (result.IsFailure)

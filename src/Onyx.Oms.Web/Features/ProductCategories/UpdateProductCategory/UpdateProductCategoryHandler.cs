@@ -76,6 +76,14 @@ public class UpdateProductCategoryHandler : ICommandHandler<UpdateProductCategor
             if (updateResult.IsFailure) return updateResult;
         }
 
+        if (command.Specifications is not null)
+        {
+            // TODO: When Product entity is added, check if there are any products under this category.
+            // If there are products, return an error and do not allow updating specifications.
+            var specUpdateResult = category.UpdateSpecifications(command.Specifications);
+            if (specUpdateResult.IsFailure) return specUpdateResult;
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

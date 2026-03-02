@@ -13,7 +13,7 @@ using Onyx.Oms.Infrastructure.Persistence;
 namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260227232558_InitialCreate")]
+    [Migration("20260301091132_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -505,7 +505,41 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ParentCategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.OwnsMany("Onyx.Oms.Core.Domain.ValueObjects.SpecDefinition", "Specifications", b1 =>
+                        {
+                            b1.Property<Guid>("ProductCategoryId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAddOrUpdate();
+
+                            b1.Property<bool>("IsRequired");
+
+                            b1.Property<string>("Key")
+                                .IsRequired();
+
+                            b1.Property<string>("Label")
+                                .IsRequired();
+
+                            b1.PrimitiveCollection<string>("Options")
+                                .IsRequired();
+
+                            b1.Property<int>("Type");
+
+                            b1.HasKey("ProductCategoryId", "__synthesizedOrdinal");
+
+                            b1.ToTable("ProductCategories");
+
+                            b1
+                                .ToJson("Specifications")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductCategoryId");
+                        });
+
                     b.Navigation("ParentCategory");
+
+                    b.Navigation("Specifications");
                 });
 
             modelBuilder.Entity("Onyx.Oms.Core.Domain.Entities.ProductCategory", b =>

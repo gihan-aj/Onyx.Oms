@@ -6,7 +6,7 @@ namespace Onyx.Oms.Core.Domain.Entities;
 
 public class ProductCategory : AuditableEntity<Guid>
 {
-    public const int MaxDepth = 2; // 0=Root, 1=Sub, 2=SubSub
+    public const int MaxDepth = 3; // 0=Root, 1=Sub, 2=SubSub
     public const char PathSeparator = '/';
     public const string NameSeparator = " / ";
 
@@ -124,21 +124,14 @@ public class ProductCategory : AuditableEntity<Guid>
     {
         if (Name != name)
         {
-            // Update breadcrumb for self
-            if (!string.IsNullOrEmpty(NamePath))
+            // If we have a parent, rebuild name path from it, otherwise it is root.
+            if(ParentCategory != null)
             {
-               // Simplified logic: If we are at root level, NamePath IS Name.
-               // If we are children, we need to rebuild? 
-               // Actually, updating Name creates a discrepancy in NamePath unless we rebuild it from parent.
-               // For simplicity, let's assume we replace the suffix.
-               if (NamePath.EndsWith(Name))
-               {
-                   NamePath = NamePath.Substring(0, NamePath.Length - Name.Length) + name;
-               }
+                NamePath = $"{ParentCategory.NamePath}{NameSeparator}{name}";
             }
             else
             {
-                NamePath = name;
+                NamePath = Name;
             }
         }
 

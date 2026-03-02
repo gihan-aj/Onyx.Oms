@@ -20,22 +20,30 @@ public class UpdateProductCategoryHandler : ICommandHandler<UpdateProductCategor
     {
         var category = await _context.ProductCategories
             .Include(c => c.ParentCategory)
+            .Include(c => c.SubCategories) // Load immediate children
             .FirstOrDefaultAsync(c => c.Id == command.Id, cancellationToken);
 
         if (category is null)
             return Result.Failure(Error.NotFound("ProductCategory.NotFound", "Product Category not found."));
 
+        // This ensures that when we iterate 'SubCategories' inside the entity, 
+        // EF Core "plugs in" the children automatically via relationship fix-up.
+        var allDescendents = await _context.ProductCategories
+            .Where(c => c.Path.StartsWith(category.Path) && c.Id != category.Id)
+            .Include(c => c.SubCategories)
+            .ToListAsync(cancellationToken);
+
         // Check name uniqueness under same parent if name changed
-        if (category.Name != command.Name)
+        bool nameChanged = category.Name != command.Name;
+
+        if (nameChanged)
         {
             bool otherExists = await _context.ProductCategories
                 .AnyAsync(c => c.Name == command.Name && c.Id != category.Id && c.ParentCategoryId == command.ParentCategoryId, cancellationToken);
             
             if (otherExists)
                 return Result.Failure(Error.Conflict("ProductCategory.DuplicateName", $"A category named '{command.Name}' already exists under the same parent category."));
-        }
-
-        bool nameChanged = category.Name != command.Name;
+        }        
 
         category.UpdateDetails(command.Name, command.Description, command.DisplayOrder, command.IconUrl, command.Color);
 
@@ -56,22 +64,11 @@ public class UpdateProductCategoryHandler : ICommandHandler<UpdateProductCategor
                     return Result.Failure(Error.Validation("ProductCategory.InvalidParent", "Cannot move an active category under an inactive parent category."));
             }
 
-            // Load descendants to ensure "ChangeParent" can recurse through them via navigation property fix-up
-            // We load them into the context, so EF Core fixes up the 'SubCategories' inverse navigation
-            var descendents = await _context.ProductCategories
-                .Where(c => c.Path.StartsWith(category.Path) && c.Id != category.Id)
-                .ToListAsync(cancellationToken);
-
             var moveResult = category.ChangeParent(newParent);
             if (moveResult.IsFailure) return moveResult;
         }
         else if (nameChanged)
         {
-            // Parent didn't change, but Name did. We must update the NamePath of all descendants.
-            var descendents = await _context.ProductCategories
-                .Where(c => c.Path.StartsWith(category.Path) && c.Id != category.Id)
-                .ToListAsync(cancellationToken);
-
             var updateResult = category.UpdateSubCategoriesPaths();
             if (updateResult.IsFailure) return updateResult;
         }

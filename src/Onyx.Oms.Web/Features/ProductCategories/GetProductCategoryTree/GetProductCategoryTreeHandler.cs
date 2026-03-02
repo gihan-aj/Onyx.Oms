@@ -17,7 +17,7 @@ public class GetProductCategoryTreeHandler : IQueryHandler<GetProductCategoryTre
 
     public async Task<Result<List<ProductCategoryTreeDto>>> Handle(GetProductCategoryTreeQuery request, CancellationToken cancellationToken)
     {
-        // MaxDepth is 2 (Root -> Sub -> SubSub), so we can eager load efficiently.
+        // MaxDepth is 3 (Root -> L1 -> L2 -> L3), so we eager load all three levels.
         // Loading only roots and including their children recursively.
         var query = _context.ProductCategories
             .AsNoTracking()
@@ -30,7 +30,8 @@ public class GetProductCategoryTreeHandler : IQueryHandler<GetProductCategoryTre
                 .OrderBy(c => c.DisplayOrder)
                 .ThenBy(c => c.Name)
                 .Include(c => c.SubCategories.Where(sc => sc.IsActive == isActive).OrderBy(sc => sc.DisplayOrder).ThenBy(sc => sc.Name))
-                .ThenInclude(sc => sc.SubCategories.Where(ssc => ssc.IsActive == isActive).OrderBy(ssc => ssc.DisplayOrder).ThenBy(ssc => ssc.Name));
+                .ThenInclude(sc => sc.SubCategories.Where(ssc => ssc.IsActive == isActive).OrderBy(ssc => ssc.DisplayOrder).ThenBy(ssc => ssc.Name))
+                .ThenInclude(ssc => ssc.SubCategories.Where(sssc => sssc.IsActive == isActive).OrderBy(sssc => sssc.DisplayOrder).ThenBy(sssc => sssc.Name));
         }
         else
         {
@@ -38,7 +39,8 @@ public class GetProductCategoryTreeHandler : IQueryHandler<GetProductCategoryTre
                 .OrderBy(c => c.DisplayOrder)
                 .ThenBy(c => c.Name)
                 .Include(c => c.SubCategories.OrderBy(sc => sc.DisplayOrder).ThenBy(sc => sc.Name))
-                .ThenInclude(sc => sc.SubCategories.OrderBy(ssc => ssc.DisplayOrder).ThenBy(ssc => ssc.Name));
+                .ThenInclude(sc => sc.SubCategories.OrderBy(ssc => ssc.DisplayOrder).ThenBy(ssc => ssc.Name))
+                .ThenInclude(ssc => ssc.SubCategories.OrderBy(sssc => sssc.DisplayOrder).ThenBy(sssc => sssc.Name));
         }
 
         var roots = await query.ToListAsync(cancellationToken);

@@ -16,9 +16,9 @@ public class GetProductCategoryByIdEndpoint : IEndpoint
             .WithApiVersionSet(app.NewApiVersionSet("ProductCategories").Build()) 
             .HasApiVersion(1);
 
-        group.MapGet("{id:guid}", async (ISender sender, [FromRoute] Guid id) =>
+        group.MapGet("{id:guid}", async (ISender sender, [FromRoute] Guid id, [FromQuery] bool includeParentSpecs = false) =>
         {
-            var query = new GetProductCategoryByIdQuery(id);
+            var query = new GetProductCategoryByIdQuery(id, includeParentSpecs);
             Result<ProductCategoryResponse> result = await sender.Send(query);
 
             return result.ToMinimalApiResult();

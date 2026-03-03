@@ -14,5 +14,6 @@ public record ProductCategoryResponse(
     int DisplayOrder,
     string? IconUrl,
     string? Color,
-    List<SpecDefinition> Specifications
+    List<SpecDefinition> Specifications,
+    List<SpecDefinition> AllSpecifications
 );

@@ -3,6 +3,7 @@ using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Domain.Services;
 using Onyx.Oms.Core.Domain.ValueObjects;
 using Onyx.Oms.Core.Messaging;
 
@@ -77,7 +78,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
                     if (string.IsNullOrWhiteSpace(variantSku))
                     {
                         // Simple generator: BaseSku + first 3 chars of each attribute value
-                        var suffix = string.Join("-", attributes.Select(a => a.Value.Length > 3 ? a.Value[..3].ToUpper() : a.Value.ToUpper()));
+                        var suffix = string.Join("-", attributes.Select(a => SkuGenerator.GetOptionValueCode(a.Value)));
                         variantSku = $"{baseSku}-{suffix}";
                     }
 
@@ -106,16 +107,10 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
             }
             else
             {
-                var varinatResult = product.CreateDefaultVariant(command.BaseStockOnHand ?? 0);
+                var updateResult = product.SetDefaultVariantLogistics(baseSku, baseCost, basePrice, baseWeight, command.BaseStockOnHand ?? 0);
     
-                if (varinatResult.IsFailure)
-                    return Result.Failure<Guid>(varinatResult.Error);
-
-                var variant = varinatResult.Value;
-
-                var variantAddResult = product.AddVariant(variant);
-                if(variantAddResult.IsFailure)
-                    return Result.Failure<Guid>(variantAddResult.Error);
+                if (updateResult.IsFailure)
+                    return Result.Failure<Guid>(updateResult.Error);
             }
 
             if (command.Images.Any())

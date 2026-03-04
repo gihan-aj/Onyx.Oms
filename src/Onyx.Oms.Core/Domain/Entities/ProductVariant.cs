@@ -1,10 +1,11 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class ProductVariant : AuditableEntity<Guid>
+public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
 {
     private ProductVariant() { }
 
@@ -12,44 +13,53 @@ public class ProductVariant : AuditableEntity<Guid>
         Guid id,
         Guid productId,
         string sku,
-        string? color,
-        string? size,
+        List<VariantAttribute> attributes,
         Money cost,
         Money price,
-        Weight weight,
+        Weight? weight,
         int stockOnHand) : base(id)
     {
         ProductId = productId;
         Sku = sku;
-        Color = color;
-        Size = size;
         Cost = cost;
         Price = price;
         Weight = weight;
         StockOnHand = stockOnHand;
         ReservedQuantity = 0;
         IsActive = true;
+
+        _attributes.AddRange(attributes);
     }
 
     public Guid ProductId { get; private set; }
     public string Sku { get; private set; } = string.Empty;
-    public string? Color { get; private set; }
-    public string? Size { get; private set; }
+
+    // Dynamic attributes
+    // e.g. [{ "Name": "Color", "Value": "Red" }, { "Name": "Size", "Value": "Large" }]
+    private readonly List<VariantAttribute> _attributes = new();
+    public IReadOnlyCollection<VariantAttribute> Attributes => _attributes.AsReadOnly();
+        
     public string DisplayName
     {
         get
         {
             var parts = new List<string> { Product?.Name ?? "Unknown Product" };
-            if (!string.IsNullOrEmpty(Color)) parts.Add(Color);
-            if (!string.IsNullOrEmpty(Size)) parts.Add(Size);
-            return string.Join(" - ", parts);
+            if(_attributes.Count > 0)
+            {
+                foreach (var attr in _attributes)
+                {
+                    parts.Add(attr.Value);
+                }
+                return string.Join(" - ", parts);
+            }
+            return parts[0];
         }
     }
 
     // Overrides
     public Money Cost { get; private set; } = Money.Zero();
     public Money Price { get; private set; } = Money.Zero();
-    public Weight Weight { get; private set; } = Weight.Zero();
+    public Weight? Weight { get; private set; }
 
     // Inventory
     public int StockOnHand { get; private set; }
@@ -58,17 +68,17 @@ public class ProductVariant : AuditableEntity<Guid>
 
     public bool IsActive { get; private set; }
 
+    public bool IsDeleted => DeletedAtUtc is not null;
+    public DateTimeOffset? DeletedAtUtc { get; private set; }
+    public string? DeletedBy { get; private set; }
+
     // Navigation
     public virtual Product Product { get; private set; } = null!;
 
     public static Result<ProductVariant> Create(
-        Guid productId,
+        Product product,
         string sku,
-        string? color,
-        string? size,
-        Money baseCost,
-        Money basePrice,
-        Weight baseWeight,
+        List<VariantAttribute> attributes,
         Money? variantCost,
         Money? variantPrice,
         Weight? variantWeight,
@@ -77,38 +87,103 @@ public class ProductVariant : AuditableEntity<Guid>
         if (string.IsNullOrWhiteSpace(sku))
             return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.SkuRequired", "SKU is required."));
 
-        // Validation for required fields is handled by the caller/command handler based on product structure
+        if (!product.HasVariants)
+            return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.NotAllowed", "This product does not use variants. Use Product.SetDefaultVariantLogistics() instead."));
+
+        // Validate Attribute Count
+        if (attributes.Count != product.Options.Count)
+            return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.AttributeMismatch", $"This product requires exactly {product.Options.Count} options."));
+
+        // Validate Attribute Names and Values
+        foreach(var option in product.Options)
+        {
+            var matchingAttr = attributes.FirstOrDefault(a => a.Name.Equals(option.Name, StringComparison.OrdinalIgnoreCase));
+
+            if(matchingAttr == null)
+                return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.MissingOption", $"Missing value for option '{option.Name}'."));
+
+            if (!option.Values.Contains(matchingAttr.Value))
+                return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.InvalidValue", $"'{matchingAttr.Value}' is not a valid value for option '{option.Name}'. Allowed: {string.Join(", ", option.Values)}"));
+        }
 
         var variant = new ProductVariant(
             Guid.NewGuid(),
-            productId,
+            product.Id,
             sku,
-            color,
-            size,
-            variantCost ?? baseCost,
-            variantPrice ?? basePrice,
-            variantWeight ?? baseWeight,
+            attributes,
+            variantCost ?? product.BaseCost,
+            variantPrice ?? product.BasePrice,
+            variantWeight ?? product.BaseWeight,
             stockOnHand);
 
         return Result.Success(variant);
     }
 
-    public Result UpdateDetails(
-        string? color, 
-        string? size,
+    /// <summary>
+    /// Creates the internal default variant for a variant-less product.
+    /// No attribute validation is performed — this variant intentionally has no attributes.
+    /// </summary>
+    internal static Result<ProductVariant> CreateDefault(
+        Product product,
+        string sku,
+        Money cost,
+        Money price,
+        Weight? weight,
+        int stockOnHand = 0)
+    {
+        if (string.IsNullOrWhiteSpace(sku))
+            return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.SkuRequired", "SKU is required for the default variant."));
+
+        var variant = new ProductVariant(
+            Guid.NewGuid(),
+            product.Id,
+            sku,
+            new List<VariantAttribute>(), // empty — no selectable options
+            cost,
+            price,
+            weight,
+            stockOnHand);
+
+        return Result.Success(variant);
+    }
+
+    public Result UpdateLogistics(
         Money baseCost,
         Money basePrice,
-        Weight baseWeight,
+        Weight? baseWeight,
         Money? variantCost, 
         Money? variantPrice, 
         Weight? variantWeight)
     {
-        // Validation for required fields is handled by the caller/command handler based on product structure
-        Color = color;
-        Size = size;
+        if (IsDeleted)
+            return Result.Failure(Error.Validation("Variant.Deleted", "Cannot update a deleted variant."));
+
         Cost = variantCost ?? baseCost;
         Price = variantPrice ?? basePrice;
         Weight = variantWeight ?? baseWeight;
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Updates logistics for the default (no-attribute) variant of a variant-less product.
+    /// Called internally via Product.SetDefaultVariantLogistics().
+    /// </summary>
+    internal Result UpdateDefaultLogistics(
+        string sku,
+        Money cost,
+        Money price,
+        Weight? weight,
+        int stockOnHand)
+    {
+        if (IsDeleted)
+            return Result.Failure(Error.Validation("Variant.Deleted", "Cannot update a deleted variant."));
+
+        Sku = sku;
+        Cost = cost;
+        Price = price;
+        Weight = weight;
+        StockOnHand = stockOnHand;
 
         return Result.Success();
     }
@@ -154,4 +229,11 @@ public class ProductVariant : AuditableEntity<Guid>
 
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
+
+    public void Delete(string userId)
+    {
+        if (IsDeleted) return;
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        DeletedBy = userId;
+    }
 }

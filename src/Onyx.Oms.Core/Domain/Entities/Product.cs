@@ -270,6 +270,27 @@ public class Product : AuditableEntity<Guid>
     }
 
     /// <summary>
+    /// Create the internal default variant for variant-less products.
+    /// </summary>
+    public Result<ProductVariant> CreateDefaultVariant(int stockOnHand)
+    {
+        if (HasVariants)
+            return Result.Failure<ProductVariant>(Error.Validation("Product.HasVariants", "This product uses variants. Update individual variants directly."));
+
+        var defaultVariant = DefaultVariant;
+        if (defaultVariant is not null)
+            return Result.Failure<ProductVariant>(Error.NotFound("Product.DefaultVariantExists", "Default variant is already exist."));
+
+        return ProductVariant.CreateDefault(
+            this,
+            BaseSku, 
+            BaseCost, 
+            BasePrice, 
+            BaseWeight, 
+            stockOnHand);
+    }
+
+    /// <summary>
     /// Updates the logistics of the internal default variant for variant-less products.
     /// </summary>
     public Result SetDefaultVariantLogistics(

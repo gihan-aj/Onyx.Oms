@@ -17,7 +17,11 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
 
     public async Task<Result<PagedResult<ProductDto>>> Handle(GetProductsPagedQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Products.AsNoTracking();
+        var query = _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Variants)
+            .Include(p => p.Images)
+            .AsNoTracking();
 
         // 1. Filtering
         if (request.IsActive.HasValue)
@@ -55,10 +59,13 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
             p.BaseSku,
             p.CategoryId,
             p.Category.Name,
+            p.Category.NamePath,
             p.BasePrice.Amount,
             p.BasePrice.Currency,
             p.Images.Where(i => i.IsMain).Select(i => i.Url).FirstOrDefault(),
             p.HasVariants,
+            p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand),
+            p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand - v.ReservedQuantity),
             p.IsActive,
             p.CreatedOnUtc,
             p.LastModifiedOnUtc));

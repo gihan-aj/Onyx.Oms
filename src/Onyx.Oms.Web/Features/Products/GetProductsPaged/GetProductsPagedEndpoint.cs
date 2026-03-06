@@ -24,6 +24,7 @@ public class GetProductsPagedEndpoint : IEndpoint
         .WithName("GetProductsPaged")
         .WithSummary("Search products")
         .WithDescription("Retrieves a paginated list of products with optional searching and sorting.")
+        .Produces<ProductDto>()
         .HasPermission(Permissions.Products.View);
     }
 }

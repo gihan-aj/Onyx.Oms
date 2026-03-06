@@ -16,10 +16,13 @@ public record ProductDto(
     string BaseSku,
     Guid CategoryId,
     string CategoryName,
+    string CategoryPath,
     decimal BasePriceAmount,
     string BasePriceCurrency,
     string? MainImageUrl,
     bool HasVariants,
+    int StockOnHand,
+    int AvailableQuantity,
     bool IsActive,
     DateTimeOffset CreatedOnUtc,
     DateTimeOffset? LastModifiedOnUtc);

@@ -27,6 +27,8 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
             if(category is null)
                 return Result.Failure<Guid>(Error.NotFound("ProductCategory.NotFound","Product category not found."));
 
+            var specDefinitions = await BuildAllSpecificationsAsync(category, cancellationToken);
+
             string? baseSku = command.BaseSku;
             if (string.IsNullOrWhiteSpace(baseSku))
                 baseSku = await _appSequenceService.GetNextNumberAsync("PRD", "PRD", cancellationToken);
@@ -38,23 +40,28 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
             if (command.BaseWeight != null)
                 baseWeight = new Weight(command.BaseWeight.Value, command.BaseWeight.Unit);
 
-            var options = command.Options.Select(o => new ProductOption 
-            {
-                Name = o.Name,
-                Values = o.Values,
-            }).ToList();
+            bool hasVariants = command.HasVariants;
 
-            bool hasVariants = options.Any();
+            List<ProductOption>? options = null;
+            if(hasVariants && command.Options != null)
+                options = command.Options.Select(o => new ProductOption 
+                {
+                    Name = o.Name,
+                    Values = o.Values,
+                }).ToList();
+
 
             var productResult = Product.Create(
                 command.Name,
                 baseSku,
                 command.Description,
-                category,
+                command.CategoryId,
+                specDefinitions ?? new List<SpecDefinition>(),
                 command.Specifications,
                 baseCost,
                 basePrice,
                 baseWeight,
+                hasVariants,
                 options,
                 command.Tags
             );
@@ -133,6 +140,49 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
             await _context.SaveChangesAsync(cancellationToken);
 
             return product.Id;
+        }
+
+        private async Task<List<SpecDefinition>> BuildAllSpecificationsAsync(
+            ProductCategory category,
+            CancellationToken cancellationToken)
+        {
+            // The materialized path looks like: /rootId/childId/leafId/
+            // Split and parse all non-empty segments as ancestor GUIDs (excluding the category itself).
+            var ancestorIds = category.Path
+                .Split(ProductCategory.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+                .Select(segment => Guid.TryParse(segment, out var guid) ? guid : (Guid?)null)
+                .Where(g => g.HasValue && g.Value != category.Id)
+                .Select(g => g!.Value)
+                .ToList();
+
+            // Merged dictionary: key = SpecDefinition.Key, ordered root-first so child overrides parent.
+            var merged = new Dictionary<string, SpecDefinition>(StringComparer.OrdinalIgnoreCase);
+
+            if (ancestorIds.Count > 0)
+            {
+                // Single round-trip to fetch all ancestor categories.
+                var ancestors = await _context.ProductCategories
+                    .AsNoTracking()
+                    .Where(c => ancestorIds.Contains(c.Id))
+                    .OrderBy(c => c.Level)   // root (Level 0) first
+                    .ToListAsync(cancellationToken);
+
+                foreach (var ancestor in ancestors)
+                {
+                    foreach (var spec in ancestor.Specifications)
+                    {
+                        merged[spec.Key] = spec;  // child levels will overwrite parent values
+                    }
+                }
+            }
+
+            // Finally overlay the requested category's own specs (highest priority).
+            foreach (var spec in category.Specifications)
+            {
+                merged[spec.Key] = spec;
+            }
+
+            return [.. merged.Values];
         }
     }
 }

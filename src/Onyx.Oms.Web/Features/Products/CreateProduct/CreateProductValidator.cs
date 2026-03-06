@@ -30,11 +30,32 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
 
             RuleFor(x => x.BaseStockOnHand)
                 .GreaterThanOrEqualTo(0).WithMessage("Stock on hand cannot be negative.")
-                .When(x => x.BaseStockOnHand.HasValue);
+                .When(x => !x.HasVariants && x.BaseStockOnHand.HasValue);
 
             RuleFor(x => x.Options)
-                .Must(options => options.Count <= 3)
-                .WithMessage("A product can have a maximum of 3 options (e.g., Size, Color, Material).");
+                .Must(options => options != null && options.Count > 0)
+                .WithMessage("At least one option must be provided when HasVariants is true.")
+                .When(x => x.HasVariants);
+
+            RuleFor(x => x.Options)
+                .Must(options => options == null || options.Count == 0)
+                .WithMessage("Options cannot be provided when HasVariants is false.")
+                .When(x => !x.HasVariants);
+
+            RuleFor(x => x.Options)
+                .Must(options => options != null && options.Count <= 3)
+                .WithMessage("A product can have a maximum of 3 options (e.g., Size, Color, Material).")
+                .When(x => x.HasVariants);
+
+            RuleFor(x => x.Variants)
+                .Must(variants => variants != null && variants.Count > 0)
+                .WithMessage("At least one variant must be provided when HasVariants is true.")
+                .When(x => x.HasVariants);
+
+            RuleFor(x => x.Variants)
+                .Must(variants => variants == null || variants.Count == 0)
+                .WithMessage("Variants cannot be provided when HasVariants is false.")
+                .When(x => !x.HasVariants);
 
             RuleForEach(x => x.Options).SetValidator(new ProductOptionDtoValidator());
 
@@ -115,7 +136,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
         {
             RuleFor(x => x.Url)
                 .NotEmpty().WithMessage("Image URL is required.")
-                .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+                //.Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
                 .WithMessage("Image URL must be a valid absolute URI.");
 
             RuleFor(x => x.DisplayOrder)

@@ -42,22 +42,11 @@ public class Product : AuditableEntity<Guid>
 
     public bool IsActive { get; private set; }
 
-    /// <summary>
-    /// When false, this product has no selectable options. Logistics (SKU, price, cost, weight, stock)
-    /// are stored in a single internal default variant with empty attributes.
-    /// The UI should hide the variant matrix and expose simple logistics fields instead.
-    /// </summary>
     public bool HasVariants { get; private set; }
-
-    /// <summary>
-    /// Returns the default (no-attribute) variant for variant-less products. Null when HasVariants is true.
-    /// </summary>
     public ProductVariant? DefaultVariant =>
         HasVariants ? null : _variants.FirstOrDefault(v => !v.IsDeleted && !v.Attributes.Any());
 
-    // Specifications
-    // Key = The "Key" from Category SpecDefinition (e.g., "screen_size")
-    // Value = The actual value (e.g., "27 inches")
+    // Specifications - key -> from category specs
     private Dictionary<string, string> _specifications = new();
     public IReadOnlyDictionary<string, string> Specifications => _specifications.AsReadOnly();
 
@@ -81,21 +70,27 @@ public class Product : AuditableEntity<Guid>
         string name,
         string baseSku,
         string? description,
-        ProductCategory category,
+        Guid categoryId,
+        List<SpecDefinition> specDefinitions,
         Dictionary<string, string> specifications,
         Money baseCost,
         Money basePrice,
         Weight? baseWeight,
+        bool hasVariants,
         List<ProductOption>? options = null,
         List<string>? tags = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Result.Failure<Product>(Error.Validation("Product.NameRequired", "Product name is required."));
 
-        if (category.Id == Guid.Empty)
+        if (categoryId == Guid.Empty)
             return Result.Failure<Product>(Error.Validation("Product.CategoryRequired", "Category is required."));
 
-        bool hasVariants = options != null && options.Count > 0;
+        if (hasVariants && (options == null || options.Count == 0))
+            return Result.Failure<Product>(Error.Validation("Product.OptionsRequired", "Options are required when HasVariants is true."));
+
+        if (!hasVariants && options != null && options.Count > 0)
+            return Result.Failure<Product>(Error.Validation("Product.OptionsNotAllowed", "Options are not allowed when HasVariants is false."));
 
         if (hasVariants && options!.Count > 3)
             return Result.Failure<Product>(Error.Validation("Product.TooManyOptions", "A product can have a maximum of 3 options."));
@@ -105,13 +100,13 @@ public class Product : AuditableEntity<Guid>
             name,
             baseSku,
             description,
-            category.Id,
+            categoryId,
             baseCost,
             basePrice,
             baseWeight,
             hasVariants);
 
-        var specResult = product.UpdateSpecifications(specifications, category);
+        var specResult = product.UpdateSpecifications(specifications, specDefinitions);
         if (specResult.IsFailure)
             return Result.Failure<Product>(specResult.Error);
 
@@ -175,10 +170,10 @@ public class Product : AuditableEntity<Guid>
         return Result.Success();
     }
 
-    public Result UpdateSpecifications(Dictionary<string, string> newSpecs, ProductCategory category)
+    public Result UpdateSpecifications(Dictionary<string, string> newSpecs, List<SpecDefinition> specDefinitions)
     {
         // Check for required fields
-        foreach(var specDef in category.Specifications.Where(sp => sp.IsRequired))
+        foreach(var specDef in specDefinitions.Where(sp => sp.IsRequired))
         {
             if(!newSpecs.ContainsKey(specDef.Key) || string.IsNullOrWhiteSpace(newSpecs[specDef.Key]))
                 return Result.Failure(Error.Validation("Product.MissingSpec", $"Specification '{specDef.Label}' is required."));
@@ -186,7 +181,7 @@ public class Product : AuditableEntity<Guid>
 
         // Remove junk data
         // Only keep keys that actually exist in the category definition
-        var validKeys = category.Specifications.Select(sp => sp.Key).ToHashSet();
+        var validKeys = specDefinitions.Select(sp => sp.Key).ToHashSet();
         var cleanSpecs = newSpecs
             .Where(kvp => validKeys.Contains(kvp.Key))
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);

@@ -12,6 +12,7 @@ public record CreateProductCommand(
     MoneyDto BaseCost,
     MoneyDto BasePrice,
     WeightDto? BaseWeight,
+    bool HasVariants,
     int? BaseStockOnHand, // Used only if the product has NO variants
 
     // Dynamic Options (e.g. "Size", "Color")

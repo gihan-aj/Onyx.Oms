@@ -32,18 +32,23 @@ When creating a category, the following rules and processes apply:
 *   **Display Order**: An integer to control sorting in the UI (e.g., 0, 1, 2).
 *   **IconUrl**: A link to an icon image for the category.
 *   **Color**: A hex color code for UI styling.
+*   **Specifications**: A list of dynamic specification definitions (e.g., "Size", "Color") that products in this category will require. Max of 30 specifications per category.
 
 ### 2.3 Business Rules for Creation
 1.  **Uniqueness**: The category `Name` must be unique **under the same parent**. You cannot have two "Shirts" categories under "Men's Clothing", but you can have one under "Men's" and another under "Women's".
 2.  **Depth Validation**: The system checks if assigning the requested parent will exceed the `MaxDepth` of 2. If the parent is already at Level 2, the creation will be rejected.
 3.  **Path Generation**: Upon creation, the system automatically generates the `Path` and `NamePath` based on the chosen parent.
+4.  **Specification Validation**: If specifications are provided, they must not have duplicate `Key` values, and the total count cannot exceed 30.
 
 ## 3. Modifying a Category
 
 ### 3.1 Updating Details
 You can update the Name, Description, Display Order, Icon, and Color. Changing the name will attempt to automatically update its own `NamePath` suffix.
 
-### 3.2 Changing Parents (Moving Categories)
+### 3.2 Updating Specifications
+You can update the dynamic specifications for a category. The system will validate that the new list contains no duplicate `Key` values and does not exceed the limit of 30 specifications.
+
+### 3.3 Changing Parents (Moving Categories)
 Moving a category is supported but involves strict checks:
 *   **Circular Reference Prevention**: A category cannot be its own parent.
 *   **Deep Circular Prevention**: A category cannot be moved *into* one of its own sub-categories.

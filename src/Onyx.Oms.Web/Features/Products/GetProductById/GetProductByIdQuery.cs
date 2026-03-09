@@ -22,6 +22,7 @@ public record ProductDetailsDto(
     bool HasVariants,
     int? StockOnHand,
     int? ReservedQuantity,
+    List<string> Tags,
     List<ProductOptionDto> Options,
     List<ProductVariantDto> Variants,
     List<ProductImageDto> Images,

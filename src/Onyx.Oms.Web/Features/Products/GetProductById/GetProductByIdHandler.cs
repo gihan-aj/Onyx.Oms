@@ -82,6 +82,7 @@ public class GetProductByIdHandler : IQueryHandler<GetProductByIdQuery, ProductD
             product.HasVariants,
             stockOnHand,
             reservedQuantity,
+            product.Tags.ToList(),
             options,
             variantsToReturn,
             product.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.DisplayOrder, i.IsMain, i.OptionName, i.OptionValue)).ToList(),

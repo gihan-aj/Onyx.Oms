@@ -139,13 +139,11 @@ public class Product : AuditableEntity<Guid>
         return Result.Success(product);
     }
 
-    public Result UpdateDetails(
+    public Result UpdateBasicInfo(
         string name,
         string? description,
+        string? baseSku,
         Guid categoryId,
-        Money baseCost,
-        Money basePrice,
-        Weight? baseWeight,
         List<string>? tags = null)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -156,16 +154,28 @@ public class Product : AuditableEntity<Guid>
 
         Name = name;
         Description = description;
+        if (!string.IsNullOrWhiteSpace(baseSku))
+            BaseSku = baseSku.ToUpperInvariant();
+            
         CategoryId = categoryId;
-        BaseCost = baseCost;
-        BasePrice = basePrice;
-        BaseWeight = baseWeight;
 
         _tags.Clear();
         if (tags != null && tags.Any())
         {
             _tags.AddRange(tags);
         }
+
+        return Result.Success();
+    }
+
+    public Result UpdateBaseLogistics(
+        Money baseCost,
+        Money basePrice,
+        Weight? baseWeight)
+    {
+        BaseCost = baseCost;
+        BasePrice = basePrice;
+        BaseWeight = baseWeight;
 
         return Result.Success();
     }
@@ -246,6 +256,48 @@ public class Product : AuditableEntity<Guid>
     }
 
     // Methods to manage variants/images can be added here or handled via separate aggregates/repos if strict DDD is relaxed for performance.
+    public Result ToggleHasVariants(bool hasVariants, string userId)
+    {
+        if (HasVariants == hasVariants)
+            return Result.Success();
+
+        if (hasVariants)
+        {
+            var defaultVariant = DefaultVariant;
+            if (defaultVariant is null)
+                defaultVariant = _variants.FirstOrDefault(v => !v.IsDeleted && !v.Attributes.Any());
+
+            if (defaultVariant != null)
+                defaultVariant.Delete(userId);
+
+            HasVariants = true;
+        }
+        else
+        {
+            foreach (var variant in _variants.Where(v => !v.IsDeleted))
+                variant.Delete(userId);
+
+            if(_options.Any())
+                _options.Clear();
+
+            HasVariants = false;
+
+            var defaultVariantResult = ProductVariant.CreateDefault(
+                this,
+                BaseSku,
+                BaseCost,
+                BasePrice,
+                BaseWeight);
+
+            if (defaultVariantResult.IsFailure)
+                return defaultVariantResult;
+
+            _variants.Add(defaultVariantResult.Value);
+        }
+
+        return Result.Success();
+    }
+
     public Result AddVariant(ProductVariant variant)
     {
         if (!HasVariants)

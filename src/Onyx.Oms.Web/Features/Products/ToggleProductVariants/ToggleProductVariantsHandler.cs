@@ -33,6 +33,10 @@ namespace Onyx.Oms.Web.Features.Products.ToggleProductVariants
             if (toggleResult.IsFailure)
                 return Result.Failure(toggleResult.Error);
 
+            if(!product.HasVariants && product.DefaultVariant != null)
+            {
+                _context.ProductVariants.Add(product.DefaultVariant);
+            }
             await _context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();

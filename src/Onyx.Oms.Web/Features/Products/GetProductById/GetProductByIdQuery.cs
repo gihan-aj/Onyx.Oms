@@ -18,7 +18,7 @@ public record ProductDetailsDto(
     decimal BasePriceAmount,
     string BasePriceCurrency,
     decimal? BaseWeightAmount,
-    string? BaseWeightCurrency,
+    string? BaseWeightUnit,
     bool HasVariants,
     int? StockOnHand,
     int? ReservedQuantity,
@@ -49,7 +49,7 @@ public record ProductVariantDto(
     decimal PriceAmount,
     string PriceCurrency,
     decimal? WeightAmount,
-    string? WeightCurrency,
+    string? WeightUnit,
     int StockOnHand,
     int ReservedQuantity,
     bool IsActive

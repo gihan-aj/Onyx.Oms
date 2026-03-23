@@ -64,6 +64,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
     // Inventory
     public int StockOnHand { get; private set; }
     public int ReservedQuantity { get; private set; }
+    public int IncomingStock {  get; private set; }
     public int AvailableQuantity => StockOnHand - ReservedQuantity; // Computed property
 
     public bool IsActive { get; private set; }

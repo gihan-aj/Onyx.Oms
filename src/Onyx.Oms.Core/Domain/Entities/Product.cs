@@ -1,6 +1,9 @@
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Domain.Services;
 using Onyx.Oms.Core.Domain.ValueObjects;
+using System.Xml.Linq;
+using static Onyx.Oms.Core.Domain.Constants.Permissions;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
@@ -200,41 +203,94 @@ public class Product : AuditableEntity<Guid>
         return Result.Success();
     }
 
-    public Result UpdateOptionValues(List<ProductOption> newOptions, string userId = "System - Option value removed")
+    public Result<List<ProductVariant>> UpdateOptionValues(List<ProductOption> newOptions, List<List<VariantAttribute>> validVariantMatrix, string userId = "System - Option value removed")
     {
-        // Structural integrity check - cannot allow adding/removing entire axes
-        bool axesMatch = _options.Count == newOptions.Count &&
-            _options.All(o => newOptions.Any(n => n.Name == o.Name));
+        // Update the JSON Document for Options
+        _options.Clear();
 
-        if(!axesMatch && _variants.Any(v => !v.IsDeleted))
-            return Result.Failure(Error.Validation("Product.StructureChanged",
-                "You cannot add or remove entire Option categories (like removing 'Size') while variants exist. Delete all variants first."));
-
-        // Value integrity check
-        // If the user removed "Red", we must ensure "Red" variants are handled.
-
-        // Get all allowed values from the NEW options
-        // e.g. Color: [Blue, Green] (Red is missing)
-        var allowedAttributes = newOptions
-            .SelectMany(o => o.Values.Select(v => new { Option = o.Name, Value = v }))
-            .ToList();
-
-        // Check not deleted variants
-        foreach( var variant in _variants.Where(v => !v.IsDeleted))
+        // Ensure display order is set correctly
+        for (int i = 0; i < newOptions.Count; i++)
         {
-            bool isValid = variant.Attributes.All(attr =>
-                allowedAttributes.Any(allowed => allowed.Option == attr.Name && allowed.Value == attr.Value));
-
-            if (!isValid)
-                variant.Delete(userId);
-                //return Result.Failure(Error.Validation("Product.VariantConflict",
-                    //$"Cannot remove option value '{variant.DisplayName}' because active variants exist. Delete those variants first."));
+            newOptions[i].DisplayOrder = i;
+            _options.Add(newOptions[i]);
         }
 
-        _options.Clear();
-        _options.AddRange(newOptions);
+        // Determine if fundamental axes changed(e.g., "Size, Color"-> "Material")
+        bool axesMatch = _options.Count == newOptions.Count &&
+            _options.All(o => newOptions.Any(n => n.Name.Equals(o.Name, StringComparison.OrdinalIgnoreCase)));
 
-        return Result.Success();
+        // Helper function to create a unique, sort-independent string for a combination of attributes
+        // Example output: "Color:Red|Size:XL"
+        string GetComboKey(IEnumerable<VariantAttribute> attr) => 
+            string.Join("|", attr.OrderBy(a => a.Name).Select(a => $"{a.Name}:{a.Value}"));
+
+        var validMatrixKeys = validVariantMatrix.Select(GetComboKey).ToHashSet();
+        var activeVariants = _variants.Where(v => !v.IsDeleted).ToList();
+
+        // HANDLE DELETIONS
+        if (!axesMatch)
+        {
+            // AXES CHANGED: The structure is totally different. Soft-delete ALL active variants.
+            foreach (var variant in activeVariants)
+            {
+                variant.Delete(userId);
+            }
+        }
+        else
+        {
+            // ONLY VALUES CHANGED: Keep valid variants, soft-delete orphaned ones (e.g., removed "Red")
+            foreach (var variant in activeVariants)
+            {
+                var variantKey = GetComboKey(variant.Attributes);
+
+                if (!validMatrixKeys.Contains(variantKey))
+                {
+                    variant.Delete(userId); // This combination is no longer valid
+                }
+            }
+        }
+
+        // HANDLE CREATIONS (Generate missing variants)
+        // Get the keys of variants that survived the deletion phase
+        var survivingVariantKeys = _variants
+            .Where(v => !v.IsDeleted)
+            .Select(v => GetComboKey(v.Attributes))
+            .ToHashSet();
+
+        var newVariants = new List<ProductVariant>();
+        foreach (var combo in validVariantMatrix)
+        {
+            var comboKey = GetComboKey(combo);
+            
+            // If an active variant doesn't already exist for this combination, create it!
+            if (!survivingVariantKeys.Contains(comboKey))
+            {
+                var suffix = string.Join("-", combo.Select(a => SkuGenerator.GetOptionValueCode(a.Value)));
+                string newSku = $"{BaseSku}-{suffix}";
+
+                var cost = new Money(BaseCost.Amount, BaseCost.Currency);
+                var price = new Money(BasePrice.Amount, BasePrice.Currency);
+                var weight = BaseWeight != null ? new Weight(BaseWeight.Value, BaseWeight.Unit) : null;
+
+                var varinatResult = ProductVariant.Create(
+                    this,
+                    newSku,
+                    combo,
+                    cost,
+                    price,
+                    weight,
+                    0
+                );
+                if (varinatResult.IsFailure)
+                    return Result.Failure<List<ProductVariant>>(varinatResult.Error);
+
+                var variant = varinatResult.Value;
+                newVariants.Add(variant);
+                _variants.Add(variant);
+            }
+        }
+
+        return newVariants;
     }
 
     public Result ChangeBaseSku(string newBaseSku)

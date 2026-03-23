@@ -33,16 +33,57 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductOptions
                 Values = o.Values,
             }).ToList();
 
+            var validVariantMatrix = GetCombinations(request.Options);
+
             var userId = _currentUserService.UserId ?? "System - Option value removed";
 
-            var updateResult = product.UpdateOptionValues(options, userId);
+            var updateResult = product.UpdateOptionValues(options, validVariantMatrix, userId);
             
             if (updateResult.IsFailure)
                 return Result.Failure(updateResult.Error);
 
+            var newVariants = updateResult.Value;
+            if (newVariants.Count > 0)
+                _context.ProductVariants.AddRange(newVariants);
+
             await _context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
+        }
+
+        private List<List<VariantAttribute>> GetCombinations(List<UpdateProductOptionDto> options)
+        {
+            var result = new List<List<VariantAttribute>>();
+            if (options.Count == 0)
+                return result;
+
+            void Permute(int depth, List<VariantAttribute> current)
+            {
+                if (depth == options.Count)
+                {
+                    // FIX: Create a deep copy of the current attributes 
+                    // so EF Core doesn't share memory references between variants
+                    var deepCopy = current.Select(a => new VariantAttribute
+                    {
+                        Name = a.Name,
+                        Value = a.Value
+                    }).ToList();
+
+                    result.Add(deepCopy);
+                    return;
+                }
+
+                var currentOption = options[depth];
+                foreach (var val in currentOption.Values)
+                {
+                    current.Add(new VariantAttribute { Name = currentOption.Name, Value = val });
+                    Permute(depth + 1, current);
+                    current.RemoveAt(current.Count - 1);
+                }
+            }
+
+            Permute(0, new List<VariantAttribute>());   
+            return result;
         }
     }
 }

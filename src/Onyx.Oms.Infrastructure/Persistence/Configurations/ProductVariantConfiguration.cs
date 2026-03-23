@@ -11,7 +11,9 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
         builder.ToTable("ProductVariants");
         builder.HasKey(v => v.Id);
 
-        builder.HasIndex(v => v.Sku).IsUnique();
+        builder.HasIndex(v => v.Sku)
+            .IsUnique()
+            .HasFilter("[DeletedAtUtc] IS NULL");
 
         builder.Property(v => v.Sku)
             .IsRequired()

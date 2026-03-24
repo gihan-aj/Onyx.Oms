@@ -43,6 +43,13 @@ public class ProductImage : Entity<Guid>
         OptionValue = null;
     }
 
+    public void Update(string url, int displayOrder, bool isMain)
+    {
+        Url = url;
+        DisplayOrder = displayOrder;
+        IsMain = isMain;
+    }
+
     // Helper to check if this image applies to a specific variant
     public bool AppliesToVariant(ProductVariant variant)
     {

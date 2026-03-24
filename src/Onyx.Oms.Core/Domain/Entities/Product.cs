@@ -417,4 +417,44 @@ public class Product : AuditableEntity<Guid>
     {
         _images.Add(image);
     }
+
+    public Result<List<ProductImage>> UpdateImages(IEnumerable<(Guid Id, string Url, int DisplayOrder, bool IsMain, string? OptionName, string? OptionValue)> updatedImages)
+    {
+        var incomingIds = updatedImages.Where(i => i.Id != Guid.Empty).Select(i => i.Id).ToHashSet();
+        var newImages = new List<ProductImage>();
+
+        _images.RemoveAll(img => !incomingIds.Contains(img.Id));
+
+        foreach (var imgData in updatedImages)
+        {
+            var existing = _images.FirstOrDefault(i => i.Id == imgData.Id);
+            if (existing != null)
+            {
+                existing.Update(imgData.Url, imgData.DisplayOrder, imgData.IsMain);
+
+                if (!string.IsNullOrEmpty(imgData.OptionName) && !string.IsNullOrEmpty(imgData.OptionValue))
+                {
+                    var linkResult = existing.LinkToOption(imgData.OptionName, imgData.OptionValue, _options);
+                    if (linkResult.IsFailure) return Result.Failure<List<ProductImage>>(linkResult.Error);
+                }
+                else
+                {
+                    existing.Unlink();
+                }
+            }
+            else
+            {
+                var newImage = new ProductImage(Id, imgData.Url, imgData.DisplayOrder, imgData.IsMain);
+                if (!string.IsNullOrEmpty(imgData.OptionName) && !string.IsNullOrEmpty(imgData.OptionValue))
+                {
+                    var linkResult = newImage.LinkToOption(imgData.OptionName, imgData.OptionValue, _options);
+                    if (linkResult.IsFailure) return Result.Failure<List<ProductImage>>(linkResult.Error);
+                }
+                _images.Add(newImage);
+                newImages.Add(newImage);
+            }
+        }
+
+        return newImages;
+    }
 }

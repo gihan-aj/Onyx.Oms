@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
 {
@@ -10,8 +10,12 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
                 .NotEmpty().WithMessage("Product ID is required.");
 
             RuleFor(x => x.Variants)
-                .Must(variants => variants.Select(v => v.Sku).Distinct().Count() == variants.Count)
-                .WithMessage("Each variant must have a unique SKU.");
+                .Must(variants => 
+                {
+                    var providedSkus = variants.Select(v => v.Sku).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+                    return providedSkus.Distinct().Count() == providedSkus.Count;
+                })
+                .WithMessage("Each provided variant SKU must be unique in the request.");
 
             RuleForEach(x => x.Variants).SetValidator(new UpdateProductVariantDtoValidator());
         }
@@ -23,9 +27,6 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
         {
             RuleFor(x => x.Id)
                 .NotEmpty().WithMessage("Variant ID is required.");
-
-            RuleFor(x => x.Sku)
-                .NotEmpty().WithMessage("SKU is required.");
             When(x => x.Price != null, () =>
             {
                 RuleFor(x => x.Price!.Amount)

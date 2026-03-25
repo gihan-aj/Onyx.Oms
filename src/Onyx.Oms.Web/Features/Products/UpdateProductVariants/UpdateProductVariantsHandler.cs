@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
@@ -41,9 +41,9 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
                         var suffix = string.Join("-", originalVariant.Attributes.Select(a => SkuGenerator.GetOptionValueCode(a.Value)));
                         newVariantSku = $"{product.BaseSku}-{suffix}";
                     }
-                    bool skuExists = await _context.ProductVariants.AnyAsync(v => v.Sku  == newVariantSku, cancellationToken);
+                    bool skuExists = await _context.ProductVariants.AnyAsync(v => v.Sku == newVariantSku && v.Id != originalVariant.Id, cancellationToken);
                     if(skuExists)
-                        return Result.Failure(Error.Conflict("ProductVariant.SkuConflict", $"A product variant with this SKU: {updatedVariantDetails.Sku}, already exists."));
+                        return Result.Failure(Error.Conflict("ProductVariant.SkuConflict", $"A product variant with this SKU: {newVariantSku}, already exists."));
 
                     var changeSkuResult = originalVariant.ChangeSku(newVariantSku);
                     if (changeSkuResult.IsFailure)

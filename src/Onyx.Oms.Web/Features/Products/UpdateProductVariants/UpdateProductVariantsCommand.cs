@@ -1,4 +1,4 @@
-﻿using Onyx.Oms.Core.Messaging;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
 {
@@ -9,7 +9,7 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
 
     public record UpdateProductVariantDto(
         Guid Id,
-        string Sku,
+        string? Sku,
         MoneyDto? Cost,
         MoneyDto? Price,
         WeightDto? Weight,

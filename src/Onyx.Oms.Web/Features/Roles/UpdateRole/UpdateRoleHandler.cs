@@ -36,9 +36,14 @@ public class UpdateRoleHandler : ICommandHandler<UpdateRoleCommand>
         }
 
         // Prevent users from modifying their own roles
-        var currentUserId = _currentUserService.UserId;
+        var currentUserIdString = _currentUserService.UserId;
+        var currentUserId = Guid.Empty;
+        if (string.IsNullOrEmpty(currentUserIdString) && Guid.TryParse(currentUserIdString, out currentUserId))
+        {
+            return Result.Failure(Error.Unauthorized("UpdateRole.NotAuthenticated", "User is not authenticated."));
+        }
         var isCurrentUserRole = await _context.AppUsers
-            .Where(u => u.IdentityUserId == currentUserId)
+            .Where(u => u.Id == currentUserId)
             .SelectMany(u => u.Roles)
             .AnyAsync(r => r.Id == request.Id, cancellationToken);
 

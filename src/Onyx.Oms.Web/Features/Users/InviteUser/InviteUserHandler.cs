@@ -38,6 +38,13 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
             return Result.Failure<Guid>(Error.Failure("Identity.ClientIdMissing", "Could not determine Client ID."));
         }
 
+        var tenantIdString = _currentUserService.TenantId;
+        var tenantId = Guid.Empty;
+        if (string.IsNullOrEmpty(targetClientId) && !Guid.TryParse(tenantIdString, out tenantId))
+        {
+            return Result.Failure<Guid>(Error.Failure("Identity.TenantIdMissing", "Could not determine Tenant ID."));
+        }
+
         // 3. Call IdP to Invite User and Assign Roles
         // The IdP's InviteUser endpoint handles creating the user (if new) and assigning the roles.
         Guid userId = Guid.Empty;
@@ -108,7 +115,12 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
 
         if (localUser == null)
         {          
-            localUser = AppUser.Create(userId.ToString(), request.Email, request.FirstName, request.LastName);
+            var localUserResult = AppUser.Create(userId, tenantId, request.FirstName, request.LastName);
+            if(localUserResult.IsFailure)
+                return Result.Failure<Guid>(localUserResult.Error);
+
+            localUser = localUserResult.Value;
+
             _context.AppUsers.Add(localUser);
         }
         else 

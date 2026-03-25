@@ -26,5 +26,7 @@ public class CurrentUserService : ICurrentUserService
     public string? ClientId => _httpContextAccessor.HttpContext?.User?.FindFirst("client_id")?.Value 
                                ?? _httpContextAccessor.HttpContext?.User?.FindFirst("azp")?.Value;
 
+    public string? TenantId => _httpContextAccessor.HttpContext?.User?.FindFirst("tenant_id")?.Value;
+
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 }

@@ -1,10 +1,13 @@
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
 public class AppUser : AuditableEntity<Guid>
 {
-    public string IdentityUserId { get; private set; } = string.Empty; // Maps to Identity's User ID
+    public Guid TenantId { get; private set; }
+    public Tenant Tenant { get; private set; } = null!;
+
     public string Email { get; private set; } = string.Empty;
     public string FirstName { get; private set; } = string.Empty;
     public string? LastName { get; private set; } = string.Empty;
@@ -17,24 +20,42 @@ public class AppUser : AuditableEntity<Guid>
 
     private AppUser() : base(Guid.Empty) { }
 
-    private AppUser(Guid id, string identityUserdId, string email, string firstName, string? lastName) : base(id)
+    private AppUser(Guid identityUserId, Guid tenantId, string email, string firstName, string? lastName)
     {
-        IdentityUserId = identityUserdId;
+        Id = identityUserId;
+        TenantId = tenantId;
         Email = email;
         FirstName = firstName;
         LastName = lastName;
         IsActive = true;
     }
 
-    public static AppUser Create(string identityUserdId, string email, string firstName, string? lastName = null)
+    public static Result<AppUser> Create(Guid identityUserId, Guid tenantId, string email, string firstName, string? lastName = null)
     {
-        return new AppUser(Guid.NewGuid(), identityUserdId, email, firstName, lastName);
+        if (identityUserId == Guid.Empty)
+            return Result.Failure<AppUser>(Error.Validation("AppUser.IdentityUserIdRequired", "Identity User ID is required."));
+
+        if (tenantId == Guid.Empty)
+            return Result.Failure<AppUser>(Error.Validation("AppUser.TenantIdRequired", "Tenant ID is required."));
+
+        if (string.IsNullOrWhiteSpace(email))
+            return Result.Failure<AppUser>(Error.Validation("AppUser.EmailRequired", "Email is required."));
+
+        if (string.IsNullOrWhiteSpace(firstName))
+            return Result.Failure<AppUser>(Error.Validation("AppUser.FirstNameRequired", "First Name is required."));
+
+        return Result.Success(new AppUser(identityUserId, tenantId, email, firstName, lastName));
     }
 
-    public void Update(string firstName, string lastName)
+    public Result Update(string firstName, string lastName)
     {
+        if (string.IsNullOrWhiteSpace(firstName))
+            return Result.Failure(Error.Validation("AppUser.FirstNameRequired", "First Name is required."));
+
         FirstName = firstName;
         LastName = lastName;
+
+        return Result.Success();
     }
 
     public void UpdateLastLoginTime()
@@ -42,20 +63,30 @@ public class AppUser : AuditableEntity<Guid>
         LastLoginUtc = DateTime.UtcNow;
     }
     
-    public void AssignRole(Role role)
+    public Result AssignRole(Role role)
     {
+        if (role == null)
+            return Result.Failure(Error.Validation("AppUser.RoleRequired", "Role is required."));
+
         if (!_roles.Contains(role))
         {
             _roles.Add(role);
         }
+
+        return Result.Success();
     }
 
-    public void RemoveRole(Role role)
+    public Result RemoveRole(Role role)
     {
+        if (role == null)
+            return Result.Failure(Error.Validation("AppUser.RoleRequired", "Role is required."));
+
         if (_roles.Contains(role))
         {
             _roles.Remove(role);
         }
+
+        return Result.Success();
     }
 
     public void Activate()

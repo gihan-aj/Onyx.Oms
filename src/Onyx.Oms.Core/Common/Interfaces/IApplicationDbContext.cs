@@ -14,6 +14,9 @@ public interface IApplicationDbContext
     DbSet<AppUser> AppUsers { get; }
     DbSet<Role> Roles { get; }
     DbSet<TenantProfile> TenantProfiles { get; }
+    DbSet<Tenant> Tenants { get; }
+    DbSet<TenantSubscription> TenantSubscriptions { get; }
+    DbSet<SubscriptionPlan> SubscriptionPlans { get; }
     Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

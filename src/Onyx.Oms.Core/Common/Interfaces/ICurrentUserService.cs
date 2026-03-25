@@ -7,5 +7,6 @@ public interface ICurrentUserService
     string? UserName { get; }
     string? Email { get; }
     string? ClientId { get; }
+    string? TenantId { get; }
     bool IsAuthenticated { get; }
 }

@@ -46,6 +46,9 @@ using (var scope = app.Services.CreateScope())
 
     var sequenceSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.AppSequenceSeeder>();
     await sequenceSeeder.SeedAsync();
+
+    var subscriptionPlanSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.SubscriptionPlanSeeder>();
+    await subscriptionPlanSeeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.
@@ -67,7 +70,7 @@ app.UseExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<Onyx.Oms.Infrastructure.Middleware.UserMirrorMiddleware>();
+//app.UseMiddleware<Onyx.Oms.Infrastructure.Middleware.UserMirrorMiddleware>();
 
 app.MapEndpoints();
 

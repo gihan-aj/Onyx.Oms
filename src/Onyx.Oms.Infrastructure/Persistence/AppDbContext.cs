@@ -27,6 +27,9 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<AppSequence> AppSequences => Set<AppSequence>();
     public DbSet<TenantProfile> TenantProfiles => Set<TenantProfile>();
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
 using Onyx.Oms.Infrastructure.Identity.IdP;
-using Microsoft.EntityFrameworkCore;
-using Onyx.Oms.Core.Domain.Models;
+using static Onyx.Oms.Core.Domain.Constants.Permissions;
 
 namespace Onyx.Oms.Web.Features.Roles.ActivateRole;
 
@@ -35,9 +37,15 @@ public class ActivateRoleHandler : ICommandHandler<ActivateRoleCommand>
         }
 
         // Prevent users from modifying their own roles
-        var currentUserId = _currentUserService.UserId;
+        var currentUserIdString = _currentUserService.UserId;
+        var currentUserId = Guid.Empty;
+        if (string.IsNullOrEmpty(currentUserIdString) && Guid.TryParse(currentUserIdString, out currentUserId))
+        {
+            return Result.Failure(Error.Unauthorized("ActivateRole.NotAuthenticated", "User is not authenticated."));
+        }
+
         var isCurrentUserRole = await _context.AppUsers
-            .Where(u => u.IdentityUserId == currentUserId)
+            .Where(u => u.Id == currentUserId)
             .SelectMany(u => u.Roles)
             .AnyAsync(r => r.Id == request.Id, cancellationToken);
 

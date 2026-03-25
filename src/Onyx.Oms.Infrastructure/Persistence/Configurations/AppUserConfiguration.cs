@@ -12,9 +12,11 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.IdentityUserId)
-            .HasMaxLength(36)
-            .IsRequired();
+        builder.HasOne(x => x.Tenant)
+            .WithMany(t => t.Users)
+            .HasForeignKey(x => x.TenantId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.Email)
             .HasMaxLength(200)

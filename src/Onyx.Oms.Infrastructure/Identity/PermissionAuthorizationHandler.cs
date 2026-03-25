@@ -32,7 +32,8 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
         }
 
         var sub = _currentUserService.UserId;
-        if (string.IsNullOrEmpty(sub))
+        var userId = Guid.Empty;
+        if (string.IsNullOrEmpty(sub) && Guid.TryParse(sub, out userId))
         {
             _logger.LogWarning("Permission check failed: User authenticated but no ID found.");
             return;
@@ -40,7 +41,7 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
 
         // NOTE: In a real high-scale app, we might cache this mapping too or put the int ID in the token claims
         var user = await _context.AppUsers
-            .Where(u => u.IdentityUserId == sub)
+            .Where(u => u.Id == userId)
             .FirstOrDefaultAsync();
         
         if (user == null)

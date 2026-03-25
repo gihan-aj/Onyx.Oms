@@ -14,7 +14,7 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
                 .WithApiVersionSet(app.NewApiVersionSet("Products").Build())
                 .HasApiVersion(1);
 
-            group.MapPut("{productId:guid}/variants", async (Guid productId, Guid variantId, ISender sender, UpdateProductVariantsCommand command) =>
+            group.MapPut("{productId:guid}/variants", async (Guid productId, ISender sender, UpdateProductVariantsCommand command) =>
             {
                 if (productId != command.ProductId)
                 {

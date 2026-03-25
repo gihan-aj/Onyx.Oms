@@ -302,7 +302,14 @@ public class Product : AuditableEntity<Guid>
         return Result.Success();
     }
 
-    public void Activate() => IsActive = true;
+    public void Activate()
+    {
+        IsActive = true;
+        if (!HasVariants)
+        {
+            DefaultVariant?.Activate();
+        }
+    }
     public void Deactivate()
     {
         foreach (var variant in _variants)

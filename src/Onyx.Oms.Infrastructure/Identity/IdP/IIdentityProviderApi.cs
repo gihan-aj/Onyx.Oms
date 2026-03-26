@@ -18,6 +18,9 @@ public interface IIdentityProviderApi
 
     [Post("/api/users")]
     Task<IApiResponse<UserDto>> InviteUserAsync([Body] InviteUserRequest request);
+
+    [Post("/api/users/register")]
+    Task<IApiResponse<RegisterUserResponse>> RegisterUserAsync([Body] RegisterUserRequest request);
     
     [Post("/api/users/{userId}/roles")]
     Task<IApiResponse<AssignRolesResponse>> AssignRolesAsync(Guid userId, [Body] AssignRolesRequest request);
@@ -30,3 +33,11 @@ public record AssignRolesRequest(IEnumerable<string> RoleNames, string TargetCli
 
 public record UserDto(Guid Id, string Email, string FirstName, string LastName, bool IsActive, IEnumerable<string>? AssignedRoles = null);
 public record AssignRolesResponse(string Message, IEnumerable<string> AssignedRoles);
+
+public record RegisterUserRequest(
+    string FirstName,
+    string LastName,
+    string Email,
+    string Password,
+    string TenantId);
+public record RegisterUserResponse(Guid UserId);

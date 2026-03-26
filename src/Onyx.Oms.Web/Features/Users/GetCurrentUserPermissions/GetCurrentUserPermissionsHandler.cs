@@ -26,7 +26,11 @@ public class GetCurrentUserPermissionsHandler : IQueryHandler<GetCurrentUserPerm
     {
         var sub = _currentUserService.UserId;
         var userId = Guid.Empty;
-        if (string.IsNullOrEmpty(sub) && Guid.TryParse(sub, out userId))
+        if (string.IsNullOrEmpty(sub))
+        {
+            return Result.Failure<List<string>>(Error.Unauthorized("Identity.NotAuthenticated", "User is not authenticated."));
+        }
+        if (!Guid.TryParse(sub, out userId))
         {
             return Result.Failure<List<string>>(Error.Unauthorized("Identity.NotAuthenticated", "User is not authenticated."));
         }

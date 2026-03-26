@@ -26,14 +26,23 @@ public class PermissionSeeder
 
         if (superAdminRole == null)
         {
-            // Create locally if not exists
             superAdminRole = Role.Create(superAdminRoleName, "God Mode Role - Has all permissions");
             _context.Roles.Add(superAdminRole);
-            
-            // NOTE: We do NOT sync this role to IdP automatically.
-            // Why? Because we don't know the Front-end Client ID here (this runs in backend context),
-            // so we can't create the role with the correct prefix (e.g. "OrderSystem_SuperAdmin").
-            // The IdP Admin should manually create this role for the Frontend Client if needed.
+        }
+
+        // Ensure Admin role exists locally (for new Tenants)
+        var adminRoleName = "Admin";
+        var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == adminRoleName);
+
+        if (adminRole == null)
+        {
+            adminRole = Role.Create(adminRoleName, "Tenant Administrator Role");
+            // Optionally, give it all permissions too
+            foreach(var perm in allPermissions)
+            {
+                adminRole.AddPermission(perm);
+            }
+            _context.Roles.Add(adminRole);
         }
 
         // 3. Sync Permissions: Ensure SuperAdmin has ALL permissions

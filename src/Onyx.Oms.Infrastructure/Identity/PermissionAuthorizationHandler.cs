@@ -33,9 +33,14 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
 
         var sub = _currentUserService.UserId;
         var userId = Guid.Empty;
-        if (string.IsNullOrEmpty(sub) && Guid.TryParse(sub, out userId))
+        if (string.IsNullOrEmpty(sub) )
         {
             _logger.LogWarning("Permission check failed: User authenticated but no ID found.");
+            return;
+        }
+        if(!Guid.TryParse(sub, out userId))
+        {
+            _logger.LogWarning("Permission check failed: User authenticated but wrong ID format.");
             return;
         }
 

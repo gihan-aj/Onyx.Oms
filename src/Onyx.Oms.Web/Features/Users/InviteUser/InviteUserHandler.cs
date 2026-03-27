@@ -66,25 +66,25 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
             {
                 if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
                 {
-                    // User already exists in IdP, gracefully handle by fetching the user and assigning roles
-                    var userResponse = await _idpApi.GetUserByEmailAsync(request.Email);
-                    if (!userResponse.IsSuccessStatusCode || userResponse.Content == null)
-                    {
-                        return Result.Failure<Guid>(Error.Failure("Identity.UserFetchFailed", $"Failed to fetch existing user. Status: {userResponse.StatusCode}"));
-                    }
+                    //// User already exists in IdP, gracefully handle by fetching the user and assigning roles
+                    //var userResponse = await _idpApi.GetUserByEmailAsync(request.Email);
+                    //if (!userResponse.IsSuccessStatusCode || userResponse.Content == null)
+                    //{
+                    //    return Result.Failure<Guid>(Error.Failure("Identity.UserFetchFailed", $"Failed to fetch existing user. Status: {userResponse.StatusCode}"));
+                    //}
                     
-                    userId = userResponse.Content.Id;
+                    //userId = userResponse.Content.Id;
 
-                    // Assign roles to existing user
-                    var assignRolesRequest = new AssignRolesRequest(roles.Select(r => r.Name), targetClientId);
-                    var assignResponse = await _idpApi.AssignRolesAsync(userId, assignRolesRequest);
+                    //// Assign roles to existing user
+                    //var assignRolesRequest = new AssignRolesRequest(roles.Select(r => r.Name), targetClientId);
+                    //var assignResponse = await _idpApi.AssignRolesAsync(userId, assignRolesRequest);
 
-                    if (!assignResponse.IsSuccessStatusCode || assignResponse.Content == null)
-                    {
-                         return Result.Failure<Guid>(Error.Failure("Identity.RoleAssignmentFailed", $"IdP failed to assign roles to existing user. Status: {assignResponse.StatusCode}"));
-                    }
+                    //if (!assignResponse.IsSuccessStatusCode || assignResponse.Content == null)
+                    //{
+                    //     return Result.Failure<Guid>(Error.Failure("Identity.RoleAssignmentFailed", $"IdP failed to assign roles to existing user. Status: {assignResponse.StatusCode}"));
+                    //}
 
-                    assignedRoleNames = assignResponse.Content.AssignedRoles ?? Enumerable.Empty<string>();
+                    //assignedRoleNames = assignResponse.Content.AssignedRoles ?? Enumerable.Empty<string>();
                 }
                 else
                 {

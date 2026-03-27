@@ -69,7 +69,7 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
             
             if (!idpResponse.IsSuccessStatusCode || idpResponse.Content == null)
             {
-                return Result.Failure<Guid>(Error.Failure("Identity.RegistrationFailed", $"Failed to register user in Identity Provider. Status: {idpResponse.StatusCode}"));
+                return Result.Failure<Guid>(Error.Failure("Identity.RegistrationFailed", $"Failed to register user in Identity Provider. Status: {idpResponse.StatusCode}. Message: {idpResponse.Error?.Content}"));
             }
 
             identityUserId = idpResponse.Content.UserId;

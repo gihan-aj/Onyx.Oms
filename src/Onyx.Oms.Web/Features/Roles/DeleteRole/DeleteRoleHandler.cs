@@ -1,7 +1,6 @@
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Messaging;
-using Onyx.Oms.Infrastructure.Identity.IdP;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Domain.Models;
 
@@ -10,13 +9,11 @@ namespace Onyx.Oms.Web.Features.Roles.DeleteRole;
 public class DeleteRoleHandler : ICommandHandler<DeleteRoleCommand>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IIdentityProviderApi _idpApi;
     private readonly ICurrentUserService _currentUserService;
 
-    public DeleteRoleHandler(IApplicationDbContext context, IIdentityProviderApi idpApi, ICurrentUserService currentUserService)
+    public DeleteRoleHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
-        _idpApi = idpApi;
         _currentUserService = currentUserService;
     }
 
@@ -37,7 +34,11 @@ public class DeleteRoleHandler : ICommandHandler<DeleteRoleCommand>
         // Prevent users from modifying their own roles
         var currentUserIdString = _currentUserService.UserId;
         var currentUserId = Guid.Empty;
-        if (string.IsNullOrEmpty(currentUserIdString) && Guid.TryParse(currentUserIdString, out currentUserId))
+        if (string.IsNullOrEmpty(currentUserIdString))
+        {
+            return Result.Failure(Error.Unauthorized("DeleteRole.NotAuthenticated", "User is not authenticated."));
+        }
+        if (!Guid.TryParse(currentUserIdString, out currentUserId))
         {
             return Result.Failure(Error.Unauthorized("DeleteRole.NotAuthenticated", "User is not authenticated."));
         }
@@ -49,26 +50,6 @@ public class DeleteRoleHandler : ICommandHandler<DeleteRoleCommand>
         if (isCurrentUserRole)
         {
             return Result.Failure(Error.Forbidden("Role.ModifyOwn", "You cannot modify a role that is currently assigned to you."));
-        }
-
-        var targetClientId = _currentUserService.ClientId;
-        if (string.IsNullOrEmpty(targetClientId))
-        {
-            return Result.Failure(Error.Failure("Identity.ClientIdMissing", "Could not determine Client ID."));
-        }
-
-        try
-        {
-            var response = await _idpApi.DeleteRoleAsync(role.Name, targetClientId);
-            
-            if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.NotFound)
-            {
-                 return Result.Failure(Error.Failure("Identity.DeletionFailed", $"IdP failed to delete role. Status: {response.StatusCode}"));
-            }
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure(Error.Failure("Identity.Connection", $"Failed to connect to IdP: {ex.Message}"));
         }
 
         _context.Roles.Remove(role);

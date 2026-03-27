@@ -12,13 +12,11 @@ namespace Onyx.Oms.Web.Features.Roles.ActivateRole;
 public class ActivateRoleHandler : ICommandHandler<ActivateRoleCommand>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IIdentityProviderApi _idpApi;
     private readonly ICurrentUserService _currentUserService;
 
-    public ActivateRoleHandler(IApplicationDbContext context, IIdentityProviderApi idpApi, ICurrentUserService currentUserService)
+    public ActivateRoleHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
-        _idpApi = idpApi;
         _currentUserService = currentUserService;
     }
 

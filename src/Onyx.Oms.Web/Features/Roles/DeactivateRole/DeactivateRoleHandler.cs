@@ -10,13 +10,11 @@ namespace Onyx.Oms.Web.Features.Roles.DeactivateRole;
 public class DeactivateRoleHandler : ICommandHandler<DeactivateRoleCommand>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IIdentityProviderApi _idpApi;
     private readonly ICurrentUserService _currentUserService;
 
-    public DeactivateRoleHandler(IApplicationDbContext context, IIdentityProviderApi idpApi, ICurrentUserService currentUserService)
+    public DeactivateRoleHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
-        _idpApi = idpApi;
         _currentUserService = currentUserService;
     }
 

@@ -60,7 +60,7 @@ public class IdPTokenHandler : DelegatingHandler
             Address = disco.TokenEndpoint,
             ClientId = _authOptions.ClientId,
             ClientSecret = _authOptions.ClientSecret,
-            Scope = _authOptions.Scope ?? "idp_roles_manage"
+            Scope = _authOptions.Scope ?? ""
         }, cancellationToken);
 
         if (tokenResponse.IsError)

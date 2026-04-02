@@ -53,6 +53,7 @@ public static class DependencyInjection
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddScoped<DatabaseSeeder>();
         services.AddScoped<PermissionSeeder>();
         services.AddScoped<AppSequenceSeeder>();
         services.AddScoped<SubscriptionPlanSeeder>();

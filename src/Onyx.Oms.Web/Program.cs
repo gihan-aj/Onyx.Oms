@@ -41,6 +41,9 @@ var app = builder.Build();
 // Run Seeder
 using (var scope = app.Services.CreateScope())
 {
+    var databaseSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.DatabaseSeeder>();
+    await databaseSeeder.SeedAsync();
+
     var permissionSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.PermissionSeeder>();
     await permissionSeeder.SeedAsync();
 
@@ -64,7 +67,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
 

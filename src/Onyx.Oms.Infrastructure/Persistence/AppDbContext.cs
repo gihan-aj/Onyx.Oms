@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
+using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Infrastructure.Persistence.Entities;
 using Onyx.Oms.Infrastructure.Persistence.Interceptors;
@@ -8,13 +9,16 @@ namespace Onyx.Oms.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext, IApplicationDbContext
 {
+    private readonly ICurrentUserService _currentUserService;
     private readonly AuditableEntityInterceptor _auditableEntityInterceptor;
 
     public AppDbContext(
         DbContextOptions<AppDbContext> options,
-        AuditableEntityInterceptor auditableEntityInterceptor) : base(options)
+        AuditableEntityInterceptor auditableEntityInterceptor,
+        ICurrentUserService currentUserService) : base(options)
     {
         _auditableEntityInterceptor = auditableEntityInterceptor;
+        _currentUserService = currentUserService;
     }
 
     public DbSet<Courier> Couriers { get; set; }
@@ -26,7 +30,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<AppUser> AppUsers => Set<AppUser>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<AppSequence> AppSequences => Set<AppSequence>();
-    public DbSet<TenantProfile> TenantProfiles => Set<TenantProfile>();
+    //public DbSet<TenantProfile> TenantProfiles => Set<TenantProfile>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
@@ -40,6 +44,29 @@ public class AppDbContext : DbContext, IApplicationDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // STATIC schmea rules
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // DYNAMIC security filters
+        var activeTenantId = _currentUserService.ActiveTenantId;
+
+        foreach(var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(IMustHaveTenant).IsAssignableFrom(entityType.ClrType))
+            {
+                var method = typeof(AppDbContext)
+                    .GetMethod(nameof(ApplyTenantFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.MakeGenericMethod(entityType.ClrType);
+
+                method?.Invoke(this, new object[] { modelBuilder, activeTenantId });
+            }
+        }
+    }
+
+    private void ApplyTenantFilter<TEntity>(ModelBuilder builder, Guid activeTenantId)
+        where TEntity : class, IMustHaveTenant
+    {
+        builder.Entity<TEntity>().HasQueryFilter(e => e.TenantId == activeTenantId);
     }
 }

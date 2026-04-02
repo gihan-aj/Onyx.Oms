@@ -13,7 +13,7 @@ public interface IApplicationDbContext
     DbSet<ProductImage> ProductImages { get; }
     DbSet<AppUser> AppUsers { get; }
     DbSet<Role> Roles { get; }
-    DbSet<TenantProfile> TenantProfiles { get; }
+    //DbSet<TenantProfile> TenantProfiles { get; }
     DbSet<Tenant> Tenants { get; }
     DbSet<TenantSubscription> TenantSubscriptions { get; }
     DbSet<SubscriptionPlan> SubscriptionPlans { get; }

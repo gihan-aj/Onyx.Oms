@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -24,17 +25,22 @@ public static class DependencyInjection
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddScoped<IAppSequenceService, AppSequenceService>();
 
-        // Permission Services
-        services.AddScoped<PermissionService>();
-        services.AddScoped<IPermissionService>(provider => 
-            new CachedPermissionService(
-                provider.GetRequiredService<PermissionService>(),
-                provider.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>()));
-
         services.AddMemoryCache(); // Required for caching decorator
 
-        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        // Permission Services
+        services.AddScoped<PermissionService>();
+        services.AddScoped<IPermissionService>(provider =>
+        {
+            var innerService = provider.GetRequiredService<PermissionService>();
+            var cache = provider.GetRequiredService<IMemoryCache>();
+
+            return new CachedPermissionService(innerService, cache);
+        });
+
+        services.AddAuthorization();
+
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         // IdP Services
         services.AddTransient<IdPTokenHandler>();
@@ -54,7 +60,6 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<DatabaseSeeder>();
-        services.AddScoped<PermissionSeeder>();
         services.AddScoped<AppSequenceSeeder>();
         services.AddScoped<SubscriptionPlanSeeder>();
 
@@ -84,8 +89,6 @@ public static class DependencyInjection
                 };
             });
         }
-
-        services.AddAuthorization();
 
         return services;
     }

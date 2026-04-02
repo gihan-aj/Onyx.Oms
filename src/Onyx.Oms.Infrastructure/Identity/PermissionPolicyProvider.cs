@@ -11,13 +11,14 @@ public class PermissionPolicyProvider : DefaultAuthorizationPolicyProvider
 
     public override async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
-        if (policyName.StartsWith("Permissions", StringComparison.OrdinalIgnoreCase))
+        var policy = await base.GetPolicyAsync(policyName);
+        if(policy is not null)
         {
-            var policy = new AuthorizationPolicyBuilder();
-            policy.AddRequirements(new PermissionRequirement(policyName));
-            return policy.Build();
+            return policy;
         }
 
-        return await base.GetPolicyAsync(policyName);
+        return new AuthorizationPolicyBuilder()
+            .AddRequirements(new PermissionRequirement(policyName))
+            .Build();
     }
 }

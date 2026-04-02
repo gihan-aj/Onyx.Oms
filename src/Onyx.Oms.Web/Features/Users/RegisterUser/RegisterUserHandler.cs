@@ -27,9 +27,9 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
             return Result.Failure<Guid>(Error.NotFound("SubscriptionPlan.NotFound", "The selected subscription plan was not found."));
 
         // 2. Validate "Admin" role exists locally
-        var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin", cancellationToken);
-        if (adminRole == null)
-            return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "The Admin role could not be found. Please ensure it is seeded."));
+        var tenantOwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == Core.Domain.Constants.Roles.Oms.TenantOwner, cancellationToken);
+        if (tenantOwnerRole == null)
+            return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "The Tenant Owner role could not be found. Please ensure it is seeded."));
 
         // 3. Create Tenant
         var tenantResult = Tenant.Create(request.CompanyDetails.CompanyName, request.CompanyDetails.ContactEmail, null);
@@ -87,7 +87,7 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
         var appUser = appUserResult.Value;
         
         // 7. Assign Admin role locally
-        var roleAssignResult = appUser.AssignRole(adminRole);
+        var roleAssignResult = appUser.AssignRole(tenantOwnerRole);
         if (roleAssignResult.IsFailure)
             return Result.Failure<Guid>(roleAssignResult.Error);
 

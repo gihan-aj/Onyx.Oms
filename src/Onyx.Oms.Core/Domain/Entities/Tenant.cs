@@ -10,9 +10,9 @@ namespace Onyx.Oms.Core.Domain.Entities
 
         private Tenant() { }
 
-        private Tenant(string companyName, string contactEmail, string? contactPhone)
+        private Tenant(Guid? id, string companyName, string contactEmail, string? contactPhone)
         {
-            Id = Guid.NewGuid();
+            Id = id ?? Guid.NewGuid();
             CompanyName = companyName;
             ContactEmail = contactEmail;
             if(!string.IsNullOrWhiteSpace(contactEmail))
@@ -50,7 +50,7 @@ namespace Onyx.Oms.Core.Domain.Entities
 
         public bool IsActive { get; private set; }
 
-        public static Result<Tenant> Create(string companyName, string contactEmail, string? contactPhone)
+        public static Result<Tenant> Create(string companyName, string contactEmail, string? contactPhone, Guid? explicitId = null)
         {
             if (string.IsNullOrWhiteSpace(companyName))
                 return Result.Failure<Tenant>(Error.Validation("Tenant.ComanyNameRequired", "Company Name is required."));
@@ -58,7 +58,7 @@ namespace Onyx.Oms.Core.Domain.Entities
             if (string.IsNullOrWhiteSpace(contactEmail))
                 return Result.Failure<Tenant>(Error.Validation("Tenant.EmailRequired", "Email is required."));
 
-            return new Tenant(companyName, contactEmail, contactPhone);
+            return new Tenant(explicitId, companyName, contactEmail, contactPhone);
         }
 
         // --- Domain Behaviors ---

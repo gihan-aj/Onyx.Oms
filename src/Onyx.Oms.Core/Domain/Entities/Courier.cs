@@ -1,10 +1,12 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Courier : AuditableEntity<Guid>
+public class Courier : AuditableEntity<Guid>, IMustHaveTenant
 {
+    public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string? ContactPerson { get; private set; }
     public string? PrimaryPhone { get; private set; }
@@ -17,15 +19,16 @@ public class Courier : AuditableEntity<Guid>
     private Courier() { }
 
     private Courier(
-        Guid id,
+        Guid tenantId,
         string name,
         string? contactPerson,
         string? primaryPhone,
         string? secondaryPhone,
         string? websiteUrl,
         string? trackingUrlTemplate,
-        bool isActive) : base(id)
+        bool isActive) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         Name = name;
         ContactPerson = contactPerson;
         PrimaryPhone = primaryPhone;
@@ -36,6 +39,7 @@ public class Courier : AuditableEntity<Guid>
     }
 
     public static Result<Courier> Create(
+        Guid tenantId,
         string name,
         string? contactPerson,
         string? primaryPhone,
@@ -49,7 +53,7 @@ public class Courier : AuditableEntity<Guid>
         }
 
         var courier = new Courier(
-            Guid.NewGuid(),
+            tenantId,
             name,
             contactPerson,
             primaryPhone,

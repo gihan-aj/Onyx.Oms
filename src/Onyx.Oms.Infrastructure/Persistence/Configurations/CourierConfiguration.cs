@@ -10,6 +10,9 @@ public class CourierConfiguration : IEntityTypeConfiguration<Courier>
     {
         builder.HasKey(c => c.Id);
 
+        builder.Property(x => x.TenantId)
+            .IsRequired();
+
         builder.Property(c => c.Name)
             .HasMaxLength(200)
             .IsRequired();
@@ -30,12 +33,13 @@ public class CourierConfiguration : IEntityTypeConfiguration<Courier>
             .HasMaxLength(500);
 
         builder.Property(c => c.CreatedBy)
-            .HasMaxLength(36);
+            .HasMaxLength(100);
 
         builder.Property(c => c.LastModifiedBy)
-            .HasMaxLength(36)
+            .HasMaxLength(100)
             .IsRequired(false);
 
+        builder.HasIndex(x => x.TenantId);
         builder.HasIndex(c => c.Name).IsUnique();
     }
 }

@@ -103,6 +103,10 @@ namespace Onyx.Oms.Core.Domain.Entities
             return Result.Success();
         }
 
+        public void UpdateLogo(string logoUrl) => LogoUrl = logoUrl;
+
+        public void UpdateHeroImage(string heroImageUrl) => HeroImageUrl = heroImageUrl;
+
         public Result UpdatePreferences(string jsonFormattedPreferences)
         {
             PreferencesJson = jsonFormattedPreferences;

@@ -44,9 +44,6 @@ using (var scope = app.Services.CreateScope())
     var databaseSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.DatabaseSeeder>();
     await databaseSeeder.SeedAsync();
 
-    var sequenceSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.AppSequenceSeeder>();
-    await sequenceSeeder.SeedAsync();
-
     var subscriptionPlanSeeder = scope.ServiceProvider.GetRequiredService<Onyx.Oms.Infrastructure.Persistence.Seeding.SubscriptionPlanSeeder>();
     await subscriptionPlanSeeder.SeedAsync();
 }

@@ -32,7 +32,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                 await _context.SaveChangesAsync(cancellationToken);
             }
 
-            await SeedRolesAndPermissionsAsync(cancellationToken);
+            await SeedRolesAndPermissionsAsync(hostTenant.Id, cancellationToken);
 
             var adminUser = await _context.AppUsers
                 .Include(u => u.Roles)
@@ -61,7 +61,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
             await _context.SaveChangesAsync(cancellationToken);
         }
 
-        private async Task SeedRolesAndPermissionsAsync(CancellationToken cancellationToken)
+        private async Task SeedRolesAndPermissionsAsync(Guid hostTenantId, CancellationToken cancellationToken)
         {
             var allPermssions = Permissions.GetAllPermissions();
 
@@ -74,7 +74,8 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
 
             if(systemAdminRole == null)
             {
-                systemAdminRole = Role.Create(Roles.Oms.SystemAdmin, "God Mode Role - Has all the permissions");
+                var systemAdminRoleResult = Role.Create(hostTenantId, Roles.Oms.SystemAdmin, "God Mode Role - Has all the permissions");
+                systemAdminRole = systemAdminRoleResult.Value;
                 _context.Roles.Add(systemAdminRole);
             }
 
@@ -86,7 +87,8 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
 
             if(tenantOwnerRole == null)
             {
-                tenantOwnerRole = Role.Create(Roles.Oms.TenantOwner, "Full tenant access");
+                var tenantOwnerRoleResult = Role.Create(hostTenantId, Roles.Oms.TenantOwner, "Full tenant access");
+                tenantOwnerRole = tenantOwnerRoleResult.Value;
                 _context.Roles.Add(tenantOwnerRole);
             }
 

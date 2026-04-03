@@ -28,19 +28,14 @@ public class ActivateRoleHandler : ICommandHandler<ActivateRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
-        // Protect SuperAdmin role
-        if (role.Name == "SuperAdmin")
+        // Protect Admin roles
+        if (role.Name == Core.Domain.Constants.Roles.Oms.SystemAdmin || role.Name == Core.Domain.Constants.Roles.Oms.TenantOwner)
         {
-            return Result.Failure(Error.Forbidden("Role.Protected", "Modifying the SuperAdmin role is not allowed."));
+            return Result.Failure(Error.Forbidden("Role.Protected", "Modifying this role is not allowed."));
         }
 
         // Prevent users from modifying their own roles
-        var currentUserIdString = _currentUserService.UserId;
-        var currentUserId = Guid.Empty;
-        if (string.IsNullOrEmpty(currentUserIdString) && Guid.TryParse(currentUserIdString, out currentUserId))
-        {
-            return Result.Failure(Error.Unauthorized("ActivateRole.NotAuthenticated", "User is not authenticated."));
-        }
+        var currentUserId = _currentUserService.UserId;
 
         var isCurrentUserRole = await _context.AppUsers
             .Where(u => u.Id == currentUserId)
@@ -52,7 +47,6 @@ public class ActivateRoleHandler : ICommandHandler<ActivateRoleCommand>
             return Result.Failure(Error.Forbidden("Role.ModifyOwn", "You cannot modify a role that is currently assigned to you."));
         }
 
-        // Local Only Activation
         role.Activate();
         await _context.SaveChangesAsync(cancellationToken);
 

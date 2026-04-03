@@ -11,10 +11,12 @@ namespace Onyx.Oms.Web.Features.Roles.CreateRole;
 public class CreateRoleHandler : ICommandHandler<CreateRoleCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public CreateRoleHandler(IApplicationDbContext context)
+    public CreateRoleHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<Guid>> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
@@ -26,7 +28,11 @@ public class CreateRoleHandler : ICommandHandler<CreateRoleCommand, Guid>
         }
 
         // 4. Create Local Role
-        var role = Role.Create(request.Name, request.Description);
+        var roleResult = Role.Create(_currentUserService.ActiveTenantId, request.Name, request.Description);
+        if(roleResult.IsFailure)
+            return Result.Failure<Guid>(roleResult.Error);
+
+        var role = roleResult.Value;
 
         // 5. Add Permissions
         foreach (var perm in request.Permissions)

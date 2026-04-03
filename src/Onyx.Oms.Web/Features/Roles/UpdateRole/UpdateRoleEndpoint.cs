@@ -16,10 +16,6 @@ public class UpdateRoleEndpoint : IEndpoint
 
         group.MapPut("{id:guid}", async (ISender sender, Guid id, [FromBody] UpdateRoleCommand command) =>
         {
-            // Note: Since records are immutable by default regarding properties in primary constructor unless init-only,
-            // matching ID logic is usually good practice. 
-            // In C# records, we might need a trusted way to ensure Id matches.
-            // Here we assume client sends correct payload or we can double check.
             if (id != command.Id) return Results.BadRequest("Id mismatch");
 
             var result = await sender.Send(command);

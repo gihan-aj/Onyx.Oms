@@ -16,7 +16,9 @@ public class GetRolesPagedHandler : IQueryHandler<GetRolesPagedQuery, PagedResul
 
     public async Task<Result<PagedResult<RoleDto>>> Handle(GetRolesPagedQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Roles.AsNoTracking();
+        var query = _context.Roles
+            .AsNoTracking()
+            .Where(r => r.Name != Core.Domain.Constants.Roles.Oms.SystemAdmin || r.Name != Core.Domain.Constants.Roles.Oms.TenantOwner);
 
         // 1. Filtering
         if (request.IsActive.HasValue)

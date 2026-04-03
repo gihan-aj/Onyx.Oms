@@ -25,23 +25,15 @@ public class DeleteRoleHandler : ICommandHandler<DeleteRoleCommand>
             return Result.Failure(Error.NotFound("Role.NotFound", $"Role with Id {request.Id} was not found."));
         }
 
-        // Protect SuperAdmin role
-        if (role.Name == "SuperAdmin")
+        // Protect Admin roles
+        if (role.Name == Core.Domain.Constants.Roles.Oms.SystemAdmin || role.Name == Core.Domain.Constants.Roles.Oms.TenantOwner)
         {
-            return Result.Failure(Error.Forbidden("Role.Protected", "Modifying the SuperAdmin role is not allowed."));
+            return Result.Failure(Error.Forbidden("Role.Protected", "Deleting this role is not allowed."));
         }
 
         // Prevent users from modifying their own roles
-        var currentUserIdString = _currentUserService.UserId;
-        var currentUserId = Guid.Empty;
-        if (string.IsNullOrEmpty(currentUserIdString))
-        {
-            return Result.Failure(Error.Unauthorized("DeleteRole.NotAuthenticated", "User is not authenticated."));
-        }
-        if (!Guid.TryParse(currentUserIdString, out currentUserId))
-        {
-            return Result.Failure(Error.Unauthorized("DeleteRole.NotAuthenticated", "User is not authenticated."));
-        }
+        var currentUserId = _currentUserService.UserId;
+
         var isCurrentUserRole = await _context.AppUsers
             .Where(u => u.Id == currentUserId)
             .SelectMany(u => u.Roles)

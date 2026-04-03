@@ -1,9 +1,12 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Role : AuditableEntity<Guid>
+public class Role : AuditableEntity<Guid>, IMustHaveTenant
 {
+    public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public bool IsActive { get; private set; } = true;
@@ -16,18 +19,22 @@ public class Role : AuditableEntity<Guid>
     private readonly List<AppUser> _users = new();
     public IReadOnlyCollection<AppUser> Users => _users.AsReadOnly();
 
-    private Role() : base(Guid.Empty) { } // EF Core
+    private Role() : base(Guid.NewGuid()) { } // EF Core
 
-    private Role(Guid id, string name, string? description) : base(id) // ID is identity
+    private Role(Guid tenantId, string name, string? description) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         Name = name;
         Description = description;
         IsActive = true;
     }
 
-    public static Role Create(string name, string? description = null)
+    public static Result<Role> Create(Guid tenantId, string name, string? description = null)
     {
-        return new Role(Guid.NewGuid(), name, description);
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure<Role>(Error.Validation("Role.NameRequired", "Role name is required."));
+
+        return new Role(tenantId, name, description);
     }
 
     public void Update(string name, string? description)

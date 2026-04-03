@@ -11,12 +11,14 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.ToTable("Roles");
 
         builder.HasKey(x => x.Id);
-        // ID is int, so it will be Identity by default in SQL Server
+
+        builder.Property(x => x.TenantId)
+            .IsRequired();
 
         builder.Property(x => x.Name)
             .HasMaxLength(50)
             .IsRequired();
-            
+
         builder.HasIndex(x => x.Name).IsUnique();
 
         builder.Property(x => x.Description)
@@ -31,5 +33,7 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 
         // Configure Permissions as JSON
         builder.PrimitiveCollection(r => r.Permissions);
+
+        builder.HasIndex(x => new { x.TenantId, x.IsActive });
     }
 }

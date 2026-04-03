@@ -16,9 +16,6 @@ public class TenantSubscriptionConfiguration : IEntityTypeConfiguration<TenantSu
         
         builder.Property(ts => ts.Status).IsRequired().HasConversion<int>();
 
-        builder.Property(c => c.CreatedBy).HasMaxLength(36);
-        builder.Property(c => c.LastModifiedBy).HasMaxLength(36);
-
         builder.HasOne(ts => ts.Plan)
             .WithMany()
             .IsRequired()

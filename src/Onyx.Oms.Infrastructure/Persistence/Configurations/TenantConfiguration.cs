@@ -28,9 +28,6 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         builder.Property(t => t.PreferencesJson).HasColumnType("nvarchar(max)");
 
-        builder.Property(c => c.CreatedBy).HasMaxLength(36);
-        builder.Property(c => c.LastModifiedBy).HasMaxLength(36);
-
         builder.OwnsOne(t => t.StoreAddress, a =>
         {
             a.Property(p => p.Street).HasMaxLength(200).HasColumnName("Street");

@@ -24,13 +24,6 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(x => x.Description)
             .HasMaxLength(200);
 
-        builder.Property(c => c.CreatedBy)
-            .HasMaxLength(36);
-
-        builder.Property(c => c.LastModifiedBy)
-            .HasMaxLength(36)
-            .IsRequired(false);
-
         // Configure Permissions as JSON
         builder.PrimitiveCollection(r => r.Permissions);
 

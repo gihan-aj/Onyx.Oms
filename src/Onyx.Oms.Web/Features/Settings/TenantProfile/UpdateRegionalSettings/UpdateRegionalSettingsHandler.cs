@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
-using Onyx.Oms.Web.Common.Settings;
 using Onyx.Oms.Web.Features.Settings.TenantProfile.GetProfile;
 
 namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateRegionalSettings;
@@ -12,12 +10,10 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateRegionalSettings;
 public class UpdateRegionalSettingsHandler : ICommandHandler<UpdateRegionalSettingsCommand>
 {
     private readonly IApplicationDbContext _context;
-    private readonly DefaultTenantProfileSettings _defaultSettings;
 
-    public UpdateRegionalSettingsHandler(IApplicationDbContext context, IOptions<DefaultTenantProfileSettings> defaultSettings)
+    public UpdateRegionalSettingsHandler(IApplicationDbContext context)
     {
         _context = context;
-        _defaultSettings = defaultSettings.Value;
     }
 
     public async Task<Result> Handle(UpdateRegionalSettingsCommand request, CancellationToken cancellationToken)

@@ -27,13 +27,6 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.Property(x => x.FirstName).HasMaxLength(100);
         builder.Property(x => x.LastName).HasMaxLength(100);
 
-        builder.Property(c => c.CreatedBy)
-            .HasMaxLength(36);
-
-        builder.Property(c => c.LastModifiedBy)
-            .HasMaxLength(36)
-            .IsRequired(false);
-
         // Many-to-Many Relationship Configuration
         builder.HasMany(x => x.Roles)
             .WithMany(x => x.Users)

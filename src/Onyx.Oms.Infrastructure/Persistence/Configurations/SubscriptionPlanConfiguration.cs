@@ -25,7 +25,5 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
         builder.Property(sp => sp.TrialPeriodInDays).IsRequired();
         builder.Property(sp => sp.IsActive).HasDefaultValue(true);
 
-        builder.Property(c => c.CreatedBy).HasMaxLength(36);
-        builder.Property(c => c.LastModifiedBy).HasMaxLength(36);
     }
 }

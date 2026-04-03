@@ -4,7 +4,6 @@ using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
-using Onyx.Oms.Web.Common.Settings;
 using Onyx.Oms.Web.Features.Settings.TenantProfile.GetProfile;
 
 namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateStoreAddress;
@@ -12,12 +11,10 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateStoreAddress;
 public class UpdateStoreAddressHandler : ICommandHandler<UpdateStoreAddressCommand>
 {
     private readonly IApplicationDbContext _context;
-    private readonly DefaultTenantProfileSettings _defaultSettings;
 
-    public UpdateStoreAddressHandler(IApplicationDbContext context, IOptions<DefaultTenantProfileSettings> defaultSettings)
+    public UpdateStoreAddressHandler(IApplicationDbContext context)
     {
         _context = context;
-        _defaultSettings = defaultSettings.Value;
     }
 
     public async Task<Result> Handle(UpdateStoreAddressCommand request, CancellationToken cancellationToken)

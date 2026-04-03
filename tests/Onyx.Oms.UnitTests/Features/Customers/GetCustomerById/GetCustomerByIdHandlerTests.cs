@@ -24,9 +24,10 @@ public class GetCustomerByIdHandlerTests
     public async Task Handle_ShouldReturnCustomer_WhenExists()
     {
         // Arrange
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var customerId = Guid.NewGuid();
         var address = new Address("Street", "City", "State", "Zip", "Country");
-        var customer = Customer.Create("Name", "email@test.com", "123", null, address, "Notes").Value;
+        var customer = Customer.Create(tenantId, "Name", "email@test.com", "123", null, address, "Notes").Value;
         
         // Reflection to set ID since it's private set in real usage usually, 
         // but our Entity base allows init or has private setter. 

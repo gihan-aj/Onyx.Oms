@@ -9,6 +9,7 @@ public class CourierTests
     public void Create_ShouldReturnSuccess_WhenInputsAreValid()
     {
         // Arrange
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var name = "DHL";
         var contactPerson = "John Doe";
         var primaryPhone = "1234567890";
@@ -17,7 +18,7 @@ public class CourierTests
         var trackingUrlTemplate = "https://dhl.com/track/{0}";
 
         // Act
-        var result = Courier.Create(name, contactPerson, primaryPhone, secondaryPhone, websiteUrl, trackingUrlTemplate);
+        var result = Courier.Create(tenantId, name, contactPerson, primaryPhone, secondaryPhone, websiteUrl, trackingUrlTemplate);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -28,8 +29,11 @@ public class CourierTests
     [Fact]
     public void Create_ShouldReturnFailure_WhenNameIsEmpty()
     {
+        // Arrange
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
         // Act
-        var result = Courier.Create("", "John Doe", "123", null, null, null);
+        var result = Courier.Create(tenantId, "", "John Doe", "123", null, null, null);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -40,7 +44,8 @@ public class CourierTests
     public void UpdateDetails_ShouldUpdateProperties()
     {
         // Arrange
-        var courier = Courier.Create("Old Name", "Old Contact", "111", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var courier = Courier.Create(tenantId, "Old Name", "Old Contact", "111", null, null, null).Value;
         var newName = "New Name";
 
         // Act
@@ -55,7 +60,8 @@ public class CourierTests
     public void Deactivate_ShouldSetIsActiveToFalse()
     {
         // Arrange
-        var courier = Courier.Create("Test", "Test", "123", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var courier = Courier.Create(tenantId, "Test", "Test", "123", null, null, null).Value;
 
         // Act
         courier.Deactivate();
@@ -68,7 +74,8 @@ public class CourierTests
     public void Activate_ShouldSetIsActiveToTrue()
     {
         // Arrange
-        var courier = Courier.Create("Test", "Test", "123", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var courier = Courier.Create(tenantId, "Test", "Test", "123", null, null, null).Value;
         courier.Deactivate(); // Start as inactive
 
         // Act

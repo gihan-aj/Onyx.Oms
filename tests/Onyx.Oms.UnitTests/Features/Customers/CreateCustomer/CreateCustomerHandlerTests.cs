@@ -12,11 +12,13 @@ public class CreateCustomerHandlerTests
 {
     private readonly IApplicationDbContext _context;
     private readonly CreateCustomerHandler _handler;
+    private readonly ICurrentUserService _currentUserService;
 
     public CreateCustomerHandlerTests()
     {
         _context = Substitute.For<IApplicationDbContext>();
-        _handler = new CreateCustomerHandler(_context);
+        _currentUserService = Substitute.For<ICurrentUserService>();
+        _handler = new CreateCustomerHandler(_context, _currentUserService);
     }
 
     [Fact]
@@ -41,8 +43,9 @@ public class CreateCustomerHandlerTests
     public async Task Handle_ShouldReturnFailure_WhenEmailIsTaken()
     {
         // Arrange
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var email = "john@example.com";
-        var existingCustomer = Customer.Create("Existing", email, "000000", null, null, null).Value;
+        var existingCustomer = Customer.Create(tenantId, "Existing", email, "000000", null, null, null).Value;
         
         var command = new CreateCustomerCommand(
             "New User", email, "123456", null, "Street", "City", "State", "Zip", "Country", "Notes");

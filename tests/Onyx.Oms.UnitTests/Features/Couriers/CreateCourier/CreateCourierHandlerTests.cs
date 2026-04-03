@@ -11,11 +11,13 @@ public class CreateCourierHandlerTests
 {
     private readonly IApplicationDbContext _context;
     private readonly CreateCourierHandler _handler;
+    private readonly ICurrentUserService _currentUserService;
 
     public CreateCourierHandlerTests()
     {
         _context = Substitute.For<IApplicationDbContext>();
-        _handler = new CreateCourierHandler(_context);
+        _currentUserService = Substitute.For<ICurrentUserService>();
+        _handler = new CreateCourierHandler(_context, _currentUserService);
     }
 
     [Fact]

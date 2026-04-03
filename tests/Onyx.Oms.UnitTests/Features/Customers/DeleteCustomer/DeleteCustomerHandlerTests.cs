@@ -23,7 +23,8 @@ public class DeleteCustomerHandlerTests
     public async Task Handle_ShouldReturnSuccess_WhenCustomerExists()
     {
         // Arrange
-        var customer = Customer.Create("Name", "e@e.com", "123", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var customer = Customer.Create(tenantId, "Name", "e@e.com", "123", null, null, null).Value;
         var command = new DeleteCustomerCommand(customer.Id);
 
         var dbSet = MockDbSet.Create(customer);

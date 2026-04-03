@@ -23,7 +23,8 @@ public class UpdateCustomerHandlerTests
     public async Task Handle_ShouldReturnSuccess_WhenUpdateIsValid()
     {
         // Arrange
-        var customer = Customer.Create("Old Name", "old@test.com", "111", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var customer = Customer.Create(tenantId, "Old Name", "old@test.com", "111", null, null, null).Value;
         var command = new UpdateCustomerCommand(
             customer.Id, "New Name", "new@test.com", "222", "333", "St", "City", "St", "Z", "Co", "Note");
 
@@ -62,8 +63,9 @@ public class UpdateCustomerHandlerTests
     public async Task Handle_ShouldReturnComparison_WhenEmailTakenByAnotherUser()
     {
         // Arrange
-        var customer1 = Customer.Create("User 1", "user1@test.com", "111", null, null, null).Value;
-        var customer2 = Customer.Create("User 2", "user2@test.com", "222", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var customer1 = Customer.Create(tenantId, "User 1", "user1@test.com", "111", null, null, null).Value;
+        var customer2 = Customer.Create(tenantId, "User 2", "user2@test.com", "222", null, null, null).Value;
         
         // Try to update User 1 to use User 2's email
         var command = new UpdateCustomerCommand(
@@ -84,7 +86,8 @@ public class UpdateCustomerHandlerTests
     public async Task Handle_ShouldReturnSuccess_WhenEmailDidNotChange()
     {
         // Arrange
-        var customer = Customer.Create("User 1", "user1@test.com", "111", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var customer = Customer.Create(tenantId, "User 1", "user1@test.com", "111", null, null, null).Value;
         
         // Same email, just update name
         var command = new UpdateCustomerCommand(

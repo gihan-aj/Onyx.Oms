@@ -11,13 +11,14 @@ public class CustomerTests
     public void Create_ShouldReturnSuccess_WhenInputsAreValid()
     {
         // Arrange
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var name = "Jane Doe";
         var email = "jane@example.com";
         var phone = "555-0199";
         var address = new Address("123 Main St", "Colombo", "Western", "00100", "Sri Lanka");
 
         // Act
-        var result = Customer.Create(name, email, phone, null, address, "Test Notes");
+        var result = Customer.Create(tenantId, name, email, phone, null, address, "Test Notes");
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -30,8 +31,11 @@ public class CustomerTests
     [Fact]
     public void Create_ShouldReturnFailure_WhenNameIsEmpty()
     {
+        // Arrange
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
         // Act
-        var result = Customer.Create("", "email@test.com", "123", null, null, null);
+        var result = Customer.Create(tenantId, "", "email@test.com", "123", null, null, null);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -41,8 +45,11 @@ public class CustomerTests
     [Fact]
     public void Create_ShouldReturnFailure_WhenPrimaryPhoneIsEmpty()
     {
+        // Arrange
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
         // Act
-        var result = Customer.Create("Name", "email@test.com", "", null, null, null);
+        var result = Customer.Create(tenantId, "Name", "email@test.com", "", null, null, null);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -63,7 +70,9 @@ public class CustomerTests
     public void Activate_ShouldSetIsActiveToTrue()
     {
         // Arrange
-        var customer = Customer.Create("Name", "e@e.com", "123", null, null, null).Value;
+        var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
+        var customer = Customer.Create(tenantId, "Name", "e@e.com", "123", null, null, null).Value;
         customer.Deactivate();
 
         // Act

@@ -1,19 +1,24 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class ProductImage : Entity<Guid>
+public class ProductImage : Entity<Guid>, IMustHaveTenant
 {
-    public ProductImage(Guid productId, string url, int displayOrder, bool isMain) : base(Guid.NewGuid())
+    private ProductImage() : base(Guid.NewGuid()) { }
+
+    public ProductImage(Guid tenantId, Guid productId, string url, int displayOrder, bool isMain) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         ProductId = productId;
         Url = url;
         DisplayOrder = displayOrder;
         IsMain = isMain;
     }
 
+    public Guid TenantId { get; private set; }
     public Guid ProductId { get; private set; }
     public string Url { get; private set; } = string.Empty;
     public int DisplayOrder { get; private set; }

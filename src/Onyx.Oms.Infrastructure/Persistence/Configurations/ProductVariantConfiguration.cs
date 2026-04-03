@@ -11,6 +11,9 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
         builder.ToTable("ProductVariants");
         builder.HasKey(v => v.Id);
 
+        builder.HasIndex(v => v.TenantId)
+            .IsUnique();
+
         builder.HasIndex(v => v.Sku)
             .IsUnique()
             .HasFilter("[DeletedAtUtc] IS NULL");
@@ -53,6 +56,8 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
             ab.Property(a => a.Name).HasMaxLength(100);
             ab.Property(a => a.Value).HasMaxLength(200);
         });
+
+        builder.HasIndex(v => new { v.TenantId, v.ProductId });
 
         // Soft-delete global query filter — uses DeletedAtUtc directly (IsDeleted is a computed property)
         builder.HasQueryFilter(v => v.DeletedAtUtc == null);

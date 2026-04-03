@@ -1,16 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
-using Onyx.Oms.Infrastructure.Persistence;
 
 namespace Onyx.Oms.Web.Features.Products.UpdateProductImages
 {
     public class UpdateProductImagesHandler : ICommandHandler<UpdateProductImagesCommand>
     {
-        private readonly AppDbContext _context;
+        private readonly IApplicationDbContext _context;
 
-        public UpdateProductImagesHandler(AppDbContext context)
+        public UpdateProductImagesHandler(IApplicationDbContext context)
         {
             _context = context;
         }
@@ -34,7 +34,7 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductImages
             var newImages = updateResult.Value;
             if(newImages != null && newImages.Count > 0)
             {
-                _context.AddRange(newImages);
+                _context.ProductImages.AddRange(newImages);
             }
 
             await _context.SaveChangesAsync(cancellationToken);

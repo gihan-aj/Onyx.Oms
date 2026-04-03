@@ -7,10 +7,12 @@ namespace Onyx.Oms.Infrastructure.Persistence.Interceptors;
 public class TenantSecurityInterceptor : SaveChangesInterceptor
 {
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantSecurityBypass _bypass;
 
-    public TenantSecurityInterceptor(ICurrentUserService currentUserService)
+    public TenantSecurityInterceptor(ICurrentUserService currentUserService, ITenantSecurityBypass bypass)
     {
         _currentUserService = currentUserService;
+        _bypass = bypass;
     }
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
@@ -28,6 +30,9 @@ public class TenantSecurityInterceptor : SaveChangesInterceptor
     private void EnforceTenantSecurity(DbContext? context)
     {
         if (context == null) return;
+
+        if (_bypass.IsBypassEnabled)
+            return;
 
         var activeTenantId = _currentUserService.ActiveTenantId;
 

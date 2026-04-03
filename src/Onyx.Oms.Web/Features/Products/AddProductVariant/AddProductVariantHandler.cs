@@ -12,10 +12,12 @@ namespace Onyx.Oms.Web.Features.Products.AddProductVariant
     public class AddProductVariantHandler : ICommandHandler<AddProductVariantCommand, Guid>
     {
         private readonly IApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AddProductVariantHandler(IApplicationDbContext context)
+        public AddProductVariantHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Result<Guid>> Handle(AddProductVariantCommand request, CancellationToken cancellationToken)
@@ -47,6 +49,7 @@ namespace Onyx.Oms.Web.Features.Products.AddProductVariant
 
             // ProductVariant.Create expects a product that has variants
             var variantResult = ProductVariant.Create(
+                _currentUserService.ActiveTenantId,
                 product,
                 variantSku,
                 attributes,

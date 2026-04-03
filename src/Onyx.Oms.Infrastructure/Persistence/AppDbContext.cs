@@ -10,15 +10,15 @@ namespace Onyx.Oms.Infrastructure.Persistence;
 public class AppDbContext : DbContext, IApplicationDbContext
 {
     private readonly ICurrentUserService _currentUserService;
-    private readonly AuditableEntityInterceptor _auditableEntityInterceptor;
+    private readonly ITenantSecurityBypass _bypass;
 
     public AppDbContext(
         DbContextOptions<AppDbContext> options,
-        AuditableEntityInterceptor auditableEntityInterceptor,
-        ICurrentUserService currentUserService) : base(options)
+        ICurrentUserService currentUserService,
+        ITenantSecurityBypass bypass) : base(options)
     {
-        _auditableEntityInterceptor = auditableEntityInterceptor;
         _currentUserService = currentUserService;
+        _bypass = bypass;
     }
 
     public DbSet<Courier> Couriers { get; set; }
@@ -36,7 +36,6 @@ public class AppDbContext : DbContext, IApplicationDbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.AddInterceptors(_auditableEntityInterceptor);
         base.OnConfiguring(optionsBuilder);
     }
 
@@ -66,6 +65,6 @@ public class AppDbContext : DbContext, IApplicationDbContext
     private void ApplyTenantFilter<TEntity>(ModelBuilder builder, Guid activeTenantId)
         where TEntity : class, IMustHaveTenant
     {
-        builder.Entity<TEntity>().HasQueryFilter(e => e.TenantId == activeTenantId);
+        builder.Entity<TEntity>().HasQueryFilter(e => _bypass.IsBypassEnabled || e.TenantId == activeTenantId);
     }
 }

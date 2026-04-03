@@ -58,9 +58,10 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
                     Values = o.Values,
                 }).ToList();
 
+            var tenatId = _currentUserService.ActiveTenantId;
 
             var productResult = Product.Create(
-                _currentUserService.ActiveTenantId,
+                tenatId,
                 command.Name,
                 baseSku,
                 command.Description,
@@ -103,6 +104,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
                     var weight = variantDto.Weight != null ? new Weight(variantDto.Weight.Value, variantDto.Weight.Unit) : baseWeight;
 
                     var varinatResult = ProductVariant.Create(
+                        tenatId,
                         product,
                         variantSku,
                         attributes,
@@ -133,7 +135,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
             {
                 foreach(var imgDto in command.Images)
                 {
-                    var image = new ProductImage(product.Id, imgDto.Url, imgDto.DisplayOrder, imgDto.IsMain);
+                    var image = new ProductImage(tenatId, product.Id, imgDto.Url, imgDto.DisplayOrder, imgDto.IsMain);
                     if (!string.IsNullOrWhiteSpace(imgDto.OptionName) && !string.IsNullOrWhiteSpace(imgDto.OptionValue))
                     {
                         var imageResult = image.LinkToOption(imgDto.OptionName, imgDto.OptionValue, product.Options);

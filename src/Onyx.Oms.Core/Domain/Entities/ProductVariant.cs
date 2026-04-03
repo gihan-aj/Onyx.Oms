@@ -5,20 +5,21 @@ using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
+public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTenant
 {
-    private ProductVariant() { }
+    private ProductVariant() : base(Guid.NewGuid()) { }
 
     internal ProductVariant(
-        Guid id,
+        Guid tenantId,
         Guid productId,
         string sku,
         List<VariantAttribute> attributes,
         Money cost,
         Money price,
         Weight? weight,
-        int stockOnHand) : base(id)
+        int stockOnHand) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         ProductId = productId;
         Sku = sku;
         Cost = cost;
@@ -31,6 +32,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
         _attributes.AddRange(attributes);
     }
 
+    public Guid TenantId { get; private set; }
     public Guid ProductId { get; private set; }
     public string Sku { get; private set; } = string.Empty;
 
@@ -77,6 +79,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
     public virtual Product Product { get; private set; } = null!;
 
     public static Result<ProductVariant> Create(
+        Guid tenantId,
         Product product,
         string sku,
         List<VariantAttribute> attributes,
@@ -108,7 +111,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
         }
 
         var variant = new ProductVariant(
-            Guid.NewGuid(),
+            tenantId,
             product.Id,
             sku,
             attributes,
@@ -125,6 +128,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
     /// No attribute validation is performed — this variant intentionally has no attributes.
     /// </summary>
     internal static Result<ProductVariant> CreateDefault(
+        Guid tenantId,
         Product product,
         string sku,
         Money cost,
@@ -136,7 +140,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
             return Result.Failure<ProductVariant>(Error.Validation("ProductVariant.SkuRequired", "SKU is required for the default variant."));
 
         var variant = new ProductVariant(
-            Guid.NewGuid(),
+            tenantId,
             product.Id,
             sku,
             new List<VariantAttribute>(), // empty — no selectable options

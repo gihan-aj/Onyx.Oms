@@ -11,6 +11,7 @@ using Onyx.Oms.Infrastructure.Identity.IdP;
 using Onyx.Oms.Infrastructure.Persistence;
 using Onyx.Oms.Infrastructure.Persistence.Interceptors;
 using Onyx.Oms.Infrastructure.Persistence.Seeding;
+using Onyx.Oms.Infrastructure.Security;
 using Onyx.Oms.Infrastructure.Services;
 using Refit;
 
@@ -27,6 +28,8 @@ public static class DependencyInjection
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddScoped<TenantSecurityInterceptor>();
         services.AddScoped<DispatchDomainEventsInterceptor>();
+
+        services.AddScoped<ITenantSecurityBypass, TenantSecurityBypass>();
 
         services.AddMemoryCache(); // Required for caching decorator
 

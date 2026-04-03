@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Domain.Constants;
 using System.Security.Claims;
@@ -8,12 +9,13 @@ namespace Onyx.Oms.Infrastructure.Identity;
 public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IPermissionService _permissionService;
+    private readonly IServiceProvider _serviceProvider;
+    //private readonly IPermissionService _permissionService;
 
-    public CurrentUserService(IHttpContextAccessor httpContextAccessor, IPermissionService permissionService)
+    public CurrentUserService(IHttpContextAccessor httpContextAccessor, IServiceProvider serviceProvider)
     {
         _httpContextAccessor = httpContextAccessor;
-        _permissionService = permissionService;
+        _serviceProvider = serviceProvider;
     }
 
     public bool IsAuthenticated =>
@@ -56,7 +58,9 @@ public class CurrentUserService : ICurrentUserService
             {
                 if(Guid.TryParse(requestedTenantString, out var requestedTenantId))
                 {
-                    var userPermissions = _permissionService.GetPermissionsAsync(UserId).GetAwaiter().GetResult();
+                    using var scope = _serviceProvider.CreateScope();
+                    var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionService>();
+                    var userPermissions = permissionService.GetPermissionsAsync(UserId).GetAwaiter().GetResult();
                     if (userPermissions != null && userPermissions.Contains(Permissions.Platform.ImpersonateTenant))
                     {
                         return requestedTenantId;

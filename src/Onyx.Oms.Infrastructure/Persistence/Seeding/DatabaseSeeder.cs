@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Entities;
 
@@ -7,58 +8,63 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
     public class DatabaseSeeder
     {
         private readonly AppDbContext _context;
+        private readonly ITenantSecurityBypass _bypass;
 
-        public DatabaseSeeder(AppDbContext context)
+        public DatabaseSeeder(AppDbContext context, ITenantSecurityBypass bypass)
         {
             _context = context;
+            _bypass = bypass;
         }
 
         public async Task SeedAsync(CancellationToken cancellationToken = default)
         {
-            await _context.Database.MigrateAsync();
-
-            var hostTenant = await _context.Tenants
-                .FirstOrDefaultAsync(t => t.Id == Tenants.HostTenant.Id, cancellationToken);
-            if (hostTenant == null)
+            using (_bypass.EnableBypass())
             {
-                var tenantResult = Tenant.Create(
-                    companyName: Tenants.HostTenant.Name,
-                    contactEmail: Users.SystemAdmin.Email,
-                    contactPhone: null,
-                    explicitId: Tenants.HostTenant.Id);
+                await _context.Database.MigrateAsync();
 
-                hostTenant = tenantResult.Value;
-                _context.Tenants.Add(hostTenant);
+                var hostTenant = await _context.Tenants
+                    .FirstOrDefaultAsync(t => t.Id == Tenants.HostTenant.Id, cancellationToken);
+                if (hostTenant == null)
+                {
+                    var tenantResult = Tenant.Create(
+                        companyName: Tenants.HostTenant.Name,
+                        contactEmail: Users.SystemAdmin.Email,
+                        contactPhone: null,
+                        explicitId: Tenants.HostTenant.Id);
+
+                    hostTenant = tenantResult.Value;
+                    _context.Tenants.Add(hostTenant);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+
+                await SeedRolesAndPermissionsAsync(hostTenant.Id, cancellationToken);
+
+                var adminUser = await _context.AppUsers
+                    .Include(u => u.Roles)
+                    .FirstOrDefaultAsync(u => u.Id == Users.SystemAdmin.Id, cancellationToken);
+
+                if (adminUser == null)
+                {
+                    var userResult = AppUser.Create(
+                        identityUserId: Users.SystemAdmin.Id,
+                        tenantId: Tenants.HostTenant.Id,
+                        email: Users.SystemAdmin.Email,
+                        firstName: "System",
+                        lastName: "Admin");
+
+                    adminUser = userResult.Value;
+                    _context.AppUsers.Add(adminUser);
+                }
+
+                var systemAdminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == Roles.Oms.SystemAdmin, cancellationToken);
+
+                if (!adminUser.Roles.Any(r => r.Name == Roles.Oms.SystemAdmin))
+                {
+                    adminUser.AssignRole(systemAdminRole!);
+                }
+
                 await _context.SaveChangesAsync(cancellationToken);
             }
-
-            await SeedRolesAndPermissionsAsync(hostTenant.Id, cancellationToken);
-
-            var adminUser = await _context.AppUsers
-                .Include(u => u.Roles)
-                .FirstOrDefaultAsync(u => u.Id == Users.SystemAdmin.Id, cancellationToken);
-
-            if(adminUser == null)
-            {
-                var userResult = AppUser.Create(
-                    identityUserId: Users.SystemAdmin.Id,
-                    tenantId: Tenants.HostTenant.Id,
-                    email: Users.SystemAdmin.Email,
-                    firstName: "System",
-                    lastName: "Admin");
-
-                adminUser = userResult.Value;
-                _context.AppUsers.Add(adminUser);
-            }
-
-            var systemAdminRole = await _context.Set<Role>().FirstAsync(r => r.Name == Roles.Oms.SystemAdmin, cancellationToken);
-
-            if (!adminUser.Roles.Any(r => r.Name == Roles.Oms.SystemAdmin))
-            {
-                adminUser.AssignRole(systemAdminRole);
-            }
-
-            await _context.SaveChangesAsync(cancellationToken);
         }
 
         private async Task SeedRolesAndPermissionsAsync(Guid hostTenantId, CancellationToken cancellationToken)
@@ -69,7 +75,6 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
             var tenantPermissions = allPermssions.Where(p => p.StartsWith("tenant:")).ToList();
 
             var systemAdminRole = await _context.Roles
-                .Include(p => p.Permissions)
                 .FirstOrDefaultAsync(r => r.Name == Roles.Oms.SystemAdmin, cancellationToken);
 
             if(systemAdminRole == null)
@@ -82,7 +87,6 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
             SyncPermissions(systemAdminRole, allPermssions);
 
             var tenantOwnerRole = await _context.Roles
-                .Include(p => p.Permissions)
                 .FirstOrDefaultAsync(r => r.Name == Roles.Oms.TenantOwner, cancellationToken);
 
             if(tenantOwnerRole == null)
@@ -93,6 +97,8 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
             }
 
             SyncPermissions(tenantOwnerRole, tenantPermissions);
+
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         private void SyncPermissions(Role role, List<string> intendedPermissions)

@@ -11,6 +11,9 @@ public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
         builder.ToTable("ProductImages");
         builder.HasKey(i => i.Id);
 
+        builder.Property(i => i.TenantId)
+            .IsRequired();
+
         builder.Property(i => i.Url)
             .IsRequired()
             .HasMaxLength(2048);
@@ -23,6 +26,6 @@ public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
             .HasMaxLength(200);
 
         // Index for efficient filtering: e.g. "give me all images for Color: Red"
-        builder.HasIndex(i => new { i.ProductId, i.OptionName, i.OptionValue });
+        builder.HasIndex(i => new { i.TenantId, i.ProductId, i.OptionName, i.OptionValue });
     }
 }

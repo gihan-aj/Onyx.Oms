@@ -124,6 +124,7 @@ public class Product : AuditableEntity<Guid>, IMustHaveTenant
             // Variant-less mode: create a default variant to hold logistics.
             // This is purely internal — the UI works with simple fields, we store them here.
             var defaultVariantResult = ProductVariant.CreateDefault(
+                tenantId,
                 product,
                 baseSku,
                 baseCost,
@@ -275,6 +276,7 @@ public class Product : AuditableEntity<Guid>, IMustHaveTenant
                 var weight = BaseWeight != null ? new Weight(BaseWeight.Value, BaseWeight.Unit) : null;
 
                 var varinatResult = ProductVariant.Create(
+                    TenantId,
                     this,
                     newSku,
                     combo,
@@ -348,6 +350,7 @@ public class Product : AuditableEntity<Guid>, IMustHaveTenant
             HasVariants = false;
 
             var defaultVariantResult = ProductVariant.CreateDefault(
+                TenantId,
                 this,
                 BaseSku,
                 BaseCost,
@@ -394,6 +397,7 @@ public class Product : AuditableEntity<Guid>, IMustHaveTenant
             return Result.Failure<ProductVariant>(Error.NotFound("Product.DefaultVariantExists", "Default variant is already exist."));
 
         return ProductVariant.CreateDefault(
+            TenantId,
             this,
             BaseSku, 
             BaseCost, 
@@ -453,7 +457,7 @@ public class Product : AuditableEntity<Guid>, IMustHaveTenant
             }
             else
             {
-                var newImage = new ProductImage(Id, imgData.Url, imgData.DisplayOrder, imgData.IsMain);
+                var newImage = new ProductImage(TenantId, Id, imgData.Url, imgData.DisplayOrder, imgData.IsMain);
                 if (!string.IsNullOrEmpty(imgData.OptionName) && !string.IsNullOrEmpty(imgData.OptionValue))
                 {
                     var linkResult = newImage.LinkToOption(imgData.OptionName, imgData.OptionValue, _options);

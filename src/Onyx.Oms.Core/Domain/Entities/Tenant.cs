@@ -11,9 +11,8 @@ namespace Onyx.Oms.Core.Domain.Entities
 
         private Tenant() { }
 
-        private Tenant(Guid? id, string companyName, string contactEmail, string? contactPhone)
+        private Tenant(Guid? id, string companyName, string contactEmail, string? contactPhone) : base(id ?? Guid.NewGuid())
         {
-            Id = id ?? Guid.NewGuid();
             CompanyName = companyName;
             ContactEmail = contactEmail;
             if(!string.IsNullOrWhiteSpace(contactEmail))

@@ -10,64 +10,95 @@ namespace Onyx.Oms.Infrastructure.Services;
 public class AppSequenceService : IAppSequenceService
 {
     private readonly AppDbContext _dbContext;
+    private readonly ICurrentUserService _currentUserService;
 
-    public AppSequenceService(AppDbContext dbContext)
+    public AppSequenceService(AppDbContext dbContext, ICurrentUserService currentUserService)
     {
         _dbContext = dbContext;
+        _currentUserService = currentUserService;
     }
 
-    public async Task<string> GetNextNumberAsync(string sequenceId, string prefix, CancellationToken ct = default)
-    {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
-        try
+    public async Task<Result<string>> GetNextNumberAsync(string prefix, CancellationToken cancellationToken = default)
+    {       
+        int maxRetries = 3;
+
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            var currentValNullable = await _dbContext.Database.SqlQueryRaw<long?>(
-                "SELECT CAST(CurrentValue AS bigint) AS Value FROM AppSequences WITH (UPDLOCK) WHERE Id = {0}", sequenceId)
-                .SingleOrDefaultAsync(ct);
-
-            long nextValue;
-            if (currentValNullable == null)
+            try
             {
-                nextValue = 1;
-                await _dbContext.Database.ExecuteSqlRawAsync(
-                    "INSERT INTO AppSequences (Id, CurrentValue) VALUES ({0}, {1})", 
-                    new object[] { sequenceId, nextValue }, ct);
+                var sequence = await _dbContext.AppSequences
+                    .FirstOrDefaultAsync(s => s.Prefix == prefix, cancellationToken);
+
+                if (sequence == null)
+                {
+                    sequence = new AppSequence
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = _currentUserService.ActiveTenantId,
+                        Prefix = prefix,
+                        CurrentValue = 0
+                    };
+
+                    _dbContext.AppSequences.Add(sequence);
+                }
+
+                sequence.CurrentValue++;
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                return $"{prefix}-{sequence.CurrentValue:D6}";
             }
-            else
+            catch(DbUpdateConcurrencyException ex)
             {
-                nextValue = currentValNullable.Value + 1;
-                await _dbContext.Database.ExecuteSqlRawAsync(
-                    "UPDATE AppSequences SET CurrentValue = {0} WHERE Id = {1}", 
-                    new object[] { nextValue, sequenceId }, ct);
+                if (attempt == maxRetries - 1)
+                {
+                    //throw new Exception($"System is currently experiencing high traffic. Could not generate sequence for {prefix}. Please try again.");
+                    return Result.Failure<string>(Error.Failure("AppSequence.Concurrency", $"System is currently experiencing high traffic. Could not generate sequence for {prefix}. Please try again."));
+                }
+                foreach (var entry in ex.Entries)
+                {
+                    if (entry.Entity is AppSequence)
+                    {
+                        // This updates the local 'sequence' variable with the newly incremented value
+                        await entry.ReloadAsync(cancellationToken);
+                    }
+                }
             }
-
-            await transaction.CommitAsync(ct);
-
-            return $"{prefix}-{nextValue:D4}";
         }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+
+        return Result.Failure<string>(Error.Failure("AppSequence.Concurrency", "Sequence generation failed."));
     }
 
-    public async Task<long?> GetCurrentValueAsync(string sequenceId, CancellationToken ct = default)
+    public async Task<long?> GetCurrentValueAsync(string prefix, CancellationToken ct = default)
     {
         var sequence = await _dbContext.AppSequences
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == sequenceId, ct);
+            .FirstOrDefaultAsync(s => s.Prefix == prefix, ct);
 
         return sequence?.CurrentValue;
     }
 
-    public async Task<Result> UpdateCurrentValueAsync(string sequenceId, long newValue, CancellationToken ct = default)
+    public async Task<List<AppSequence>> GetCurrentValuesAsync(CancellationToken ct = default)
     {
-        var sequence = await _dbContext.AppSequences.FirstOrDefaultAsync(s => s.Id == sequenceId, ct);
+        var sequence = await _dbContext.AppSequences
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        return sequence;
+    }
+
+    public async Task<Result> UpdateCurrentValueAsync(string prefix, long newValue, CancellationToken ct = default)
+    {
+        var sequence = await _dbContext.AppSequences.FirstOrDefaultAsync(s => s.Prefix == prefix, ct);
         
         if (sequence == null)
         {
-            sequence = new AppSequence { Id = sequenceId, CurrentValue = newValue };
+            sequence = new AppSequence 
+            { 
+                Id = Guid.NewGuid(), 
+                TenantId = _currentUserService.ActiveTenantId, 
+                Prefix = prefix, 
+                CurrentValue = newValue 
+            };
             _dbContext.AppSequences.Add(sequence);
         }
         else

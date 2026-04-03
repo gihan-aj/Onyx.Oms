@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Couriers.DeleteCourier;
 
-public class DeleteCourierHandler : IRequestHandler<DeleteCourierCommand, Result>
+public class DeleteCourierHandler : ICommandHandler<DeleteCourierCommand>
 {
     private readonly IApplicationDbContext _context;
 

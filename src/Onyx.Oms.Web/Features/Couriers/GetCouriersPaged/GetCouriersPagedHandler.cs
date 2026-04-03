@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Messaging;
 using Onyx.Oms.Web.Features.Couriers.GetCouriers;
 
 namespace Onyx.Oms.Web.Features.Couriers.GetCouriersPaged;
 
-public class GetCouriersPagedHandler : IRequestHandler<GetCouriersPagedQuery, Result<PagedResult<CourierDto>>>
+public class GetCouriersPagedHandler : IQueryHandler<GetCouriersPagedQuery, PagedResult<CourierDto>>
 {
     private readonly IApplicationDbContext _context;
 

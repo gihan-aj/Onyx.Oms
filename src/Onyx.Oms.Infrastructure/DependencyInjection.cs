@@ -22,8 +22,10 @@ public static class DependencyInjection
     {
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddScoped<AuditableEntityInterceptor>();
         services.AddScoped<IAppSequenceService, AppSequenceService>();
+
+        services.AddScoped<AuditableEntityInterceptor>();
+        services.AddScoped<TenantSecurityInterceptor>();
 
         services.AddMemoryCache(); // Required for caching decorator
 
@@ -53,10 +55,15 @@ public static class DependencyInjection
             })
             .AddHttpMessageHandler<IdPTokenHandler>();
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+        services.AddDbContext<AppDbContext>((sp, options) =>
+        {
+            var auditableInterceptor = sp.GetRequiredService<AuditableEntityInterceptor>();
+            var tenantSecurityInterceptor = sp.GetRequiredService<TenantSecurityInterceptor>();
+
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName))
+                .AddInterceptors(auditableInterceptor, tenantSecurityInterceptor);
+        });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<DatabaseSeeder>();

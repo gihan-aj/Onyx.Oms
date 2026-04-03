@@ -1,7 +1,7 @@
-﻿namespace Onyx.Oms.Core.Common.Interfaces
+﻿namespace Onyx.Oms.Core.Common.Interfaces;
+
+public interface IMustHaveTenant
 {
-    public interface IMustHaveTenant
-    {
-        Guid TenantId { get; }
-    }
+    Guid TenantId { get; }
+}
 }

@@ -1,9 +1,10 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class AppUser : AuditableEntity<Guid>
+public class AppUser : AuditableEntity<Guid>, IMustHaveTenant
 {
     public Guid TenantId { get; private set; }
     public Tenant Tenant { get; private set; } = null!;

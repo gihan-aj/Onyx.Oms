@@ -35,14 +35,23 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreatedOnUtc = DateTimeOffset.UtcNow;
-                entry.Entity.CreatedBy = _currentUserService.UserId ?? "System";
+                entry.Entity.CreatedBy = _currentUserService.UserId;
             }
 
-            if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+            else if (entry.State == EntityState.Modified || entry.HasChangedOwnedEntities())
             {
                 entry.Entity.LastModifiedOnUtc = DateTimeOffset.UtcNow;
-                entry.Entity.LastModifiedBy = _currentUserService.UserId ?? "System";
+                entry.Entity.LastModifiedBy = _currentUserService.UserId;
             }
         }
     }
+}
+
+public static class ChangeTrackerExtensions
+{
+    public static bool HasChangedOwnedEntities(this Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry) =>
+        entry.References.Any(r =>
+            r.TargetEntry != null &&
+            r.TargetEntry.Metadata.IsOwned() &&
+            (r.TargetEntry.State == EntityState.Added || r.TargetEntry.State == EntityState.Modified));
 }

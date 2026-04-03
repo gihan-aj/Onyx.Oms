@@ -5,7 +5,7 @@ using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Settings.AppSequences.UpdateAppSequenceValue;
 
-public record UpdateAppSequenceValueCommand(string SequenceId, long NewValue) : ICommand;
+public record UpdateAppSequenceValueCommand(string Prefix, long NewValue) : ICommand;
 
 public class UpdateAppSequenceValueHandler : ICommandHandler<UpdateAppSequenceValueCommand>
 {
@@ -18,7 +18,7 @@ public class UpdateAppSequenceValueHandler : ICommandHandler<UpdateAppSequenceVa
 
     public async Task<Result> Handle(UpdateAppSequenceValueCommand request, CancellationToken cancellationToken)
     {
-        var currentValue = await _appSequenceService.GetCurrentValueAsync(request.SequenceId, cancellationToken);
+        var currentValue = await _appSequenceService.GetCurrentValueAsync(request.Prefix, cancellationToken);
 
         if (currentValue.HasValue && request.NewValue < currentValue.Value)
         {
@@ -27,6 +27,6 @@ public class UpdateAppSequenceValueHandler : ICommandHandler<UpdateAppSequenceVa
                 $"The new sequence value ({request.NewValue}) cannot be less than the current value ({currentValue.Value})."));
         }
 
-        return await _appSequenceService.UpdateCurrentValueAsync(request.SequenceId, request.NewValue, cancellationToken);
+        return await _appSequenceService.UpdateCurrentValueAsync(request.Prefix, request.NewValue, cancellationToken);
     }
 }

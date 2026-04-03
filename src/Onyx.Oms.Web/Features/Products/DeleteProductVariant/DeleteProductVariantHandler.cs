@@ -30,7 +30,7 @@ namespace Onyx.Oms.Web.Features.Products.DeleteProductVariant
             if (variant is null)
                 return Result.Failure(Error.NotFound("Variant.NotFound", "Variant not found."));
 
-            var userId = _currentUserService.UserId ?? "System - Delete Variant";
+            var userId = _currentUserService.UserId;
             
             variant.Delete(userId);
 

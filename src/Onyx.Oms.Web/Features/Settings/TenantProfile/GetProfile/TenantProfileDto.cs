@@ -5,14 +5,15 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.GetProfile;
 public record TenantProfileDto(
     Guid Id,
     string StoreName,
-    string? LegalName,
-    string? TaxRegistrationNumber,
     string ContactEmail,
     string? ContactPhone,
+    string? LegalName,
+    string? TaxRegistrationNumber,
     Address? StoreAddress,
-    string BaseCurrency,
+    string DefaultCurrency,
     string WeightUnit,
     string? InvoiceFooterText,
     string? LogoUrl,
+    string? HeroImageUrl,
     string PreferencesJson
 );

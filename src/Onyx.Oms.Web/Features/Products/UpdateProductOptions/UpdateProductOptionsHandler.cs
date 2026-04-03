@@ -35,7 +35,7 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductOptions
 
             var validVariantMatrix = GetCombinations(request.Options);
 
-            var userId = _currentUserService.UserId ?? "System - Option value removed";
+            var userId = _currentUserService.UserId;
 
             var updateResult = product.UpdateOptionValues(options, validVariantMatrix, userId);
             

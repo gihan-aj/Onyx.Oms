@@ -24,7 +24,7 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         builder.Property(t => t.InvoiceFooterText).HasMaxLength(1000);
         builder.Property(t => t.LogoUrl).HasMaxLength(500);
-        builder.Property(t => t.HeroImage).HasMaxLength(500);
+        builder.Property(t => t.HeroImageUrl).HasMaxLength(500);
 
         builder.Property(t => t.PreferencesJson).HasColumnType("nvarchar(max)");
 

@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
 using Onyx.Oms.Web.Common.Settings;
+using Onyx.Oms.Web.Features.Settings.TenantProfile.GetProfile;
 
 namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateRegionalSettings;
 
@@ -20,21 +22,14 @@ public class UpdateRegionalSettingsHandler : ICommandHandler<UpdateRegionalSetti
 
     public async Task<Result> Handle(UpdateRegionalSettingsCommand request, CancellationToken cancellationToken)
     {
-        var profile = await _context.TenantProfiles.FirstOrDefaultAsync(cancellationToken);
+        var profile = await _context.Tenants.FirstOrDefaultAsync(cancellationToken);
 
         if (profile == null)
         {
-            profile = new Onyx.Oms.Core.Domain.Entities.TenantProfile(
-                Guid.NewGuid(),
-                _defaultSettings.StoreName,
-                _defaultSettings.ContactEmail,
-                string.IsNullOrWhiteSpace(_defaultSettings.BaseCurrency) ? "LKR" : _defaultSettings.BaseCurrency,
-                string.IsNullOrWhiteSpace(_defaultSettings.WeightUnit) ? "kg" : _defaultSettings.WeightUnit
-            );
-            _context.TenantProfiles.Add(profile);
+            return Result.Failure<TenantProfileDto>(Error.NotFound("Tenant.NotFound", "Tenant details not found."));
         }
 
-        profile.UpdateRegionalSettings(request.BaseCurrency, request.WeightUnit);
+        profile.UpdateRegionalSettings(request.DefaultCurrency, request.TimeZone, request.WeightUnit);
 
         await _context.SaveChangesAsync(cancellationToken);
 

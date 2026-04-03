@@ -3,6 +3,6 @@ public interface ISoftDeletable
 {
     bool IsDeleted { get; }
     DateTimeOffset? DeletedAtUtc { get; }
-    string? DeletedBy { get; }
-    void Delete(string userId);
+    Guid? DeletedBy { get; }
+    void Delete(Guid userId);
 }

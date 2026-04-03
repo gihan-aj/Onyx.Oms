@@ -22,6 +22,6 @@ public class GetTenantProfileEndpoint : IEndpoint
         .WithDescription("Retrieves the global tenant profile containing store settings.")
         .Produces<TenantProfileDto>(StatusCodes.Status200OK)
         .RequireAuthorization()
-        .HasPermission(Onyx.Oms.Core.Domain.Constants.Permissions.TenantSettings.View);
+        .HasPermission(Onyx.Oms.Core.Domain.Constants.Permissions.Tenants.View);
     }
 }

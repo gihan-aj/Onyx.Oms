@@ -71,7 +71,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
 
     public bool IsDeleted => DeletedAtUtc is not null;
     public DateTimeOffset? DeletedAtUtc { get; private set; }
-    public string? DeletedBy { get; private set; }
+    public Guid? DeletedBy { get; private set; }
 
     // Navigation
     public virtual Product Product { get; private set; } = null!;
@@ -231,7 +231,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 
-    public void Delete(string userId)
+    public void Delete(Guid userId)
     {
         if (IsDeleted) return;
         DeletedAtUtc = DateTimeOffset.UtcNow;

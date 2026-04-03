@@ -26,7 +26,7 @@ namespace Onyx.Oms.Web.Features.Products.ToggleProductVariants
             if (product is null)
                 return Result.Failure(Error.NotFound("Product.NotFound", "Product not found."));
 
-            var userId = _currentUserService.UserId ?? "System - Toggle variants";
+            var userId = _currentUserService.UserId;
 
             var toggleResult = product.ToggleHasVariants(request.HasVariants, userId);
 

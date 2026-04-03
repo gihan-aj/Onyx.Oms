@@ -54,10 +54,6 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
             ab.Property(a => a.Value).HasMaxLength(200);
         });
 
-        builder.Property(v => v.DeletedBy).HasMaxLength(36);
-        builder.Property(v => v.CreatedBy).HasMaxLength(36);
-        builder.Property(v => v.LastModifiedBy).HasMaxLength(36);
-
         // Soft-delete global query filter — uses DeletedAtUtc directly (IsDeleted is a computed property)
         builder.HasQueryFilter(v => v.DeletedAtUtc == null);
     }

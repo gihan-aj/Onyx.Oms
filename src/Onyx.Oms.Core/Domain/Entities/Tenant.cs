@@ -39,7 +39,7 @@ namespace Onyx.Oms.Core.Domain.Entities
         // Invoicing & Documents
         public string? InvoiceFooterText { get; private set; }
         public string? LogoUrl { get; private set; }
-        public string? HeroImage {  get; private set; }
+        public string? HeroImageUrl {  get; private set; }
 
         // Loose UI Preferences (Serialized JSON)
         public string PreferencesJson { get; private set; } = "{}";
@@ -79,10 +79,10 @@ namespace Onyx.Oms.Core.Domain.Entities
             return Result.Success();
         }
 
-        public Result UpdateRegionalSettings(string currency, string weightUnit)
+        public Result UpdateRegionalSettings(string currency, string timeZone, string weightUnit)
         {
-            if (string.IsNullOrWhiteSpace(currency) || string.IsNullOrWhiteSpace(weightUnit))
-                return Result.Failure(Error.Validation("Tenant.RegionalSettingsRequired", "Currency and Weight Unit are required."));
+            if (string.IsNullOrWhiteSpace(currency) || string.IsNullOrWhiteSpace(timeZone) || string.IsNullOrWhiteSpace(weightUnit))
+                return Result.Failure(Error.Validation("Tenant.RegionalSettingsRequired", "Currency, Time Zone and Weight Unit are required."));
 
             DefaultCurrency = currency.ToUpperInvariant();
             WeightUnit = weightUnit.ToLowerInvariant();

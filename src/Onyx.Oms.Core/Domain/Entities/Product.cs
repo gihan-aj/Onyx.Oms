@@ -205,7 +205,7 @@ public class Product : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
-    public Result<List<ProductVariant>> UpdateOptionValues(List<ProductOption> newOptions, List<List<VariantAttribute>> validVariantMatrix, string userId = "System - Option value removed")
+    public Result<List<ProductVariant>> UpdateOptionValues(List<ProductOption> newOptions, List<List<VariantAttribute>> validVariantMatrix, Guid userId)
     {
         // Update the JSON Document for Options
         _options.Clear();
@@ -321,7 +321,7 @@ public class Product : AuditableEntity<Guid>, IMustHaveTenant
     }
 
     // Methods to manage variants/images can be added here or handled via separate aggregates/repos if strict DDD is relaxed for performance.
-    public Result ToggleHasVariants(bool hasVariants, string userId)
+    public Result ToggleHasVariants(bool hasVariants, Guid userId)
     {
         if (HasVariants == hasVariants)
             return Result.Success();

@@ -27,6 +27,6 @@ public class UpdateStoreInfoEndpoint : IEndpoint
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .RequireAuthorization()
-        .HasPermission(Onyx.Oms.Core.Domain.Constants.Permissions.TenantSettings.Edit);
+        .HasPermission(Onyx.Oms.Core.Domain.Constants.Permissions.Tenants.Edit);
     }
 }

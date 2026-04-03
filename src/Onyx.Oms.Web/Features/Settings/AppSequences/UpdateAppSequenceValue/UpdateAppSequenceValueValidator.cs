@@ -6,7 +6,7 @@ public class UpdateAppSequenceValueValidator : AbstractValidator<UpdateAppSequen
 {
     public UpdateAppSequenceValueValidator()
     {
-        RuleFor(x => x.SequenceId)
+        RuleFor(x => x.Prefix)
             .NotEmpty().WithMessage("Sequence ID is required.")
             .MaximumLength(10).WithMessage("Sequence ID cannot exceed 10 characters.");
 

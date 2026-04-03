@@ -1,7 +1,6 @@
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -27,6 +26,6 @@ public class UpdateRegionalSettingsEndpoint : IEndpoint
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .RequireAuthorization()
-        .HasPermission(Onyx.Oms.Core.Domain.Constants.Permissions.TenantSettings.Edit);
+        .HasPermission(Onyx.Oms.Core.Domain.Constants.Permissions.Tenants.Edit);
     }
 }

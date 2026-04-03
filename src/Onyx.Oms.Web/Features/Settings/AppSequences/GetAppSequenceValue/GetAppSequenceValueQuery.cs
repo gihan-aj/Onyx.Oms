@@ -5,7 +5,7 @@ using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Settings.AppSequences.GetAppSequenceValue;
 
-public record GetAppSequenceValueQuery(string SequenceId) : IQuery<long>;
+public record GetAppSequenceValueQuery(string Prefix) : IQuery<long>;
 
 public class GetAppSequenceValueHandler : IQueryHandler<GetAppSequenceValueQuery, long>
 {
@@ -18,11 +18,11 @@ public class GetAppSequenceValueHandler : IQueryHandler<GetAppSequenceValueQuery
 
     public async Task<Result<long>> Handle(GetAppSequenceValueQuery request, CancellationToken cancellationToken)
     {
-        var currentValue = await _appSequenceService.GetCurrentValueAsync(request.SequenceId, cancellationToken);
+        var currentValue = await _appSequenceService.GetCurrentValueAsync(request.Prefix, cancellationToken);
         
         if (currentValue == null)
         {
-            return Result.Failure<long>(Error.NotFound("AppSequence.NotFound", $"App sequence with ID '{request.SequenceId}' was not found."));
+            return Result.Failure<long>(Error.NotFound("AppSequence.NotFound", $"App sequence with ID '{request.Prefix}' was not found."));
         }
 
         return Result<long>.Success(currentValue.Value);

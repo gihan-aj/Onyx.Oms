@@ -9,6 +9,13 @@ public static class Permissions
         // Add things like billing, global analytics, etc. here
     }
 
+    public static class Tenants
+    {
+        public const string View = "tenant:tenants:view";
+        public const string Create = "tenant:tenants:create";
+        public const string Edit = "tenant:tenants:edit";
+    }
+
     public static class Users
     {
         public const string View = "tenant:users:view";

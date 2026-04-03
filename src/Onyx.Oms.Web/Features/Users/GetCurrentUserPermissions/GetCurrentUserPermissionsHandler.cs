@@ -24,18 +24,8 @@ public class GetCurrentUserPermissionsHandler : IQueryHandler<GetCurrentUserPerm
 
     public async Task<Result<List<string>>> Handle(GetCurrentUserPermissionsQuery request, CancellationToken cancellationToken)
     {
-        var sub = _currentUserService.UserId;
-        var userId = Guid.Empty;
-        if (string.IsNullOrEmpty(sub))
-        {
-            return Result.Failure<List<string>>(Error.Unauthorized("Identity.NotAuthenticated", "User is not authenticated."));
-        }
-        if (!Guid.TryParse(sub, out userId))
-        {
-            return Result.Failure<List<string>>(Error.Unauthorized("Identity.NotAuthenticated", "User is not authenticated."));
-        }
+        var userId = _currentUserService.UserId;
 
-        // We need the local user's Guid to get permissions
         var localUser = await _context.AppUsers
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);

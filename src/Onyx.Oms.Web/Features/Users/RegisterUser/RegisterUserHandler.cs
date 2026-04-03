@@ -62,7 +62,7 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
                 request.UserDetails.LastName,
                 request.UserDetails.Email,
                 request.UserDetails.Password,
-                tenant.Id.ToString()
+                tenant.Id
             );
 
             var idpResponse = await _idpApi.RegisterUserAsync(registerRequest);

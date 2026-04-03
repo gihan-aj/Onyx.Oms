@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;

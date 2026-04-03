@@ -31,19 +31,7 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
             return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "One or more specified roles were not found."));
         }
 
-        // 2. Get Target Client ID
-        var targetClientId = _currentUserService.ClientId;
-        if (string.IsNullOrEmpty(targetClientId))
-        {
-            return Result.Failure<Guid>(Error.Failure("Identity.ClientIdMissing", "Could not determine Client ID."));
-        }
-
-        var tenantIdString = _currentUserService.TenantId;
-        var tenantId = Guid.Empty;
-        if (string.IsNullOrEmpty(targetClientId) && !Guid.TryParse(tenantIdString, out tenantId))
-        {
-            return Result.Failure<Guid>(Error.Failure("Identity.TenantIdMissing", "Could not determine Tenant ID."));
-        }
+        var tenantId = _currentUserService.ActiveTenantId;
 
         // 3. Call IdP to Invite User and Assign Roles
         // The IdP's InviteUser endpoint handles creating the user (if new) and assigning the roles.
@@ -54,10 +42,9 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
         {
             var idpRequest = new InviteUserRequest(
                 request.Email,
-                roles.Select(r => r.Name), // Pass the role names
                 request.FirstName,
                 request.LastName,
-                targetClientId
+                tenantId
             );
 
             var response = await _idpApi.InviteUserAsync(idpRequest);

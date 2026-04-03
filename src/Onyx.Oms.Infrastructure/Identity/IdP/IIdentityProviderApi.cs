@@ -28,7 +28,7 @@ public interface IIdentityProviderApi
 
 //public record CreateRoleRequest(string Name, string TargetClientId);
 //public record UpdateRoleNameRequest(string NewName, string TargetClientId);
-public record InviteUserRequest(string Email, IEnumerable<string> RoleNames, string FirstName, string LastName, string TargetClientId);
+public record InviteUserRequest(string Email, string FirstName, string LastName, Guid TenantId);
 //public record AssignRolesRequest(IEnumerable<string> RoleNames, string TargetClientId);
 
 public record UserDto(Guid Id, string Email, string FirstName, string LastName, bool IsActive, IEnumerable<string>? AssignedRoles = null);
@@ -39,5 +39,5 @@ public record RegisterUserRequest(
     string LastName,
     string Email,
     string Password,
-    string TenantId);
+    Guid TenantId);
 public record RegisterUserResponse(Guid UserId);

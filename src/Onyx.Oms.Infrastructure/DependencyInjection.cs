@@ -26,6 +26,7 @@ public static class DependencyInjection
 
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddScoped<TenantSecurityInterceptor>();
+        services.AddScoped<DispatchDomainEventsInterceptor>();
 
         services.AddMemoryCache(); // Required for caching decorator
 
@@ -59,15 +60,15 @@ public static class DependencyInjection
         {
             var auditableInterceptor = sp.GetRequiredService<AuditableEntityInterceptor>();
             var tenantSecurityInterceptor = sp.GetRequiredService<TenantSecurityInterceptor>();
+            var domainEventsInterceptor = sp.GetRequiredService<DispatchDomainEventsInterceptor>();
 
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName))
-                .AddInterceptors(auditableInterceptor, tenantSecurityInterceptor);
+                .AddInterceptors(auditableInterceptor, tenantSecurityInterceptor, domainEventsInterceptor);
         });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<DatabaseSeeder>();
-        services.AddScoped<AppSequenceSeeder>();
         services.AddScoped<SubscriptionPlanSeeder>();
 
         // Authentication Configuration

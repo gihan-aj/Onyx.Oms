@@ -1,4 +1,5 @@
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Events;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
 
@@ -58,7 +59,11 @@ namespace Onyx.Oms.Core.Domain.Entities
             if (string.IsNullOrWhiteSpace(contactEmail))
                 return Result.Failure<Tenant>(Error.Validation("Tenant.EmailRequired", "Email is required."));
 
-            return new Tenant(explicitId, companyName, contactEmail, contactPhone);
+            var tenant = new Tenant(explicitId, companyName, contactEmail, contactPhone);
+
+            //tenant.RaiseDomainEvent(new TenantCreatedDomainEvent(tenant.Id));
+
+            return tenant;
         }
 
         // --- Domain Behaviors ---

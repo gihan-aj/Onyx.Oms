@@ -12,33 +12,35 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
     private readonly IIdentityProviderApi _idpApi;
+    private readonly IAppSequenceService _appSequenceService;
 
-    public RegisterUserHandler(IApplicationDbContext context, IIdentityProviderApi idpApi)
+    public RegisterUserHandler(IApplicationDbContext context, IIdentityProviderApi idpApi, IAppSequenceService appSequenceService)
     {
         _context = context;
         _idpApi = idpApi;
+        _appSequenceService = appSequenceService;
     }
 
     public async Task<Result<Guid>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        // 1. Get the requested SubscriptionPlan
+        // Get the requested SubscriptionPlan
         var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == request.SubscriptionDetails.SubscriptionId, cancellationToken);
         if (plan == null)
             return Result.Failure<Guid>(Error.NotFound("SubscriptionPlan.NotFound", "The selected subscription plan was not found."));
 
-        // 2. Validate "Admin" role exists locally
+        // Validate "Admin" role exists locally
         var tenantOwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == Core.Domain.Constants.Roles.Oms.TenantOwner, cancellationToken);
         if (tenantOwnerRole == null)
             return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "The Tenant Owner role could not be found. Please ensure it is seeded."));
 
-        // 3. Create Tenant
+        // Create Tenant
         var tenantResult = Tenant.Create(request.CompanyDetails.CompanyName, request.CompanyDetails.ContactEmail, null);
         if (tenantResult.IsFailure)
             return Result.Failure<Guid>(tenantResult.Error);
 
         var tenant = tenantResult.Value;
 
-        // 4. Create TenantSubscription
+        // Create TenantSubscription
         var trialEnd = plan.TrialPeriodInDays > 0 ? DateTimeOffset.UtcNow.AddDays(plan.TrialPeriodInDays) : (DateTimeOffset?)null;
         
         var subscriptionResult = TenantSubscription.Create(
@@ -53,7 +55,7 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
         tenant.SetSubscription(subscriptionResult.Value);
         _context.Tenants.Add(tenant);
 
-        // 5. Register User in IdP
+        // Register User in IdP
         Guid identityUserId;
         try
         {
@@ -79,14 +81,14 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
             return Result.Failure<Guid>(Error.Failure("Identity.Connection", $"Failed to connect to IdP: {ex.Message}"));
         }
 
-        // 6. Create AppUser locally
+        // Create AppUser locally
         var appUserResult = AppUser.Create(identityUserId, tenant.Id, request.UserDetails.Email, request.UserDetails.FirstName, request.UserDetails.LastName);
         if (appUserResult.IsFailure)
             return Result.Failure<Guid>(appUserResult.Error);
 
         var appUser = appUserResult.Value;
         
-        // 7. Assign Admin role locally
+        // Assign Admin role locally
         var roleAssignResult = appUser.AssignRole(tenantOwnerRole);
         if (roleAssignResult.IsFailure)
             return Result.Failure<Guid>(roleAssignResult.Error);
@@ -94,7 +96,10 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
         tenant.AddUser(appUser);
         _context.AppUsers.Add(appUser);
 
-        // 8. Commit all changes
+        // Create sequences for "PROD" and "ORD"
+        _appSequenceService.InitialzeDefaultSequences(tenant.Id);
+
+        // Commit all changes
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success(appUser.Id);

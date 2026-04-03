@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Infrastructure.Persistence;
 using Onyx.Oms.Infrastructure.Persistence.Entities;
@@ -16,6 +17,27 @@ public class AppSequenceService : IAppSequenceService
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
+    }
+
+    public void InitialzeDefaultSequences(Guid tenantId)
+    {
+        var skuSequence = new AppSequence
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Prefix = Prefixes.Sku,
+            CurrentValue = 0
+        };
+
+        var orderNumberSequence = new AppSequence
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Prefix = Prefixes.OrderNumber,
+            CurrentValue = 0
+        };
+
+        _dbContext.AddRange(skuSequence, orderNumberSequence);
     }
 
     public async Task<Result<string>> GetNextNumberAsync(string prefix, CancellationToken cancellationToken = default)

@@ -1,13 +1,13 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Customers.UpdateCustomer;
 
-public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Result>
+public class UpdateCustomerHandler : ICommandHandler<UpdateCustomerCommand>
 {
     private readonly IApplicationDbContext _context;
 

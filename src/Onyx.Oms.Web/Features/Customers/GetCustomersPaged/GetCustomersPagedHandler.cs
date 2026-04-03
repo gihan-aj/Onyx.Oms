@@ -1,11 +1,11 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Customers.GetCustomersPaged;
 
-public class GetCustomersPagedHandler : IRequestHandler<GetCustomersPagedQuery, Result<PagedResult<CustomerDto>>>
+public class GetCustomersPagedHandler : IQueryHandler<GetCustomersPagedQuery, PagedResult<CustomerDto>>
 {
     private readonly IApplicationDbContext _context;
 
@@ -30,7 +30,8 @@ public class GetCustomersPagedHandler : IRequestHandler<GetCustomersPagedQuery, 
             query = query.Where(c => 
                 c.Name.Contains(request.SearchTerm) ||
                 (c.Email != null && c.Email.Contains(request.SearchTerm)) || 
-                c.PrimaryPhone.Contains(request.SearchTerm));
+                c.PrimaryPhone.Contains(request.SearchTerm) || 
+                (c.LastOrderNumber != null && c.LastOrderNumber.Contains(request.SearchTerm)));
         }
 
         // 2. Sorting
@@ -43,6 +44,7 @@ public class GetCustomersPagedHandler : IRequestHandler<GetCustomersPagedQuery, 
             c.Email,
             c.PrimaryPhone,
             c.SecondaryPhone,
+            c.LastOrderNumber,
             c.Address,
             c.Notes,
             c.IsActive,
@@ -69,6 +71,7 @@ public class GetCustomersPagedHandler : IRequestHandler<GetCustomersPagedQuery, 
             "email" => isDesc ? query.OrderByDescending(c => c.Email) : query.OrderBy(c => c.Email),
             "primaryphone" => isDesc ? query.OrderByDescending(c => c.PrimaryPhone) : query.OrderBy(c => c.PrimaryPhone),
             "city" => isDesc ? query.OrderByDescending(c => c.Address.City) : query.OrderBy(c => c.Address.City),
+            "lastordernumber" => isDesc ? query.OrderByDescending(c => c.LastOrderNumber) : query.OrderBy(c => c.LastOrderNumber),
             "isactive" => isDesc ? query.OrderByDescending(c => c.IsActive) : query.OrderBy(c => c.IsActive),
             "createddate" => isDesc ? query.OrderByDescending(c => c.CreatedOnUtc) : query.OrderBy(c => c.CreatedOnUtc),
             _ => query.OrderByDescending(c => c.CreatedOnUtc)

@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Customers.DeactivateCustomer;
 
-public class DeactivateCustomerHandler : IRequestHandler<DeactivateCustomerCommand, Result>
+public class DeactivateCustomerHandler : ICommandHandler<DeactivateCustomerCommand>
 {
     private readonly IApplicationDbContext _context;
 

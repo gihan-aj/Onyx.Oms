@@ -1,20 +1,22 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Customers.CreateCustomer;
 
-public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Result<Guid>>
+public class CreateCustomerHandler : ICommandHandler<CreateCustomerCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public CreateCustomerHandler(IApplicationDbContext context)
+    public CreateCustomerHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<Guid>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
@@ -40,6 +42,7 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
             request.Country ?? string.Empty);
 
         var result = Customer.Create(
+            _currentUserService.ActiveTenantId,
             request.Name,
             request.Email,
             request.PrimaryPhone,

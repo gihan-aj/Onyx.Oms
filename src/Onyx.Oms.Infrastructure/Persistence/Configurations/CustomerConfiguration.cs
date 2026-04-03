@@ -10,6 +10,9 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
     {
         builder.HasKey(c => c.Id);
 
+        builder.Property(c => c.TenantId)
+            .IsRequired();
+
         builder.Property(c => c.Name)
             .IsRequired()
             .HasMaxLength(200);
@@ -30,14 +33,12 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.SecondaryPhone)
             .HasMaxLength(50);
 
+        builder.Property(c => c.LastOrderNumber)
+            .HasMaxLength(20)
+            .IsRequired(false);
+
         builder.Property(c => c.Notes)
             .HasMaxLength(1000);
-
-        builder.Property(c => c.CreatedBy)
-            .HasMaxLength(36);
-
-        builder.Property(c => c.LastModifiedBy)
-             .HasMaxLength(36);
 
         builder.Property(c => c.IsActive)
             .HasDefaultValue(true);
@@ -51,5 +52,7 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             a.Property(p => p.PostalCode).HasMaxLength(20).HasColumnName("PostalCode");
             a.Property(p => p.Country).HasMaxLength(100).HasColumnName("Country");
         });
+
+        builder.HasIndex(x => new { x.TenantId, x.IsActive });
     }
 }

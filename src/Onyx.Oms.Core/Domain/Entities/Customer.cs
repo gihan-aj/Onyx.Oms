@@ -1,23 +1,40 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Customer : AuditableEntity<Guid>
+public class Customer : AuditableEntity<Guid>, IMustHaveTenant
 {
+    public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string? Email { get; private set; }
     public string PrimaryPhone { get; private set; } = string.Empty;
     public string? SecondaryPhone { get; private set; }
     public Address Address { get; private set; } = Address.Empty;
+    public string? LastOrderNumber { get; private set; }
     public string? Notes { get; private set; }
     public bool IsActive { get; private set; }
 
     // Private constructor for EF Core
-    private Customer() { }
+    private Customer(): base(Guid.NewGuid()) { }
+
+    private Customer(Guid tenantId, string name, string? email, string primaryPhone, string? secondaryPhone, Address? address, string? notes)
+        : base(Guid.NewGuid())
+    {
+        TenantId = tenantId;
+        Name = name;
+        Email = string.IsNullOrWhiteSpace(email) ? null : email;
+        PrimaryPhone = primaryPhone;
+        SecondaryPhone = string.IsNullOrWhiteSpace(secondaryPhone) ? null : secondaryPhone;
+        Address = address ?? Address.Empty;
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes;
+        IsActive = true;
+    }
 
     public static Result<Customer> Create(
+        Guid tenantId,
         string name,
         string? email,
         string primaryPhone,
@@ -31,17 +48,9 @@ public class Customer : AuditableEntity<Guid>
         if (string.IsNullOrWhiteSpace(primaryPhone))
             return Result.Failure<Customer>(Error.Validation("Customer.PrimaryPhoneRequired", "Primary Phone is required."));
 
-        return Result.Success(new Customer
-        {
-            Id = Guid.NewGuid(),
-            Name = name,
-            Email = email,
-            PrimaryPhone = primaryPhone,
-            SecondaryPhone = secondaryPhone,
-            Address = address ?? Address.Empty,
-            Notes = notes,
-            IsActive = true
-        });
+        var customer = new Customer(tenantId, name, email, primaryPhone, secondaryPhone, address, notes);
+
+        return customer;
     }
 
     public void UpdateDetails(
@@ -62,4 +71,5 @@ public class Customer : AuditableEntity<Guid>
 
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
+    public void UpdateLastOrder(string orderNumber) => LastOrderNumber = orderNumber;
 }

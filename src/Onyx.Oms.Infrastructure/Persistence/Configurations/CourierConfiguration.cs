@@ -32,13 +32,6 @@ public class CourierConfiguration : IEntityTypeConfiguration<Courier>
         builder.Property(c => c.TrackingUrlTemplate)
             .HasMaxLength(500);
 
-        builder.Property(c => c.CreatedBy)
-            .HasMaxLength(100);
-
-        builder.Property(c => c.LastModifiedBy)
-            .HasMaxLength(100)
-            .IsRequired(false);
-
         builder.HasIndex(x => x.TenantId);
         builder.HasIndex(c => c.Name).IsUnique();
     }

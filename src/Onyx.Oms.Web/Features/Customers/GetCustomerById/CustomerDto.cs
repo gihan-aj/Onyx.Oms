@@ -9,6 +9,7 @@ public record CustomerDto(
     string PrimaryPhone,
     string? SecondaryPhone,
     Address Address,
+    string? LastOrderNumber,
     string? Notes,
     bool IsActive,
     DateTimeOffset CreatedDate);

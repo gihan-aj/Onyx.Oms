@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Customers.ActivateCustomer;
 
-public class ActivateCustomerHandler : IRequestHandler<ActivateCustomerCommand, Result>
+public class ActivateCustomerHandler : ICommandHandler<ActivateCustomerCommand>
 {
     private readonly IApplicationDbContext _context;
 

@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Customers.DeleteCustomer;
 
-public class DeleteCustomerHandler : IRequestHandler<DeleteCustomerCommand, Result>
+public class DeleteCustomerHandler : ICommandHandler<DeleteCustomerCommand>
 {
     private readonly IApplicationDbContext _context;
 

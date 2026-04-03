@@ -1,12 +1,12 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.Customers.GetCustomerById;
 
-public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Result<CustomerDto>>
+public class GetCustomerByIdHandler : IQueryHandler<GetCustomerByIdQuery, CustomerDto>
 {
     private readonly IApplicationDbContext _context;
 
@@ -33,6 +33,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
             customer.PrimaryPhone,
             customer.SecondaryPhone,
             customer.Address,
+            customer.LastOrderNumber,
             customer.Notes,
             customer.IsActive,
             customer.CreatedOnUtc);

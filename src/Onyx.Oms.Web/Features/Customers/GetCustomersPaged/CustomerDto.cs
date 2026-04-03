@@ -8,6 +8,7 @@ public record CustomerDto(
     string? Email,
     string PrimaryPhone,
     string? SecondaryPhone,
+    string? LastOrderNumber,
     Address Address,
     string? Notes,
     bool IsActive,

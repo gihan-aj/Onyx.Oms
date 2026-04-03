@@ -1,21 +1,22 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class ProductCategory : AuditableEntity<Guid>
+public class ProductCategory : AuditableEntity<Guid>, IMustHaveTenant
 {
     public const int MaxDepth = 3; // 0=Root, 1=Sub, 2=SubSub
     public const char PathSeparator = '/';
     public const string NameSeparator = " / ";
 
     // Private constructor for EF Core
-    private ProductCategory() { }
+    private ProductCategory(): base(Guid.NewGuid()) { }
 
     // Internal constructor for Factory
     internal ProductCategory(
-        Guid id,
+        Guid tenantId,
         string name,
         int level,
         string path,
@@ -25,8 +26,9 @@ public class ProductCategory : AuditableEntity<Guid>
         int displayOrder,
         string? iconUrl,
         string? color,
-        List<SpecDefinition>? specifications = null) : base(id)
+        List<SpecDefinition>? specifications = null) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         Name = name;
         Description = description;
         ParentCategoryId = parentCategoryId;
@@ -44,6 +46,7 @@ public class ProductCategory : AuditableEntity<Guid>
         }
     }
 
+    public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public Guid? ParentCategoryId { get; private set; }
@@ -75,6 +78,7 @@ public class ProductCategory : AuditableEntity<Guid>
     public virtual IReadOnlyCollection<ProductCategory> SubCategories => _subCategories.AsReadOnly();
 
     public static Result<ProductCategory> Create(
+        Guid tenantId,
         string name,
         string? description = null,
         ProductCategory? parent = null,

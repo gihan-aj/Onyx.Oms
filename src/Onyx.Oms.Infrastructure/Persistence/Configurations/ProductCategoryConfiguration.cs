@@ -10,6 +10,9 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
     {
         builder.HasKey(c => c.Id);
 
+        builder.Property(c => c.TenantId)
+            .IsRequired();
+
         builder.Property(c => c.Name)
             .IsRequired()
             .HasMaxLength(100);
@@ -32,13 +35,7 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
         builder.OwnsMany(c => c.Specifications, sb =>
         {
             sb.ToJson(); // Maps to a single database column in the database
-        });  
-
-        builder.Property(c => c.CreatedBy)
-            .HasMaxLength(36);
-
-        builder.Property(c => c.LastModifiedBy)
-             .HasMaxLength(36);
+        }); 
 
         // Self-referencing relationship
         builder.HasOne(c => c.ParentCategory)
@@ -47,7 +44,7 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
             .OnDelete(DeleteBehavior.Restrict); // Prevent cascading delete to avoid accidental tree wiping
 
         // Indexes
-        builder.HasIndex(c => c.Path);
+        builder.HasIndex(c => new {c.TenantId, c.Path});
         builder.HasIndex(c => c.ParentCategoryId);
     }
 }

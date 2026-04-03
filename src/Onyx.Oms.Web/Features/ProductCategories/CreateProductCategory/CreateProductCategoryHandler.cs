@@ -10,10 +10,12 @@ namespace Onyx.Oms.Web.Features.ProductCategories.CreateProductCategory;
 public class CreateProductCategoryHandler : ICommandHandler<CreateProductCategoryCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public CreateProductCategoryHandler(IApplicationDbContext context)
+    public CreateProductCategoryHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<Guid>> Handle(CreateProductCategoryCommand request, CancellationToken cancellationToken)
@@ -40,6 +42,7 @@ public class CreateProductCategoryHandler : ICommandHandler<CreateProductCategor
         }
 
         var result = ProductCategory.Create(
+            _currentUserService.ActiveTenantId,
             request.Name,
             request.Description,
             parentCategory,

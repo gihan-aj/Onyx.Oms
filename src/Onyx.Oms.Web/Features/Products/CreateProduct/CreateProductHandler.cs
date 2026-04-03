@@ -13,11 +13,13 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
     {
         private readonly IApplicationDbContext _context;
         private readonly IAppSequenceService _appSequenceService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CreateProductHandler(IApplicationDbContext context, IAppSequenceService appSequenceService)
+        public CreateProductHandler(IApplicationDbContext context, IAppSequenceService appSequenceService, ICurrentUserService currentUserService)
         {
             _context = context;
             _appSequenceService = appSequenceService;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
@@ -31,7 +33,13 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
 
             string? baseSku = command.BaseSku;
             if (string.IsNullOrWhiteSpace(baseSku))
-                baseSku = await _appSequenceService.GetNextNumberAsync("PRD", "PRD", cancellationToken);
+            {
+                var baseSkuResult = await _appSequenceService.GetNextNumberAsync("PRD", cancellationToken);
+                if(baseSkuResult.IsFailure)
+                    return Result.Failure<Guid>(baseSkuResult.Error);
+
+                baseSku = baseSkuResult.Value;
+            }
 
             var baseCost = new Money(command.BaseCost.Amount, command.BaseCost.Currency);
             var basePrice = new Money(command.BasePrice.Amount, command.BasePrice.Currency);
@@ -52,6 +60,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
 
 
             var productResult = Product.Create(
+                _currentUserService.ActiveTenantId,
                 command.Name,
                 baseSku,
                 command.Description,

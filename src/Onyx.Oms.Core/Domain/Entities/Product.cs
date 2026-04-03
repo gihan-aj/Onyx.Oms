@@ -1,18 +1,17 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.Services;
 using Onyx.Oms.Core.Domain.ValueObjects;
-using System.Xml.Linq;
-using static Onyx.Oms.Core.Domain.Constants.Permissions;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Product : AuditableEntity<Guid>
+public class Product : AuditableEntity<Guid>, IMustHaveTenant
 {
-    private Product() { }
+    private Product(): base(Guid.NewGuid()) { }
 
     internal Product(
-        Guid id,
+        Guid tenantId,
         string name,
         string baseSku,
         string? description,
@@ -20,8 +19,9 @@ public class Product : AuditableEntity<Guid>
         Money baseCost,
         Money basePrice,
         Weight? baseWeight,
-        bool hasVariants) : base(id)
+        bool hasVariants) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         Name = name;
         BaseSku = baseSku;
         Description = description;
@@ -33,6 +33,7 @@ public class Product : AuditableEntity<Guid>
         IsActive = true;
     }
 
+    public Guid TenantId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string BaseSku { get; private set; } = string.Empty; // Can be auto-generated or set by user
     public string? Description { get; private set; }
@@ -70,6 +71,7 @@ public class Product : AuditableEntity<Guid>
     public IReadOnlyCollection<string> Tags => _tags.AsReadOnly();
 
     public static Result<Product> Create(
+        Guid tenantId,
         string name,
         string baseSku,
         string? description,
@@ -90,16 +92,16 @@ public class Product : AuditableEntity<Guid>
             return Result.Failure<Product>(Error.Validation("Product.CategoryRequired", "Category is required."));
 
         if (hasVariants && (options == null || options.Count == 0))
-            return Result.Failure<Product>(Error.Validation("Product.OptionsRequired", "Options are required when HasVariants is true."));
+            return Result.Failure<Product>(Error.Validation("Product.OptionsRequired", "Options are required when there are variants."));
 
         if (!hasVariants && options != null && options.Count > 0)
-            return Result.Failure<Product>(Error.Validation("Product.OptionsNotAllowed", "Options are not allowed when HasVariants is false."));
+            return Result.Failure<Product>(Error.Validation("Product.OptionsNotAllowed", "Options are not allowed when there is no variants."));
 
         if (hasVariants && options!.Count > 3)
             return Result.Failure<Product>(Error.Validation("Product.TooManyOptions", "A product can have a maximum of 3 options."));
 
         var product = new Product(
-            Guid.NewGuid(),
+            tenantId,
             name,
             baseSku,
             description,

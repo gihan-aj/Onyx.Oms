@@ -64,7 +64,8 @@ app.UseExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();
-//app.UseMiddleware<Onyx.Oms.Infrastructure.Middleware.UserMirrorMiddleware>();
+
+app.UseMiddleware<Onyx.Oms.Infrastructure.Security.TenantResolutionMiddleware>();
 
 app.MapEndpoints();
 

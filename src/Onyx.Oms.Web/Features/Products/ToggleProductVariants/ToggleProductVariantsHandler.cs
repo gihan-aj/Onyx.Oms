@@ -19,6 +19,10 @@ namespace Onyx.Oms.Web.Features.Products.ToggleProductVariants
 
         public async Task<Result> Handle(ToggleProductVariantsCommand request, CancellationToken cancellationToken)
         {
+            Guid? userId = _currentUserService.UserId;
+            if (userId == null)
+                return Result.Failure<Guid>(Error.Unauthorized("ProductVariant.TenantIdMissing", "User Id not found."));
+
             var product = await _context.Products
                 .Include(p => p.Variants) // Needed to map and soft delete existing variants
                 .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
@@ -26,9 +30,7 @@ namespace Onyx.Oms.Web.Features.Products.ToggleProductVariants
             if (product is null)
                 return Result.Failure(Error.NotFound("Product.NotFound", "Product not found."));
 
-            var userId = _currentUserService.UserId;
-
-            var toggleResult = product.ToggleHasVariants(request.HasVariants, userId);
+            var toggleResult = product.ToggleHasVariants(request.HasVariants, userId.Value);
 
             if (toggleResult.IsFailure)
                 return Result.Failure(toggleResult.Error);

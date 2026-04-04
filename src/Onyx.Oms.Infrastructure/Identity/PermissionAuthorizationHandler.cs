@@ -23,12 +23,13 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        if (!_currentUserService.IsAuthenticated)
+        var userId = _currentUserService.UserId;
+        if (!_currentUserService.IsAuthenticated || userId == null)
         {
             return;
         }
 
-        var userPermissions = await _permissionService.GetPermissionsAsync(_currentUserService.UserId);
+        var userPermissions = await _permissionService.GetPermissionsAsync(userId.Value);
 
         if (userPermissions.Contains(requirement.Permission))
         {

@@ -19,6 +19,10 @@ namespace Onyx.Oms.Web.Features.Products.DeleteProductVariant
 
         public async Task<Result> Handle(DeleteProductVariantCommand request, CancellationToken cancellationToken)
         {
+            Guid? userId = _currentUserService.UserId;
+            if (userId == null)
+                return Result.Failure<Guid>(Error.Unauthorized("ProductVariant.TenantIdMissing", "User Id not found."));
+
             var product = await _context.Products
                 .Include(p => p.Variants)
                 .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
@@ -29,10 +33,8 @@ namespace Onyx.Oms.Web.Features.Products.DeleteProductVariant
             var variant = product.Variants.FirstOrDefault(v => v.Id == request.VariantId);
             if (variant is null)
                 return Result.Failure(Error.NotFound("Variant.NotFound", "Variant not found."));
-
-            var userId = _currentUserService.UserId;
             
-            variant.Delete(userId);
+            variant.Delete(userId.Value);
 
             await _context.SaveChangesAsync(cancellationToken);
 

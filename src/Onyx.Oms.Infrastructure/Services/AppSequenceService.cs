@@ -53,10 +53,14 @@ public class AppSequenceService : IAppSequenceService
 
                 if (sequence == null)
                 {
+                    Guid? tenantId = _currentUserService.ActiveTenantId;
+                    if (tenantId == null)
+                        return Result.Failure<string>(Error.Unauthorized("AppSequence.TenantIdMissing", "Tenant Id not found."));
+
                     sequence = new AppSequence
                     {
                         Id = Guid.NewGuid(),
-                        TenantId = _currentUserService.ActiveTenantId,
+                        TenantId = tenantId.Value,
                         Prefix = prefix,
                         CurrentValue = 0
                     };
@@ -114,10 +118,14 @@ public class AppSequenceService : IAppSequenceService
         
         if (sequence == null)
         {
+            Guid? tenantId = _currentUserService.ActiveTenantId;
+            if (tenantId == null)
+                return Result.Failure(Error.Unauthorized("AppSequence.TenantIdMissing", "Tenant Id not found."));
+
             sequence = new AppSequence 
             { 
                 Id = Guid.NewGuid(), 
-                TenantId = _currentUserService.ActiveTenantId, 
+                TenantId = tenantId.Value, 
                 Prefix = prefix, 
                 CurrentValue = newValue 
             };

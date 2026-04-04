@@ -21,6 +21,10 @@ public class CreateRoleHandler : ICommandHandler<CreateRoleCommand, Guid>
 
     public async Task<Result<Guid>> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
     {
+        Guid? tenantId = _currentUserService.ActiveTenantId;
+        if (tenantId == null)
+            return Result.Failure<Guid>(Error.Unauthorized("Role.TenantIdMissing", "Tenant Id not found."));
+
         // 1. Check if Role exists locally
         if (await _context.Roles.AnyAsync(r => r.Name == request.Name, cancellationToken))
         {
@@ -28,7 +32,7 @@ public class CreateRoleHandler : ICommandHandler<CreateRoleCommand, Guid>
         }
 
         // 4. Create Local Role
-        var roleResult = Role.Create(_currentUserService.ActiveTenantId, request.Name, request.Description);
+        var roleResult = Role.Create(tenantId.Value, request.Name, request.Description);
         if(roleResult.IsFailure)
             return Result.Failure<Guid>(roleResult.Error);
 

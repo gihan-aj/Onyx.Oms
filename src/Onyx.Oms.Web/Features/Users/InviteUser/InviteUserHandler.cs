@@ -23,6 +23,10 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
 
     public async Task<Result<Guid>> Handle(InviteUserCommand request, CancellationToken cancellationToken)
     {
+        Guid? tenantId = _currentUserService.ActiveTenantId;
+        if (tenantId == null)
+            return Result.Failure<Guid>(Error.Unauthorized("Product.TenantIdMissing", "Tenant Id not found."));
+
         // 1. Validate Roles exist locally using Guid IDs
         var requestRoleIds = request.RoleIds.Distinct().ToList();
         var roles = await _context.Roles.Where(r => requestRoleIds.Contains(r.Id)).ToListAsync(cancellationToken);
@@ -30,8 +34,6 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
         {
             return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "One or more specified roles were not found."));
         }
-
-        var tenantId = _currentUserService.ActiveTenantId;
 
         // 3. Call IdP to Invite User and Assign Roles
         // The IdP's InviteUser endpoint handles creating the user (if new) and assigning the roles.
@@ -44,7 +46,7 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
                 request.Email,
                 request.FirstName,
                 request.LastName,
-                tenantId
+                tenantId.Value
             );
 
             var response = await _idpApi.InviteUserAsync(idpRequest);
@@ -102,7 +104,7 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Guid>
 
         if (localUser == null)
         {          
-            var localUserResult = AppUser.Create(userId, tenantId, request.FirstName, request.LastName);
+            var localUserResult = AppUser.Create(userId, tenantId.Value, request.FirstName, request.LastName);
             if(localUserResult.IsFailure)
                 return Result.Failure<Guid>(localUserResult.Error);
 

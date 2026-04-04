@@ -10,7 +10,8 @@ public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IServiceProvider _serviceProvider;
-    //private readonly IPermissionService _permissionService;
+
+    private const string ActiveTenantContextKey = "ResolvedActiveTenantId";
 
     public CurrentUserService(IHttpContextAccessor httpContextAccessor, IServiceProvider serviceProvider)
     {
@@ -21,56 +22,87 @@ public class CurrentUserService : ICurrentUserService
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
-    public Guid UserId
+    public Guid? UserId
     {
         get
         {
             var userIdString = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? _httpContextAccessor.HttpContext?.User?.FindFirstValue(CustomClaims.Subject);
 
-            return Guid.TryParse(userIdString, out var userId) ? userId : Guid.Empty;
+            return Guid.TryParse(userIdString, out var userId) ? userId : null;
         }
     }
 
-    public Guid ActualTenantId
+    public Guid? ActualTenantId
     {
         get
         {
             var tenantIdString = _httpContextAccessor.HttpContext?.User?.FindFirstValue(CustomClaims.TenantId);
 
-            return Guid.TryParse(tenantIdString, out var tenantId) ? tenantId : Guid.Empty;
+            return Guid.TryParse(tenantIdString, out var tenantId) ? tenantId : null;
         }
     }
 
-    public Guid ActiveTenantId
+    public Guid? ActiveTenantId
     {
         get
         {
-            if(!IsAuthenticated)
-                return Guid.Empty;
-
             var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext == null)
-                return ActualTenantId;
-
-            // Check if the frontend sent the impersonation header
-            if(httpContext.Request.Headers.TryGetValue("X-Tenant-ID", out var requestedTenantString))
+            // Read from the Middleware Cache
+            if (httpContext != null && httpContext.Items.TryGetValue(ActiveTenantContextKey, out var cachedTenantId))
             {
-                if(Guid.TryParse(requestedTenantString, out var requestedTenantId))
-                {
-                    using var scope = _serviceProvider.CreateScope();
-                    var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionService>();
-                    var userPermissions = permissionService.GetPermissionsAsync(UserId).GetAwaiter().GetResult();
-                    if (userPermissions != null && userPermissions.Contains(Permissions.Platform.ImpersonateTenant))
-                    {
-                        return requestedTenantId;
-                    }
-                }
+                return (Guid?)cachedTenantId;
             }
 
+            // Safe fallback if there is no HTTP Context (e.g., background jobs)
             return ActualTenantId;
         }
     }
 
-    public bool IsImpersonating => ActualTenantId != ActiveTenantId;
+    public bool IsImpersonating =>
+        ActualTenantId.HasValue &&
+        ActiveTenantId.HasValue &&
+        ActualTenantId.Value != ActiveTenantId.Value;
+
+    public async Task<Guid?> GetActiveTenantIdAsync(CancellationToken cancellationToken = default)
+    {
+        if (!IsAuthenticated)
+            return null;
+
+        var httpContext = _httpContextAccessor?.HttpContext;
+        if (httpContext == null)
+            return ActualTenantId;
+
+        if (httpContext.Items.TryGetValue(ActiveTenantContextKey, out var cachedTenantId))
+        {
+            return (Guid?)cachedTenantId;
+        }
+
+        var actualTenantId = ActualTenantId;
+
+        if (httpContext.Request.Headers.TryGetValue("X-Tenant-ID", out var requestedTenantString) &&
+            Guid.TryParse(requestedTenantString, out var requestedTenantId))
+        {
+            var currentUserId = UserId;
+
+            if (currentUserId.HasValue)
+            {
+                await using var scope = _serviceProvider.CreateAsyncScope();
+                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionService>();
+
+                var userPermissions = await permissionService.GetPermissionsAsync(currentUserId.Value, cancellationToken);
+
+                if (userPermissions != null && userPermissions.Contains(Permissions.Platform.ImpersonateTenant))
+                {
+                    // Cache and return the impersonated tenant
+                    httpContext.Items[ActiveTenantContextKey] = requestedTenantId;
+                    return requestedTenantId;
+                }
+            }
+        }
+
+        // Cache and return the actual tenant if impersonation failed or wasn't requested
+        httpContext.Items[ActiveTenantContextKey] = actualTenantId;
+        return actualTenantId;
+    }
 }

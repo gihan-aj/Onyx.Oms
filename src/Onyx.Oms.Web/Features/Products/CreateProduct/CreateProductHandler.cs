@@ -24,6 +24,10 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
 
         public async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
         {
+            Guid? tenantId = _currentUserService.ActiveTenantId;
+            if (tenantId == null)
+                return Result.Failure<Guid>(Error.Unauthorized("Product.TenantIdMissing", "Tenant Id not found."));
+
             var category = await _context.ProductCategories
                 .FirstOrDefaultAsync(c => c.Id == command.CategoryId, cancellationToken);
             if(category is null)
@@ -58,10 +62,8 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
                     Values = o.Values,
                 }).ToList();
 
-            var tenatId = _currentUserService.ActiveTenantId;
-
             var productResult = Product.Create(
-                tenatId,
+                tenantId.Value,
                 command.Name,
                 baseSku,
                 command.Description,
@@ -104,7 +106,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
                     var weight = variantDto.Weight != null ? new Weight(variantDto.Weight.Value, variantDto.Weight.Unit) : baseWeight;
 
                     var varinatResult = ProductVariant.Create(
-                        tenatId,
+                        tenantId.Value,
                         product,
                         variantSku,
                         attributes,
@@ -135,7 +137,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
             {
                 foreach(var imgDto in command.Images)
                 {
-                    var image = new ProductImage(tenatId, product.Id, imgDto.Url, imgDto.DisplayOrder, imgDto.IsMain);
+                    var image = new ProductImage(tenantId.Value, product.Id, imgDto.Url, imgDto.DisplayOrder, imgDto.IsMain);
                     if (!string.IsNullOrWhiteSpace(imgDto.OptionName) && !string.IsNullOrWhiteSpace(imgDto.OptionValue))
                     {
                         var imageResult = image.LinkToOption(imgDto.OptionName, imgDto.OptionValue, product.Options);

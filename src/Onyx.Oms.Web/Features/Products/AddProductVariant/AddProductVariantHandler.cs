@@ -22,6 +22,10 @@ namespace Onyx.Oms.Web.Features.Products.AddProductVariant
 
         public async Task<Result<Guid>> Handle(AddProductVariantCommand request, CancellationToken cancellationToken)
         {
+            Guid? tenantId = _currentUserService.ActiveTenantId;
+            if (tenantId == null)
+                return Result.Failure<Guid>(Error.Unauthorized("ProductVariant.TenantIdMissing", "Tenant Id not found."));
+
             var product = await _context.Products
                 .Include(p => p.Variants)
                 .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
@@ -49,7 +53,7 @@ namespace Onyx.Oms.Web.Features.Products.AddProductVariant
 
             // ProductVariant.Create expects a product that has variants
             var variantResult = ProductVariant.Create(
-                _currentUserService.ActiveTenantId,
+                tenantId.Value,
                 product,
                 variantSku,
                 attributes,

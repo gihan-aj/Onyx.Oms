@@ -57,14 +57,16 @@ public class AppDbContext : DbContext, IApplicationDbContext
                     .GetMethod(nameof(ApplyTenantFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                     ?.MakeGenericMethod(entityType.ClrType);
 
-                method?.Invoke(this, new object[] { modelBuilder, activeTenantId });
+                method?.Invoke(this, new object[] { modelBuilder });
             }
         }
     }
 
-    private void ApplyTenantFilter<TEntity>(ModelBuilder builder, Guid activeTenantId)
+    private void ApplyTenantFilter<TEntity>(ModelBuilder builder)
         where TEntity : class, IMustHaveTenant
     {
-        builder.Entity<TEntity>().HasQueryFilter(e => _bypass.IsBypassEnabled || e.TenantId == activeTenantId);
+        builder.Entity<TEntity>().HasQueryFilter(e => 
+            _bypass.IsBypassEnabled ||
+            e.TenantId == _currentUserService.ActiveTenantId);
     }
 }

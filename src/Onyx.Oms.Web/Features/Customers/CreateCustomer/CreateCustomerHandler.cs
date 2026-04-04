@@ -21,6 +21,10 @@ public class CreateCustomerHandler : ICommandHandler<CreateCustomerCommand, Guid
 
     public async Task<Result<Guid>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
     {
+        Guid? tenantId = _currentUserService.ActiveTenantId;
+        if (tenantId == null)
+            return Result.Failure<Guid>(Error.Unauthorized("Customer.TenantIdMissing", "Tenant Id not found."));
+
         // Check for unique email if provided
         if (!string.IsNullOrWhiteSpace(request.Email))
         {
@@ -42,7 +46,7 @@ public class CreateCustomerHandler : ICommandHandler<CreateCustomerCommand, Guid
             request.Country ?? string.Empty);
 
         var result = Customer.Create(
-            _currentUserService.ActiveTenantId,
+            tenantId.Value,
             request.Name,
             request.Email,
             request.PrimaryPhone,

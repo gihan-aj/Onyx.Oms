@@ -26,8 +26,12 @@ public class CreateCourierHandler : ICommandHandler<CreateCourierCommand, Guid>
         if (courierExists)
             return Result.Failure<Guid>(Error.Conflict("Courier.NameExists", "A courier with the same name already exists."));
 
+        Guid? tenantId = _currentUserService.ActiveTenantId;
+        if (tenantId == null)
+            return Result.Failure<Guid>(Error.Unauthorized("Courier.TenantIdMissing", "Tenant Id not found."));
+
         var courierResult = Courier.Create(
-            _currentUserService.ActiveTenantId,
+            tenantId.Value,
             request.Name,
             request.ContactPerson,
             request.PrimaryPhone,

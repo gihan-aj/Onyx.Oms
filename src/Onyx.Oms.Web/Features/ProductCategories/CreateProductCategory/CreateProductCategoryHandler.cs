@@ -20,6 +20,10 @@ public class CreateProductCategoryHandler : ICommandHandler<CreateProductCategor
 
     public async Task<Result<Guid>> Handle(CreateProductCategoryCommand request, CancellationToken cancellationToken)
     {
+        Guid? tenantId = _currentUserService.ActiveTenantId;
+        if (tenantId == null)
+            return Result.Failure<Guid>(Error.Unauthorized("ProductCategory.TenantIdMissing", "Tenant Id not found."));
+
         // Check for duplicate name under the same parent
         bool nameExists = await _context.ProductCategories
             .AnyAsync(c => c.Name == request.Name && c.ParentCategoryId == request.ParentCategoryId, cancellationToken);
@@ -42,7 +46,7 @@ public class CreateProductCategoryHandler : ICommandHandler<CreateProductCategor
         }
 
         var result = ProductCategory.Create(
-            _currentUserService.ActiveTenantId,
+            tenantId.Value,
             request.Name,
             request.Description,
             parentCategory,

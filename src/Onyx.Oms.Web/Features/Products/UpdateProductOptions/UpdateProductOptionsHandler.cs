@@ -20,6 +20,10 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductOptions
 
         public async Task<Result> Handle(UpdateProductOptionsCommand request, CancellationToken cancellationToken)
         {
+            Guid? userId = _currentUserService.UserId;
+            if (userId == null)
+                return Result.Failure<Guid>(Error.Unauthorized("ProductOptions.TenantIdMissing", "User Id not found."));
+
             var product = await _context.Products
                 .Include(p => p.Variants) // Required for UpdateOptionValues to validate the deletion of existing variants
                 .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
@@ -35,9 +39,7 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductOptions
 
             var validVariantMatrix = GetCombinations(request.Options);
 
-            var userId = _currentUserService.UserId;
-
-            var updateResult = product.UpdateOptionValues(options, validVariantMatrix, userId);
+            var updateResult = product.UpdateOptionValues(options, validVariantMatrix, userId.Value);
             
             if (updateResult.IsFailure)
                 return Result.Failure(updateResult.Error);

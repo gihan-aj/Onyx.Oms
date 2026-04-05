@@ -9,15 +9,19 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.GetProfile;
 public class GetTenantProfileHandler : IQueryHandler<GetTenantProfileQuery, TenantProfileDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetTenantProfileHandler(IApplicationDbContext context)
+    public GetTenantProfileHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<TenantProfileDto>> Handle(GetTenantProfileQuery request, CancellationToken cancellationToken)
     {
-        var profile = await _context.Tenants.FirstOrDefaultAsync(cancellationToken);
+        var profile = await _context.Tenants
+            .Where(t => t.Id == _currentUserService.ActiveTenantId)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (profile == null)
         {
@@ -33,6 +37,7 @@ public class GetTenantProfileHandler : IQueryHandler<GetTenantProfileQuery, Tena
             profile.TaxRegistrationNumber,
             profile.StoreAddress,
             profile.DefaultCurrency,
+            profile.TimeZone,
             profile.WeightUnit,
             profile.InvoiceFooterText,
             profile.LogoUrl,

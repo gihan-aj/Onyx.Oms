@@ -4,7 +4,7 @@ using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class AppUser : AuditableEntity<Guid>, IMustHaveTenant
+public class AppUser : AuditableEntity<Guid>
 {
     public Guid TenantId { get; private set; }
     public Tenant Tenant { get; private set; } = null!;

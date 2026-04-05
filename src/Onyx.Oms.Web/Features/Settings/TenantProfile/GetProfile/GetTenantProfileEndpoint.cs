@@ -1,4 +1,5 @@
 using MediatR;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
@@ -22,6 +23,6 @@ public class GetTenantProfileEndpoint : IEndpoint
         .WithDescription("Retrieves the global tenant profile containing store settings.")
         .Produces<TenantProfileDto>(StatusCodes.Status200OK)
         .RequireAuthorization()
-        .HasPermission(Onyx.Oms.Core.Domain.Constants.Permissions.Tenants.View);
+        .HasPermission(Permissions.Tenants.View);
     }
 }

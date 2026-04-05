@@ -29,7 +29,9 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
             return Result.Failure<Guid>(Error.NotFound("SubscriptionPlan.NotFound", "The selected subscription plan was not found."));
 
         // Validate "Admin" role exists locally
-        var tenantOwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == Core.Domain.Constants.Roles.Oms.TenantOwner, cancellationToken);
+        var tenantOwnerRole = await _context.Roles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.Name == Core.Domain.Constants.Roles.Oms.TenantOwner, cancellationToken);
         if (tenantOwnerRole == null)
             return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "The Tenant Owner role could not be found. Please ensure it is seeded."));
 

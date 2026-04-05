@@ -3,6 +3,7 @@ using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Domain.Constants;
 
 namespace Onyx.Oms.Web.Features.Users.GetCurrentUserPermissions;
 
@@ -25,17 +26,27 @@ public class GetCurrentUserPermissionsHandler : IQueryHandler<GetCurrentUserPerm
     public async Task<Result<List<string>>> Handle(GetCurrentUserPermissionsQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
+        var tenantId = _currentUserService.ActiveTenantId;
+        var hostTenantId = Tenants.HostTenant.Id;
 
-        var localUser = await _context.AppUsers
+        var user = await _context.AppUsers
             .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(u => u.Roles)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-        if (localUser == null)
+        if (user == null)
         {
              return Result.Failure<List<string>>(Error.NotFound("User.NotFound", "Local user profile not found."));
         }
 
-        var permissions = await _permissionService.GetPermissionsAsync(localUser.Id);
+        // Flatten into a distinct set of permissions from all roles
+        var permissions = user.Roles
+            .Where(r => r.IsActive && (r.TenantId == tenantId || r.TenantId == hostTenantId))
+            .SelectMany(r => r.Permissions)
+            .ToHashSet();
+
+        //var permissions = await _permissionService.GetPermissionsAsync(localUser.Id);
 
         return Result.Success(permissions?.ToList() ?? new List<string>());
     }

@@ -44,19 +44,20 @@ public class AppSequenceService : IAppSequenceService
     {       
         int maxRetries = 3;
 
+        Guid? tenantId = _currentUserService.ActiveTenantId;
+        if (tenantId == null)
+            return Result.Failure<string>(Error.Unauthorized("AppSequence.TenantIdMissing", "Tenant Id not found."));
+
         for (int attempt = 0; attempt < maxRetries; attempt++)
         {
             try
             {
                 var sequence = await _dbContext.AppSequences
+                    .Where(s => s.TenantId == tenantId)
                     .FirstOrDefaultAsync(s => s.Prefix == prefix, cancellationToken);
 
                 if (sequence == null)
-                {
-                    Guid? tenantId = _currentUserService.ActiveTenantId;
-                    if (tenantId == null)
-                        return Result.Failure<string>(Error.Unauthorized("AppSequence.TenantIdMissing", "Tenant Id not found."));
-
+                {                
                     sequence = new AppSequence
                     {
                         Id = Guid.NewGuid(),
@@ -98,7 +99,7 @@ public class AppSequenceService : IAppSequenceService
     {
         var sequence = await _dbContext.AppSequences
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Prefix == prefix, ct);
+            .FirstOrDefaultAsync(s => s.Prefix == prefix && s.TenantId == _currentUserService.ActiveTenantId, ct);
 
         return sequence?.CurrentValue;
     }
@@ -107,6 +108,7 @@ public class AppSequenceService : IAppSequenceService
     {
         var sequence = await _dbContext.AppSequences
             .AsNoTracking()
+            .Where(s => s.TenantId == _currentUserService.ActiveTenantId)
             .ToListAsync(ct);
 
         return sequence;
@@ -114,15 +116,18 @@ public class AppSequenceService : IAppSequenceService
 
     public async Task<Result> UpdateCurrentValueAsync(string prefix, long newValue, CancellationToken ct = default)
     {
-        var sequence = await _dbContext.AppSequences.FirstOrDefaultAsync(s => s.Prefix == prefix, ct);
+        Guid? tenantId = _currentUserService.ActiveTenantId;
+        if (tenantId == null)
+            return Result.Failure(Error.Unauthorized("AppSequence.TenantIdMissing", "Tenant Id not found."));
+
+        var sequence = await _dbContext.AppSequences
+            .Where(s => s.TenantId == tenantId)
+            .FirstOrDefaultAsync(s => s.Prefix == prefix, ct);
         
         if (sequence == null)
         {
-            Guid? tenantId = _currentUserService.ActiveTenantId;
-            if (tenantId == null)
-                return Result.Failure(Error.Unauthorized("AppSequence.TenantIdMissing", "Tenant Id not found."));
 
-            sequence = new AppSequence 
+           sequence = new AppSequence 
             { 
                 Id = Guid.NewGuid(), 
                 TenantId = tenantId.Value, 

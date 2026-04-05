@@ -11,6 +11,7 @@ public record TenantProfileDto(
     string? TaxRegistrationNumber,
     Address? StoreAddress,
     string DefaultCurrency,
+    string TimeZone,
     string WeightUnit,
     string? InvoiceFooterText,
     string? LogoUrl,

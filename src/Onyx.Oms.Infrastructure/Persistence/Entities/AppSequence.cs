@@ -2,7 +2,7 @@ using Onyx.Oms.Core.Common.Interfaces;
 
 namespace Onyx.Oms.Infrastructure.Persistence.Entities;
 
-public class AppSequence : IMustHaveTenant
+public class AppSequence
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

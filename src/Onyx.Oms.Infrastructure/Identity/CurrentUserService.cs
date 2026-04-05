@@ -90,7 +90,7 @@ public class CurrentUserService : ICurrentUserService
                 await using var scope = _serviceProvider.CreateAsyncScope();
                 var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionService>();
 
-                var userPermissions = await permissionService.GetPermissionsAsync(currentUserId.Value, cancellationToken);
+                var userPermissions = await permissionService.GetPermissionsAsync(currentUserId.Value, null, cancellationToken);
 
                 if (userPermissions != null && userPermissions.Contains(Permissions.Platform.ImpersonateTenant))
                 {

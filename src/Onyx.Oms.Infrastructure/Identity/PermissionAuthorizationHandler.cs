@@ -29,7 +29,7 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
             return;
         }
 
-        var userPermissions = await _permissionService.GetPermissionsAsync(userId.Value);
+        var userPermissions = await _permissionService.GetPermissionsAsync(userId.Value, _currentUserService.ActiveTenantId);
 
         if (userPermissions.Contains(requirement.Permission))
         {

@@ -14,14 +14,14 @@ public class CachedPermissionService : IPermissionService
         _memoryCache = memoryCache;
     }
 
-    public async Task<HashSet<string>> GetPermissionsAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<HashSet<string>> GetPermissionsAsync(Guid userId, Guid? tenantId = null, CancellationToken cancellationToken = default)
     {
         string key = $"permissions-{userId}";
         
         return await _memoryCache.GetOrCreateAsync(key, async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
-            return await _permissionService.GetPermissionsAsync(userId, cancellationToken);
+            return await _permissionService.GetPermissionsAsync(userId, tenantId, cancellationToken);
         }) ?? new HashSet<string>();
     }
 }

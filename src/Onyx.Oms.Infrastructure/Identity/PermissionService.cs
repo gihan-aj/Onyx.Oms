@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
+using Onyx.Oms.Core.Domain.Constants;
 
 namespace Onyx.Oms.Infrastructure.Identity;
 
@@ -12,12 +13,26 @@ public class PermissionService : IPermissionService
         _context = context;
     }
 
-    public async Task<HashSet<string>> GetPermissionsAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<HashSet<string>> GetPermissionsAsync(Guid userId, Guid? tenantId = null, CancellationToken cancellationToken = default)
     {
         // Get the user's roles
-        var user = await _context.AppUsers
+        var usersQuery = _context.AppUsers
+            .IgnoreQueryFilters()
             .AsNoTracking()
-            .Include(u => u.Roles)
+            .AsQueryable();
+
+        if(tenantId != null && tenantId != Tenants.HostTenant.Id)
+        {
+            usersQuery = usersQuery
+                .Include(u => u.Roles.Where(r => r.IsActive && (r.TenantId == tenantId || r.TenantId == Tenants.HostTenant.Id)));
+        }
+        else
+        {
+            usersQuery = usersQuery
+                .Include(u => u.Roles.Where(r => r.IsActive && r.TenantId == Tenants.HostTenant.Id));
+        }
+
+        var user = await usersQuery
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
         if (user == null || !user.Roles.Any())

@@ -15,7 +15,7 @@ public class CustomerTests
         var name = "Jane Doe";
         var email = "jane@example.com";
         var phone = "555-0199";
-        var address = new Address("123 Main St", "Colombo", "Western", "00100", "Sri Lanka");
+        var address = new Address("123 Main St","Nugegoda", "Colombo", "Western", "00100", "Sri Lanka");
 
         // Act
         var result = Customer.Create(tenantId, name, email, phone, null, address, "Test Notes");
@@ -60,7 +60,7 @@ public class CustomerTests
     public void Address_IsEmpty_ShouldReturnTrue_WhenAllFieldsAreEmpty()
     {
         // Arrange
-        var address = new Address("", "", "", "", "");
+        var address = new Address("","", "", "", "", "");
 
         // Act & Assert
         address.IsEmpty.Should().BeTrue();

@@ -9,6 +9,7 @@ public record CreateCustomerCommand(
     string? SecondaryPhone,
     string? Street,
     string? City,
+    string? District,
     string? State,
     string? PostalCode,
     string? Country,

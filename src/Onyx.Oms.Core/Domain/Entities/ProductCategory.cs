@@ -16,6 +16,7 @@ public class ProductCategory : AuditableEntity<Guid>, IMustHaveTenant
 
     // Internal constructor for Factory
     internal ProductCategory(
+        Guid id,
         Guid tenantId,
         string name,
         int level,
@@ -26,7 +27,7 @@ public class ProductCategory : AuditableEntity<Guid>, IMustHaveTenant
         int displayOrder,
         string? iconUrl,
         string? color,
-        List<SpecDefinition>? specifications = null) : base(Guid.NewGuid())
+        List<SpecDefinition>? specifications = null) : base(id)
     {
         TenantId = tenantId;
         Name = name;
@@ -119,7 +120,7 @@ public class ProductCategory : AuditableEntity<Guid>, IMustHaveTenant
             ? name
             : $"{parentNamePath}{NameSeparator}{name}";
 
-        var category = new ProductCategory(id, name, level, path, namePath, description, parentId, displayOrder, iconUrl, color, specifications);
+        var category = new ProductCategory(id, tenantId, name, level, path, namePath, description, parentId, displayOrder, iconUrl, color, specifications);
 
         return Result.Success(category);
     }

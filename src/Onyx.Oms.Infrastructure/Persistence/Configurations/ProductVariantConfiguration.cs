@@ -11,8 +11,8 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
         builder.ToTable("ProductVariants");
         builder.HasKey(v => v.Id);
 
-        builder.HasIndex(v => v.TenantId)
-            .IsUnique();
+        builder.Property(v => v.TenantId)
+            .IsRequired();
 
         builder.HasIndex(v => v.Sku)
             .IsUnique()

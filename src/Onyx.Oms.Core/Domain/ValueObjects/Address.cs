@@ -3,6 +3,7 @@ namespace Onyx.Oms.Core.Domain.ValueObjects;
 public record Address(
     string Street,
     string City,
+    string District,
     string State,
     string PostalCode,
     string Country)
@@ -10,11 +11,12 @@ public record Address(
     public bool IsEmpty => 
         string.IsNullOrWhiteSpace(Street) && 
         string.IsNullOrWhiteSpace(City) &&
+        string.IsNullOrWhiteSpace(District) &&
         string.IsNullOrWhiteSpace(State) &&
         string.IsNullOrWhiteSpace(PostalCode) &&
         string.IsNullOrWhiteSpace(Country);
 
-    public static Address Empty => new(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+    public static Address Empty => new(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
     public override string ToString()
     {

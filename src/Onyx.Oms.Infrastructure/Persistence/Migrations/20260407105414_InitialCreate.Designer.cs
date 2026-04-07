@@ -13,7 +13,7 @@ using Onyx.Oms.Infrastructure.Persistence;
 namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260403134954_InitialCreate")]
+    [Migration("20260407105414_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -508,9 +508,6 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("[DeletedAtUtc] IS NULL");
 
-                    b.HasIndex("TenantId")
-                        .IsUnique();
-
                     b.HasIndex("TenantId", "ProductId");
 
                     b.ToTable("ProductVariants", (string)null);
@@ -822,6 +819,12 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                                 .HasColumnType("nvarchar(100)")
                                 .HasColumnName("Country");
 
+                            b1.Property<string>("District")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("nvarchar(100)")
+                                .HasColumnName("District");
+
                             b1.Property<string>("PostalCode")
                                 .IsRequired()
                                 .HasMaxLength(20)
@@ -1058,6 +1061,10 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                                 .HasMaxLength(100)
                                 .HasColumnType("nvarchar(100)")
                                 .HasColumnName("Country");
+
+                            b1.Property<string>("District")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
 
                             b1.Property<string>("PostalCode")
                                 .IsRequired()

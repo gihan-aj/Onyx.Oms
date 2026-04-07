@@ -30,6 +30,7 @@ public class UpdateCustomerValidator : AbstractValidator<UpdateCustomerCommand>
 
         RuleFor(c => c.Street).MaximumLength(200);
         RuleFor(c => c.City).MaximumLength(100);
+        RuleFor(c => c.District).MaximumLength(100);
         RuleFor(c => c.State).MaximumLength(100);
         RuleFor(c => c.PostalCode).MaximumLength(20);
         RuleFor(c => c.Country).MaximumLength(100);

@@ -61,6 +61,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     SecondaryPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     Street = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    District = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     State = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     PostalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -164,6 +165,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     TaxRegistrationNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Street = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    StoreAddress_District = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     State = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     PostalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     Country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
@@ -459,12 +461,6 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                 column: "Sku",
                 unique: true,
                 filter: "[DeletedAtUtc] IS NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductVariants_TenantId",
-                table: "ProductVariants",
-                column: "TenantId",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductVariants_TenantId_ProductId",

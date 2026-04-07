@@ -41,6 +41,7 @@ public class UpdateCustomerHandler : ICommandHandler<UpdateCustomerCommand>
         var address = new Address(
             request.Street ?? string.Empty,
             request.City ?? string.Empty,
+            request.District ?? string.Empty,
             request.State ?? string.Empty,
             request.PostalCode ?? string.Empty,
             request.Country ?? string.Empty);

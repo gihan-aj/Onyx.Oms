@@ -26,7 +26,7 @@ public class UpdateCustomerHandlerTests
         var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var customer = Customer.Create(tenantId, "Old Name", "old@test.com", "111", null, null, null).Value;
         var command = new UpdateCustomerCommand(
-            customer.Id, "New Name", "new@test.com", "222", "333", "St", "City", "St", "Z", "Co", "Note");
+            customer.Id, "New Name", "new@test.com", "222", "333", "St", "City", "District", "St", "Z", "Co", "Note");
 
         var dbSet = MockDbSet.Create(customer);
         _context.Customers.Returns(dbSet);
@@ -49,7 +49,7 @@ public class UpdateCustomerHandlerTests
         _context.Customers.Returns(dbSet);
         
         var command = new UpdateCustomerCommand(
-            Guid.NewGuid(), "Name", "email", "123", null, null, null, null, null, null, null);
+            Guid.NewGuid(), "Name", "email", "123", null, null,null, null, null, null, null, null);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -69,7 +69,7 @@ public class UpdateCustomerHandlerTests
         
         // Try to update User 1 to use User 2's email
         var command = new UpdateCustomerCommand(
-            customer1.Id, "User 1", "user2@test.com", "111", null, null, null, null, null, null, null);
+            customer1.Id, "User 1", "user2@test.com", "111", null, null, null, null, null, null, null, null);
 
         var dbSet = MockDbSet.Create(customer1, customer2);
         _context.Customers.Returns(dbSet);
@@ -91,7 +91,7 @@ public class UpdateCustomerHandlerTests
         
         // Same email, just update name
         var command = new UpdateCustomerCommand(
-            customer.Id, "Updated Name", "user1@test.com", "111", null, null, null, null, null, null, null);
+            customer.Id, "Updated Name", "user1@test.com", "111", null, null, null, null, null, null, null, null);
 
         var dbSet = MockDbSet.Create(customer);
         _context.Customers.Returns(dbSet);

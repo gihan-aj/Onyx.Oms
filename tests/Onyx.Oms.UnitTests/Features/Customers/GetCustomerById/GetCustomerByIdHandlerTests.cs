@@ -26,7 +26,7 @@ public class GetCustomerByIdHandlerTests
         // Arrange
         var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var customerId = Guid.NewGuid();
-        var address = new Address("Street", "City", "State", "Zip", "Country");
+        var address = new Address("Street", "City", "District", "State", "Zip", "Country");
         var customer = Customer.Create(tenantId, "Name", "email@test.com", "123", null, address, "Notes").Value;
         
         // Reflection to set ID since it's private set in real usage usually, 

@@ -26,7 +26,7 @@ public class CreateCustomerHandlerTests
     {
         // Arrange
         var command = new CreateCustomerCommand(
-            "John Doe", "john@example.com", "123456", null, "Street", "City", "State", "Zip", "Country", "Notes");
+            "John Doe", "john@example.com", "123456", null, "Street", "City","district", "State", "Zip", "Country", "Notes");
         
         var dbSet = MockDbSet.Create<Customer>();
         _context.Customers.Returns(dbSet);
@@ -48,7 +48,7 @@ public class CreateCustomerHandlerTests
         var existingCustomer = Customer.Create(tenantId, "Existing", email, "000000", null, null, null).Value;
         
         var command = new CreateCustomerCommand(
-            "New User", email, "123456", null, "Street", "City", "State", "Zip", "Country", "Notes");
+            "New User", email, "123456", null, "Street", "City","District", "State", "Zip", "Country", "Notes");
 
         var dbSet = MockDbSet.Create(existingCustomer);
         _context.Customers.Returns(dbSet);

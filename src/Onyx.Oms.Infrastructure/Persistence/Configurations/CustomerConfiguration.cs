@@ -48,6 +48,7 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         {
             a.Property(p => p.Street).HasMaxLength(200).HasColumnName("Street");
             a.Property(p => p.City).HasMaxLength(100).HasColumnName("City");
+            a.Property(p => p.District).HasMaxLength(100).HasColumnName("District");
             a.Property(p => p.State).HasMaxLength(100).HasColumnName("State");
             a.Property(p => p.PostalCode).HasMaxLength(20).HasColumnName("PostalCode");
             a.Property(p => p.Country).HasMaxLength(100).HasColumnName("Country");

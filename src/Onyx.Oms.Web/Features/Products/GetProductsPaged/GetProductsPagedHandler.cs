@@ -31,7 +31,8 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
 
         if (request.CategoryId.HasValue)
         {
-            query = query.Where(p => p.CategoryId == request.CategoryId.Value);
+            //query = query.Where(p => p.CategoryId == request.CategoryId.Value);
+            query = query.Where(p => p.Category.Path.Contains(request.CategoryId.Value.ToString()));
         }
 
         if (request.HasVariants.HasValue)

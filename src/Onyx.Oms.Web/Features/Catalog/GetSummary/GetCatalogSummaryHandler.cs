@@ -18,8 +18,18 @@ namespace Onyx.Oms.Web.Features.Catalog.GetSummary
         {
             int lowStockThreshold = 10;
 
-            var totalCategories = await _context.ProductCategories
+            var categoryStats = await _context.ProductCategories
                 .Where(c => c.IsActive)
+                .GroupBy(c => 1)
+                .Select(g => new 
+                {
+                    Total = g.Count(),
+                    TotalLeaf = g.Count(c => !c.SubCategories.Any())
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var categoriesWithoutProducts = await _context.ProductCategories
+                .Where(c => c.IsActive && !_context.Products.Any(p => p.CategoryId == c.Id))
                 .CountAsync(cancellationToken);
 
             var productStats = await _context.Products
@@ -28,6 +38,8 @@ namespace Onyx.Oms.Web.Features.Catalog.GetSummary
                 {
                     Total = g.Count(),
                     Active = g.Count(p => p.IsActive),
+                    Inactive = g.Count(p => !p.IsActive),
+                    WithoutImages = g.Count(g => !g.Images.Any())
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -39,20 +51,29 @@ namespace Onyx.Oms.Web.Features.Catalog.GetSummary
                     TotalActive = g.Count(),
                     OutOfStock = g.Count(v => (v.StockOnHand - v.ReservedQuantity) <= 0),
                     LowStock = g.Count(v => (v.StockOnHand - v.ReservedQuantity) > 0 && (v.StockOnHand - v.ReservedQuantity) <= lowStockThreshold),
+                    TotalStockOnHand = g.Sum(v => v.StockOnHand),
+                    TotalReservedQuantity = g.Sum(v => v.ReservedQuantity)
                 })
                 .FirstOrDefaultAsync (cancellationToken);
 
-            var safeProductStats = productStats ?? new { Total = 0, Active = 0 };
-            var safeVariantStats = variantStats ?? new { TotalActive = 0, OutOfStock = 0, LowStock = 0 };
+            var safeCategoryStats = categoryStats ?? new { Total = 0, TotalLeaf = 0 };
+            var safeProductStats = productStats ?? new { Total = 0, Active = 0, Inactive = 0, WithoutImages = 0 };
+            var safeVariantStats = variantStats ?? new { TotalActive = 0, OutOfStock = 0, LowStock = 0, TotalStockOnHand = 0, TotalReservedQuantity = 0 };
 
             var summary = new CatalogSummaryDto(
-                TotalCategories: totalCategories,
+                TotalCategories: safeCategoryStats.Total,
+                TotalLeafCategories: safeCategoryStats.TotalLeaf,
                 TotalProducts: safeProductStats.Total,
                 ActiveProducts: safeProductStats.Active,
                 TotalActiveVariants: safeVariantStats.TotalActive,
                 OutOfStockVariants: safeVariantStats.OutOfStock,
-                LowStockVariants: safeVariantStats.LowStock
-            );
+                LowStockVariants: safeVariantStats.LowStock,
+                ProductsWithoutImages: safeProductStats.WithoutImages,
+                CategoriesWithoutProducts: categoriesWithoutProducts,
+                InactiveProducts: safeProductStats.Inactive,
+                TotalStockOnHand: safeVariantStats.TotalStockOnHand,
+                TotalReservedQuantity: safeVariantStats.TotalReservedQuantity
+        );
 
             return Result.Success(summary);
         }

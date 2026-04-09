@@ -23,7 +23,19 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
             .Include(p => p.Images)
             .AsNoTracking();
 
-        // 1. Filtering
+        // Stock filtering
+        if(request.StockFilterStatus != StockFilterStatus.All)
+        {
+            query = request.StockFilterStatus switch
+            {
+                StockFilterStatus.InStock => query.Where(p => p.Variants.Any(v => v.IsActive && (v.StockOnHand - v.ReservedQuantity) > 0)),
+                StockFilterStatus.LowStock => query.Where(p => p.Variants.Any(v => v.IsActive && (v.StockOnHand - v.ReservedQuantity) > 0 && (v.StockOnHand - v.ReservedQuantity) <= 10)),
+                StockFilterStatus.OutOfStock => query.Where(p => p.Variants.Any(v => v.IsActive && (v.StockOnHand - v.ReservedQuantity) <= 0)),
+                _ => query
+            };
+        }
+
+        // Filtering
         if (request.IsActive.HasValue)
         {
             query = query.Where(p => p.IsActive == request.IsActive.Value);

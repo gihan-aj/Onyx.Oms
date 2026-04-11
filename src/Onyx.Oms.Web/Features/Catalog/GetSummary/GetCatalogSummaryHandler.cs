@@ -29,7 +29,7 @@ namespace Onyx.Oms.Web.Features.Catalog.GetSummary
                 .FirstOrDefaultAsync(cancellationToken);
 
             var categoriesWithoutProducts = await _context.ProductCategories
-                .Where(c => c.IsActive && !_context.Products.Any(p => p.CategoryId == c.Id))
+                .Where(c => c.IsActive && !c.SubCategories.Any() && !_context.Products.Any(p => p.CategoryId == c.Id))
                 .CountAsync(cancellationToken);
 
             var productStats = await _context.Products

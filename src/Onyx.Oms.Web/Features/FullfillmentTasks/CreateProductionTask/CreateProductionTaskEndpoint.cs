@@ -12,11 +12,11 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.CreateProductionTask
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             // Note the /production path to avoid colliding with the procurement POST
-            var group = app.MapGroup("api/v{version:apiVersion}/fulfillment-tasks/production")
+            var group = app.MapGroup("api/v{version:apiVersion}/fulfillment-tasks")
                 .WithApiVersionSet(app.NewApiVersionSet("FulfillmentTasks").Build())
                 .HasApiVersion(1);
 
-            group.MapPost("", async (ISender sender, CreateProductionTaskCommand command) =>
+            group.MapPost("production", async (ISender sender, CreateProductionTaskCommand command) =>
             {
                 Result<Guid> result = await sender.Send(command);
 

@@ -10,11 +10,11 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.CreateProcurementTask
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            var group = app.MapGroup("api/v{version:apiVersion}/fulfillment-tasks/procurement")
+            var group = app.MapGroup("api/v{version:apiVersion}/fulfillment-tasks")
                 .WithApiVersionSet(app.NewApiVersionSet("FulfillmentTasks").Build())
                 .HasApiVersion(1);
 
-            group.MapPost("", async (ISender sender, CreateProcurementTaskCommand command) =>
+            group.MapPost("procurement", async (ISender sender, CreateProcurementTaskCommand command) =>
             {
                 Result<Guid> result = await sender.Send(command);
 

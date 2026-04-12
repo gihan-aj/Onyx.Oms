@@ -95,7 +95,7 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
 
         if (string.IsNullOrWhiteSpace(sortColumn))
         {
-            return isDesc ? query.OrderByDescending(p => p.CreatedOnUtc) : query.OrderByDescending(p => p.CreatedOnUtc);
+            return isDesc ? query.OrderByDescending(p => p.CreatedOnUtc) : query.OrderBy(p => p.CreatedOnUtc);
         }
 
         return sortColumn.ToLower() switch

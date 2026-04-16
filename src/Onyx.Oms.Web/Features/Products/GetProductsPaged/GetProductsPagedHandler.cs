@@ -66,22 +66,73 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
         query = ApplySorting(query, request.SortColumn, request.SortOrder);
 
         // 3. Projections
-        var dtoQuery = query.Select(p => new ProductDto(
-            p.Id,
-            p.Name,
-            p.BaseSku,
-            p.CategoryId,
-            p.Category.Name,
-            p.Category.NamePath,
-            p.BasePrice.Amount,
-            p.BasePrice.Currency,
-            p.Images.Where(i => i.IsMain).Select(i => i.Url).FirstOrDefault(),
-            p.HasVariants,
-            p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand),
-            p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand - v.ReservedQuantity),
-            p.IsActive,
-            p.CreatedOnUtc,
-            p.LastModifiedOnUtc));
+        IQueryable<ProductDto> dtoQuery;
+        if(request.IncludeVariantsAndImages.HasValue && request.IncludeVariantsAndImages.Value)
+        {
+            dtoQuery = query.Select(p => new ProductDto(
+                p.Id,
+                p.Name,
+                p.BaseSku,
+                p.CategoryId,
+                p.Category.Name,
+                p.Category.NamePath,
+                p.BasePrice.Amount,
+                p.BasePrice.Currency,
+                p.Images.Where(i => i.IsMain).Select(i => i.Url).FirstOrDefault(),
+                p.HasVariants,
+                p.Options.Select(o => new ProductOptionDto(o.Name, o.DisplayOrder, o.Values)).ToList(),
+                p.Variants.Where(v => v.IsActive)
+                    .Select(v => new ProductVariantDto(
+                        v.Id,
+                        v.Sku,
+                        v.Attributes.Select(a => new VariantAttributeDto(a.Name, a.Value)).ToList(),
+                        v.Cost.Amount,
+                        v.Cost.Currency,
+                        v.Price.Amount,
+                        v.Price.Currency,
+                        v.Weight != null ? v.Weight.Value : null,
+                        v.Weight != null ? v.Weight.Unit : null,
+                        v.StockOnHand,
+                        v.ReservedQuantity,
+                        v.IsActive))
+                    .ToList(),
+                p.Images
+                    .Select(i => new ProductImageDto(
+                        i.Id,
+                        i.Url,
+                        i.DisplayOrder,
+                        i.IsMain,
+                        i.OptionName,
+                        i.OptionValue))
+                    .ToList(),
+                p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand),
+                p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand - v.ReservedQuantity),
+                p.IsActive,
+                p.CreatedOnUtc,
+                p.LastModifiedOnUtc));
+        }
+        else
+        {
+            dtoQuery = query.Select(p => new ProductDto(
+                p.Id,
+                p.Name,
+                p.BaseSku,
+                p.CategoryId,
+                p.Category.Name,
+                p.Category.NamePath,
+                p.BasePrice.Amount,
+                p.BasePrice.Currency,
+                p.Images.Where(i => i.IsMain).Select(i => i.Url).FirstOrDefault(),
+                p.HasVariants,
+                p.Options.Select(o => new ProductOptionDto(o.Name, o.DisplayOrder, o.Values)).ToList(),
+                null,
+                null,
+                p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand),
+                p.Variants.Where(v => v.IsActive).Sum(v => v.StockOnHand - v.ReservedQuantity),
+                p.IsActive,
+                p.CreatedOnUtc,
+                p.LastModifiedOnUtc));
+        } 
 
         // 4. Pagination
         var pagedResult = await PagedResult<ProductDto>.CreateAsync(dtoQuery, request.Page, request.PageSize, cancellationToken);

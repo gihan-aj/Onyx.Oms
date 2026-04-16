@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Http.Json;
 using Onyx.Oms.Core;
 using Onyx.Oms.Infrastructure;
 using Onyx.Oms.Web.Extensions;
 using Scalar.AspNetCore;
+using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +33,11 @@ builder.Services.AddApiVersioning(options =>
 {
     options.GroupNameFormat = "'v'V";
     options.SubstituteApiVersionInUrl = true;
+});
+
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 var app = builder.Build();

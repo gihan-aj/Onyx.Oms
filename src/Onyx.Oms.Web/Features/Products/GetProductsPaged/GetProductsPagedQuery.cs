@@ -9,6 +9,7 @@ public record GetProductsPagedQuery : PagedRequest, IQuery<PagedResult<ProductDt
     public bool? IsActive { get; init; }
     public Guid? CategoryId { get; init; }
     public bool? HasVariants { get; init; }
+    public bool? IncludeVariantsAndImages { get; init; }
 }
 
 public record ProductDto(
@@ -22,6 +23,9 @@ public record ProductDto(
     string BasePriceCurrency,
     string? MainImageUrl,
     bool HasVariants,
+    List<ProductOptionDto> Options,
+    List<ProductVariantDto>? Variants,
+    List<ProductImageDto>? Images,
     int StockOnHand,
     int AvailableQuantity,
     bool IsActive,
@@ -35,3 +39,37 @@ public enum StockFilterStatus
     LowStock = 2,
     OutOfStock = 3,
 }
+
+public record ProductOptionDto(
+    string Name,
+    int DispalyOrder,
+    List<string> Values);
+
+public record ProductVariantDto(
+    Guid Id,
+    string Sku,
+    List<VariantAttributeDto> Attributes,
+    decimal CostAmount,
+    string CostCurrency,
+    decimal PriceAmount,
+    string PriceCurrency,
+    decimal? WeightAmount,
+    string? WeightUnit,
+    int StockOnHand,
+    int ReservedQuantity,
+    bool IsActive
+);
+
+public record VariantAttributeDto(
+    string Name,
+    string Value
+);
+
+public record ProductImageDto(
+    Guid Id,
+    string Url,
+    int DisplayOrder,
+    bool IsMain,
+    string? OptionName = null,
+    string? OptionValue = null
+);

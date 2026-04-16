@@ -4,7 +4,6 @@ using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
-using Onyx.Oms.Core.Domain.ValueObjects;
 using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.FullfillmentTasks.CreateProcurementTask
@@ -31,17 +30,15 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.CreateProcurementTask
             if(!variantExists)
                 return Result.Failure<Guid>(Error.NotFound("ProductVariant.NotFound", "Prodcut variant is not found."));
 
-            var cost = new Money(request.Cost.Amount, request.Cost.Currency);
-
             var taskResult = FulfillmentTask.Create(
                 tenantId.Value,
                 FulfillmentTaskType.Procurement,
                 request.ProductVariantId,
                 request.RequestedQuantity,
                 null,
-                cost,
                 null,
-                request.PurchaseOrderNumber,
+                null,
+                null,
                 request.Notes,
                 request.ExpectedCompletionDate,
                 request.Priority);

@@ -113,8 +113,64 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
+    public Result<FulfillmentTask?> IssuePurchaseOrder(int issueQuantity, string poNumber, Money cost)
+    {
+        if (Type != FulfillmentTaskType.Procurement)
+            return Result.Failure<FulfillmentTask?>(Error.Validation("Task.InvalidType", "Only procurement tasks can be issued a PO."));
+
+        if (Status != FulfillmentTaskStatus.Pending)
+            return Result.Failure<FulfillmentTask?>(Error.Validation("Task.InvalidStatus", "Can only issue a PO for a pending task."));
+
+        if (issueQuantity <= 0 || issueQuantity > RequestedQuantity)
+            return Result.Failure<FulfillmentTask?>(Error.Validation("Task.InvalidQuantity", "Issue quantity must be greater than zero and cannot exceed requested quantity."));
+
+        StartedQuantity = issueQuantity;
+
+        Status = FulfillmentTaskStatus.InProgress;
+        PurchaseOrderNumber = poNumber;
+        Cost = cost;
+
+        // Handle the Split if it's a partial order
+        if (issueQuantity < RequestedQuantity)
+        {
+            int remainingQuantity = RequestedQuantity - issueQuantity;
+
+            // Shrink current task to match what was actually ordered
+            RequestedQuantity = issueQuantity;
+            StartedQuantity = issueQuantity;
+
+            // Clone a new Pending task for the leftovers
+            var remainderTask = new FulfillmentTask(
+                this.TenantId,
+                this.Type,
+                this.ProductVariantId,
+                remainingQuantity, // The leftover amount
+                this.LinkedOrderItemId,
+                null, // No cost yet
+                null, // No user assigned yet
+                null, // No PO yet
+                this.Notes, // Carry over notes
+                this.ExpectedCompletionDate,
+                this.Priority
+            );
+
+            return Result.Success<FulfillmentTask?>(remainderTask);
+        }
+
+        // Full order, no split required
+        StartedQuantity = issueQuantity;
+        return Result.Success<FulfillmentTask?>(null);
+    }
+
     public Result MarkReady(int quantityToComplete)
     {
+        if(Status == FulfillmentTaskStatus.Pending)
+        {
+            // Implicitly start the exact amount
+            StartedQuantity += quantityToComplete;
+            Status = FulfillmentTaskStatus.InProgress;
+        }
+
         if (Status != FulfillmentTaskStatus.InProgress)
             return Result.Failure(Error.Validation("FulfillmentTask.NotInProgress", "Can only complete work on an InProgress task."));
 

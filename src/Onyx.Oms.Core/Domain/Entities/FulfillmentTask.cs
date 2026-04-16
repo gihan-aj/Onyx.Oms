@@ -94,6 +94,9 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
 
     public Result StartWork(int quantityToStart)
     {
+        if (Type != FulfillmentTaskType.Production)
+            return Result.Failure(Error.Validation("Task.InvalidType", "Only production tasks are eligible for this action."));
+
         if (Status == FulfillmentTaskStatus.Cancelled || Status == FulfillmentTaskStatus.Ready)
             return Result.Failure(Error.Validation("FulfillmentTask.InvalidStatus", "Cannot start work on a task that is completed or cancelled."));
 

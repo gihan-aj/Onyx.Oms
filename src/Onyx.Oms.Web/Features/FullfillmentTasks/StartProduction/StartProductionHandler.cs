@@ -22,9 +22,19 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.StartProduction
             if (productionTask is null)
                 return Result.Failure(Error.NotFound("ProductionTask.NotFound", "Production task not found."));
 
+            var variant = await _context.ProductVariants
+                .FirstOrDefaultAsync(v => v.Id == productionTask.ProductVariantId && v.IsActive == true, cancellationToken);
+            if (variant == null)
+                return Result.Failure(Error.NotFound("ProductionTask.VarinatNotFound", "Product Variant not found."));
+
             var taskResult = productionTask.StartWork(request.QuantityToStart);
             if (taskResult.IsFailure)
                 return Result.Failure(taskResult.Error);
+
+            // Update incoming stock
+            var variantUpdateResult = variant.AdjustIncomingStock(request.QuantityToStart);
+            if (variantUpdateResult.IsFailure)
+                return Result.Failure(variantUpdateResult.Error);
 
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();

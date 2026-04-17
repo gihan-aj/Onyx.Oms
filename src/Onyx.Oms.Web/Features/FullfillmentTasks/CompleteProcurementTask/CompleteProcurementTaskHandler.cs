@@ -27,11 +27,25 @@ public class CompleteProcurementTaskHandler : ICommandHandler<CompleteProcuremen
         if (task.Type != FulfillmentTaskType.Procurement)
             return Result.Failure(Error.Validation("Task.InvalidType", "The specified task is not a procurement task."));
 
+        var variant = await _context.ProductVariants
+                .FirstOrDefaultAsync(v => v.Id == task.ProductVariantId && v.IsActive == true, cancellationToken);
+        if (variant == null)
+            return Result.Failure(Error.NotFound("ProcurementTask.VarinatNotFound", "Product Variant not found."));
+
         var result = task.MarkReady(request.QuantityToComplete);
         if (result.IsFailure)
             return Result.Failure(result.Error);
 
+        // Update stock
+        var incomingStockResult = variant.AdjustIncomingStock(-request.QuantityToComplete);
+        if (incomingStockResult.IsFailure)
+            return Result.Failure(incomingStockResult.Error);
 
+        var stockResult = variant.AdjustStock(request.QuantityToComplete);
+        if (stockResult.IsFailure)
+            return Result.Failure(stockResult.Error);
+
+        // TODO: If there is an order id Reserved should be added
 
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Success();

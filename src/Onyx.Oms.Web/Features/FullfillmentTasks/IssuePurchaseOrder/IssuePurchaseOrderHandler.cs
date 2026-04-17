@@ -25,6 +25,11 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.IssuePurchaseOrder
                 return Result.Failure(Error.NotFound("ProcurementTask.NotFound", "Procurement task not found."));
             }
 
+            var variant = await _context.ProductVariants
+                .FirstOrDefaultAsync(v => v.Id == procurementTask.ProductVariantId && v.IsActive == true, cancellationToken);
+            if(variant == null)
+                return Result.Failure(Error.NotFound("ProcurementTask.VarinatNotFound", "Product Variant not found."));
+
             var result = procurementTask.IssuePurchaseOrder(
                 request.IssueQuantity, 
                 request.PurchaseOrderNumber, 
@@ -38,6 +43,11 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.IssuePurchaseOrder
             {
                 _context.FulfillmentTasks.Add(splitTask);
             }
+
+            // Update incoming stock
+            var variantUpdateResult = variant.AdjustIncomingStock(request.IssueQuantity);
+            if (variantUpdateResult.IsFailure)
+                return Result.Failure(variantUpdateResult.Error);
 
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();

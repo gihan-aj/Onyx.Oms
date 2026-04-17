@@ -202,9 +202,22 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
         return Result.Success();
     }
 
-    public void AdjustStock(int quantityAdjustment)
+    public Result AdjustStock(int quantityAdjustment)
     {
         StockOnHand += quantityAdjustment;
+        if (StockOnHand < 0)
+            return Result.Failure(Error.Validation("Stock.NegativeValue", "Stock on hand cannot be negative."));
+
+        return Result.Success();
+    }
+
+    public Result AdjustIncomingStock(int quantityAdjustment)
+    {
+        IncomingStock += quantityAdjustment;
+        if (IncomingStock < 0)
+            return Result.Failure(Error.Validation("IncomingStock.NegativeValue", "Incoming stock cannot be negative."));
+
+        return Result.Success();
     }
 
     public Result<int> ReserveStock(int requestedQuantity)

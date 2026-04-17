@@ -221,15 +221,18 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
-    public Result Cancel()
+    public Result<int> Cancel()
     {
         if (Status == FulfillmentTaskStatus.Ready)
-            return Result.Failure(Error.Validation("FulfillmentTask.InvalidStatus", "Cannot cancel a completed task."));
+            return Result.Failure<int>(Error.Validation("FulfillmentTask.InvalidStatus", "Cannot cancel a completed task."));
+
 
         if (Status == FulfillmentTaskStatus.Cancelled)
-            return Result.Success(); // Already cancelled
+            return 0; // Already cancelled
 
         Status = FulfillmentTaskStatus.Cancelled;
-        return Result.Success();
+        int currentInProgress = StartedQuantity - CompletedQuantity - ScrappedQuantity;
+
+        return currentInProgress;
     }
 }

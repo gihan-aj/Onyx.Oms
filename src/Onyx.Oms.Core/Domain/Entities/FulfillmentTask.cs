@@ -235,4 +235,56 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
 
         return currentInProgress;
     }
+
+    public Result UpdateProductionDetails(
+        int requestedQuantity,
+        Guid? assignedUserId,
+        DateTimeOffset? expectedCompletionDate,
+        TaskPriority priority,
+        string? notes)
+    {
+        if (Type != FulfillmentTaskType.Production)
+            return Result.Failure(Error.Validation("Task.InvalidType", "Cannot update production details on a procurement task."));
+
+        if (Status == FulfillmentTaskStatus.Cancelled || Status == FulfillmentTaskStatus.Ready)
+            return Result.Failure(Error.Validation("Task.InvalidStatus", "Cannot edit a completed or cancelled task."));
+
+        if (requestedQuantity < StartedQuantity)
+            return Result.Failure(Error.Validation("Task.InvalidQuantity", $"Cannot reduce requested quantity below the amount already started ({StartedQuantity})."));
+
+        RequestedQuantity = requestedQuantity;
+        AssignedUserId = assignedUserId;
+        ExpectedCompletionDate = expectedCompletionDate;
+        Priority = priority;
+        Notes = notes;
+
+        return Result.Success();
+    }
+
+    public Result UpdateProcurementDetails(
+        int requestedQuantity,
+        string purchaseOrderNumber,
+        Money cost,
+        DateTimeOffset? expectedCompletionDate,
+        TaskPriority priority,
+        string? notes)
+    {
+        if (Type != FulfillmentTaskType.Procurement)
+            return Result.Failure(Error.Validation("Task.InvalidType", "Cannot update procurement details on a production task."));
+
+        if (Status == FulfillmentTaskStatus.Cancelled || Status == FulfillmentTaskStatus.Ready)
+            return Result.Failure(Error.Validation("Task.InvalidStatus", "Cannot edit a completed or cancelled task."));
+
+        if (requestedQuantity < StartedQuantity)
+            return Result.Failure(Error.Validation("Task.InvalidQuantity", $"Cannot reduce requested quantity below the amount already started ({StartedQuantity})."));
+
+        RequestedQuantity = requestedQuantity;
+        PurchaseOrderNumber = purchaseOrderNumber;
+        Cost = cost;
+        ExpectedCompletionDate = expectedCompletionDate;
+        Priority = priority;
+        Notes = notes;
+
+        return Result.Success();
+    }
 }

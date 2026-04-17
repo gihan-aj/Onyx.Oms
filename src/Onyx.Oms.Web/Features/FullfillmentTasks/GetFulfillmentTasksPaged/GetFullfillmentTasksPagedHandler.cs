@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Messaging;
 
 namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
@@ -59,6 +60,18 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
                     x.Task.ExpectedCompletionDate.Value.Date == targetDate);
             }
 
+            if (!request.ShowAllStatus)
+            {
+                baseQuery = baseQuery.Where(x =>
+                    x.Task.Status != FulfillmentTaskStatus.Cancelled &&
+                    x.Task.Status != FulfillmentTaskStatus.Ready);
+            }
+
+            if (request.CreatedAfter.HasValue)
+            {
+                baseQuery = baseQuery.Where(x => x.Task.CreatedOnUtc >= request.CreatedAfter.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(request.OrderNumber))
             {
                 // Now we can filter by the joined Order table!
@@ -111,7 +124,12 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
                 x.Task.PurchaseOrderNumber,
                 x.Task.Notes,
                 x.Task.ExpectedCompletionDate,
-                x.Task.Priority));
+                x.Task.Priority,
+                x.Task.Status,
+                x.Task.CreatedOnUtc,
+                x.Task.StartedQuantity,
+                x.Task.CompletedQuantity,
+                x.Task.ScrappedQuantity));
 
             var pagedResult = await PagedResult<FulfillmentTaskDto>.CreateAsync(projection, request.Page, request.PageSize, cancellationToken);
 

@@ -1,4 +1,4 @@
-﻿using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.ValueObjects;
 using Onyx.Oms.Core.Messaging;
@@ -11,6 +11,8 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
         public TaskPriority? Priority { get; init; }
         public DateTimeOffset? ExpectedCompletionDate { get; init; }
         public string? OrderNumber { get; init; }
+        public bool ShowAllStatus { get; init; } = false;
+        public DateTimeOffset? CreatedAfter { get; init; }
     }
 
     public record FulfillmentTaskDto(
@@ -30,7 +32,12 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
         string? PurchaseOrderNumber,
         string? Notes,
         DateTimeOffset? ExpectedCompletionDate,
-        TaskPriority Priority);
+        TaskPriority Priority,
+        FulfillmentTaskStatus Status,
+        DateTimeOffset CreatedOnUtc,
+        int StartedQuantity,
+        int CompletedQuantity,
+        int ScrappedQuantity);
 
     public record VariantAttributeDto(
         string Name,

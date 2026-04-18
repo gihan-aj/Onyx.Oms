@@ -112,6 +112,7 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
                 x.Task.Type,
                 x.Variant.Id,
                 x.Product.Name,
+                x.Variant.Sku,
                 x.Product.HasVariants,
                 x.Variant.Attributes.Select(a => new VariantAttributeDto(a.Name, a.Value)).ToList(),
                 x.Task.RequestedQuantity,

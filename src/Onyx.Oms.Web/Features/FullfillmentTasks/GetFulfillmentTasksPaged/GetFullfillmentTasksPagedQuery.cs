@@ -20,6 +20,7 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
         FulfillmentTaskType Type,
         Guid ProductVariantId,
         string ProductName,
+        string Sku,
         bool ProductHasVariants,
         List<VariantAttributeDto>? VariantAttributes,
         int RequestedQuantity,

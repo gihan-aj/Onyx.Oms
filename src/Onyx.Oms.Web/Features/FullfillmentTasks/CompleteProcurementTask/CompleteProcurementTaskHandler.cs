@@ -32,14 +32,22 @@ public class CompleteProcurementTaskHandler : ICommandHandler<CompleteProcuremen
         if (variant == null)
             return Result.Failure(Error.NotFound("ProcurementTask.VarinatNotFound", "Product Variant not found."));
 
+        // if user try to complete a pending task or not all requested quantity hasnt been started...
+        var incomingStockAdjustment = request.QuantityToComplete > task.StartedQuantity
+            ? task.StartedQuantity
+            : request.QuantityToComplete;
+
         var result = task.MarkReady(request.QuantityToComplete);
         if (result.IsFailure)
             return Result.Failure(result.Error);
 
         // Update stock
-        var incomingStockResult = variant.AdjustIncomingStock(-request.QuantityToComplete);
-        if (incomingStockResult.IsFailure)
-            return Result.Failure(incomingStockResult.Error);
+        if (incomingStockAdjustment > 0)
+        {
+            var incomingStockResult = variant.AdjustIncomingStock(-incomingStockAdjustment);
+            if (incomingStockResult.IsFailure)
+                return Result.Failure(incomingStockResult.Error);
+        }
 
         var stockResult = variant.AdjustStock(request.QuantityToComplete);
         if (stockResult.IsFailure)

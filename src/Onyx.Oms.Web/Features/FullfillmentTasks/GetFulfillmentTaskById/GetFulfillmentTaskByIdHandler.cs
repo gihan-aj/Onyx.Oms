@@ -31,6 +31,7 @@ public class GetFulfillmentTaskByIdHandler : IQueryHandler<GetFulfillmentTaskByI
                 t.Type,
                 pv.Id,
                 p.Name,
+                pv.Sku,
                 p.HasVariants,
                 pv.Attributes.Select(a => new VariantAttributeDto(a.Name, a.Value)).ToList(),
                 t.RequestedQuantity,

@@ -12,6 +12,7 @@ public record FulfillmentTaskByIdDto(
     FulfillmentTaskType Type,
     Guid ProductVariantId,
     string ProductName,
+    string Sku,
     bool ProductHasVariants,
     List<VariantAttributeDto>? VariantAttributes,
     int RequestedQuantity,

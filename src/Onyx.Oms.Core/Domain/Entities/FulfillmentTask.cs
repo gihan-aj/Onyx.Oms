@@ -263,7 +263,7 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
 
     public Result UpdateProcurementDetails(
         int requestedQuantity,
-        string purchaseOrderNumber,
+        string? purchaseOrderNumber,
         Money cost,
         DateTimeOffset? expectedCompletionDate,
         TaskPriority priority,
@@ -278,8 +278,11 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
         if (requestedQuantity < StartedQuantity)
             return Result.Failure(Error.Validation("Task.InvalidQuantity", $"Cannot reduce requested quantity below the amount already started ({StartedQuantity})."));
 
+        if(Status != FulfillmentTaskStatus.Pending && (string.IsNullOrWhiteSpace(purchaseOrderNumber) || cost == null))
+            return Result.Failure(Error.Validation("Task.InvalidProcurement", $"Purchase Order number and Cost are required."));
+
         RequestedQuantity = requestedQuantity;
-        PurchaseOrderNumber = purchaseOrderNumber;
+        PurchaseOrderNumber = string.IsNullOrWhiteSpace(purchaseOrderNumber) ? null : purchaseOrderNumber;
         Cost = cost;
         ExpectedCompletionDate = expectedCompletionDate;
         Priority = priority;

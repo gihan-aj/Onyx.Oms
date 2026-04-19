@@ -24,10 +24,14 @@ public class UpdateProcurementTaskHandler : ICommandHandler<UpdateProcurementTas
         if (task is null)
             return Result.Failure(Error.NotFound("ProcurementTask.NotFound", "Procurement task not found."));
 
+        var money = Money.Zero();
+        if (request.Cost != null)
+            money = new Money(request.Cost.Amount, request.Cost.Currency);
+
         var result = task.UpdateProcurementDetails(
             request.RequestedQuantity,
             request.PurchaseOrderNumber,
-            new Money(request.Cost.Amount, request.Cost.Currency),
+            money,
             request.ExpectedCompletionDate,
             request.Priority,
             request.Notes);

@@ -12,6 +12,9 @@ public interface IApplicationDbContext
     DbSet<ProductVariant> ProductVariants { get; }
     DbSet<ProductImage> ProductImages { get; }
     DbSet<FulfillmentTask> FulfillmentTasks {  get; }
+    DbSet<Order> Orders { get; }
+    DbSet<OrderItem> OrderItems { get; }
+    DbSet<OrderPayment> OrderPayments { get; }
     DbSet<AppUser> AppUsers { get; }
     DbSet<Role> Roles { get; }
     //DbSet<TenantProfile> TenantProfiles { get; }

@@ -28,6 +28,9 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<FulfillmentTask> FulfillmentTasks => Set<FulfillmentTask>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>();
     public DbSet<AppUser> AppUsers => Set<AppUser>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<AppSequence> AppSequences => Set<AppSequence>();

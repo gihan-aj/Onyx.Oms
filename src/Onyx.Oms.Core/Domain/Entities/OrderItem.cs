@@ -1,3 +1,4 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
@@ -5,17 +6,19 @@ using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class OrderItem : AuditableEntity<Guid>
+public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
 {
     private OrderItem() { }
 
     private OrderItem(
+        Guid tenantId,
         Guid orderId,
         Guid productVariantId,
         int quantity,
         Money unitPrice,
         OrderItemStatus status) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         OrderId = orderId;
         ProductVariantId = productVariantId;
         Quantity = quantity;
@@ -23,6 +26,7 @@ public class OrderItem : AuditableEntity<Guid>
         Status = status;
     }
 
+    public Guid TenantId { get; private set; }
     public Guid OrderId { get; private set; }
     public Guid ProductVariantId { get; private set; }
     public int Quantity { get; private set; }
@@ -34,6 +38,7 @@ public class OrderItem : AuditableEntity<Guid>
     public Money LineTotal {  get; private set; } = Money.Zero();
 
     public static Result<OrderItem> Create(
+        Guid tenantId,
         Guid orderId,
         Guid productVariantId,
         int quantity,
@@ -50,6 +55,7 @@ public class OrderItem : AuditableEntity<Guid>
             return Result.Failure<OrderItem>(Error.Validation("OrderItem.QuantityInvalid", "Quantity must be greater than zero."));
 
         var item = new OrderItem(
+            tenantId,
             orderId,
             productVariantId,
             quantity,

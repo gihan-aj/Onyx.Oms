@@ -1,3 +1,4 @@
+using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
@@ -5,11 +6,12 @@ using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Order : AuditableEntity<Guid>
+public class Order : AuditableEntity<Guid>, IMustHaveTenant
 {
     private Order() { }
 
     private Order(
+        Guid tenantId,
         string orderNumber,
         DateTimeOffset? orderDate,
         Guid customerId,
@@ -18,6 +20,7 @@ public class Order : AuditableEntity<Guid>
         Address shippingAddress,
         string? notes) : base(Guid.NewGuid())
     {
+        TenantId = tenantId;
         OrderNumber = orderNumber;  
         OrderDate = orderDate.HasValue ? orderDate.Value : null;
         CustomerId = customerId;
@@ -30,6 +33,7 @@ public class Order : AuditableEntity<Guid>
         PaymentStatus = PaymentStatus.Unpaid;
     }
 
+    public Guid TenantId { get; private set; }
     public string OrderNumber { get; private set; } = string.Empty;
     public DateTimeOffset? OrderDate { get; private set; }
     public Guid CustomerId { get; private set; }
@@ -68,6 +72,7 @@ public class Order : AuditableEntity<Guid>
     public Money BalanceAmount => new Money(Math.Max(0, GrandTotal.Amount - TotalPaid.Amount), GrandTotal.Currency);
 
     public static Result<Order> Create(
+        Guid tenantId,
         string orderNumber,
         DateTimeOffset? orderDate,
         Guid customerId,
@@ -80,6 +85,7 @@ public class Order : AuditableEntity<Guid>
             return Result.Failure<Order>(Error.Validation("Order.CustomerRequired", "Customer is required."));
 
         return Result.Success(new Order(
+            tenantId,
             orderNumber,
             orderDate,
             customerId,
@@ -101,7 +107,7 @@ public class Order : AuditableEntity<Guid>
         if (Status != OrderStatus.Pending)
             return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot add items unless order is in Pending status."));
 
-        var itemResult = OrderItem.Create(Id, productVariantId, quantity, unitPrice, initialStatus);
+        var itemResult = OrderItem.Create(TenantId, Id, productVariantId, quantity, unitPrice, initialStatus);
         
         if (itemResult.IsFailure)
             return Result.Failure(itemResult.Error);
@@ -172,7 +178,7 @@ public class Order : AuditableEntity<Guid>
 
     public Result AddPayment(Money amount, PaymentMethod method, string? reference, DateTime paymentDate, string? gatewayName = null, string? gatewayTransactionId = null, string? gatewayPaymentStatus = null)
     {
-        var paymentResult = OrderPayment.Create(Id, amount, method, reference, paymentDate, gatewayName, gatewayTransactionId, gatewayPaymentStatus);
+        var paymentResult = OrderPayment.Create(TenantId, Id, amount, method, reference, paymentDate, gatewayName, gatewayTransactionId, gatewayPaymentStatus);
         
         if (paymentResult.IsFailure)
             return Result.Failure(paymentResult.Error);

@@ -9,72 +9,70 @@ public class Order : AuditableEntity<Guid>
 {
     private Order() { }
 
-    internal Order(
-        Guid id,
+    private Order(
+        string orderNumber,
+        DateTimeOffset? orderDate,
         Guid customerId,
+        bool isCashOnDelivery,
+        Guid? courierId,
         Address shippingAddress,
-        string? notes) : base(id)
+        string? notes) : base(Guid.NewGuid())
     {
+        OrderNumber = orderNumber;  
+        OrderDate = orderDate.HasValue ? orderDate.Value : null;
         CustomerId = customerId;
+        IsCashOnDelivery = isCashOnDelivery;
+        CourierId = courierId.HasValue ? courierId.Value : null;
         ShippingAddress = shippingAddress;
-        Notes = notes;
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes;
         
         Status = OrderStatus.Pending;
         PaymentStatus = PaymentStatus.Unpaid;
     }
 
+    public string OrderNumber { get; private set; } = string.Empty;
+    public DateTimeOffset? OrderDate { get; private set; }
     public Guid CustomerId { get; private set; }
     public OrderStatus Status { get; private set; }
     public PaymentStatus PaymentStatus { get; private set; }
+    public bool IsCashOnDelivery { get; private set; }
     
+    public Guid? CourierId { get; private set; }
     public Address ShippingAddress { get; private set; } = Address.Empty;
     public string? TrackingNumber { get; private set; }
     public string? Notes { get; private set; }
 
+    public Money SubTotal { get; private set; } = Money.Zero();
+    public Money DiscountAmount { get; private set; } = Money.Zero();
+    public string? DiscountReason { get; private set; }
+    public Money ShippingCost { get; private set; } = Money.Zero();
+    public Money TaxAmount { get; private set; } = Money.Zero();
+    public Money GrandTotal { get; private set; } = Money.Zero();
+
     private readonly List<OrderItem> _items = new();
     public virtual IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
-    private readonly List<Payment> _payments = new();
-    public virtual IReadOnlyCollection<Payment> Payments => _payments.AsReadOnly();
-
-    public Money TotalAmount
-    {
-        get
-        {
-            if (!_items.Any()) return Money.Zero();
-            var currency = _items.First().UnitPrice.Currency;
-            var total = _items.Sum(i => i.TotalPrice.Amount);
-            return new Money(total, currency);
-        }
-    }
+    private readonly List<OrderPayment> _payments = new();
+    public virtual IReadOnlyCollection<OrderPayment> Payments => _payments.AsReadOnly();
 
     public Money TotalPaid
     {
         get
         {
-            if (!_payments.Any()) return TotalAmount.Amount > 0 ? Money.Zero(TotalAmount.Currency) : Money.Zero();
-            var currency = _payments.First().Amount.Currency;
+            if (!_payments.Any()) return Money.Zero(GrandTotal.Currency);
             var total = _payments.Sum(p => p.Amount.Amount);
-            return new Money(total, currency);
+            return new Money(total, GrandTotal.Currency);
         }
     }
 
-    public Money BalanceAmount
-    {
-        get
-        {
-            var total = TotalAmount;
-            var paid = TotalPaid;
-            if (total.Currency != paid.Currency && paid.Amount > 0)
-                throw new InvalidOperationException("Currency mismatch between total and paid amounts.");
-            
-            var balance = total.Amount - paid.Amount;
-            return new Money(balance < 0 ? 0 : balance, total.Currency);
-        }
-    }
+    public Money BalanceAmount => new Money(Math.Max(0, GrandTotal.Amount - TotalPaid.Amount), GrandTotal.Currency);
 
     public static Result<Order> Create(
+        string orderNumber,
+        DateTimeOffset? orderDate,
         Guid customerId,
+        bool isCashOnDelivery,
+        Guid? courierId,
         Address? shippingAddress,
         string? notes)
     {
@@ -82,13 +80,23 @@ public class Order : AuditableEntity<Guid>
             return Result.Failure<Order>(Error.Validation("Order.CustomerRequired", "Customer is required."));
 
         return Result.Success(new Order(
-            Guid.NewGuid(),
+            orderNumber,
+            orderDate,
             customerId,
+            isCashOnDelivery,
+            courierId,
             shippingAddress ?? Address.Empty,
             notes));
     }
 
-    public Result AddItem(Guid productVariantId, int quantity, Money unitPrice, OrderItemStatus initialStatus = OrderItemStatus.Allocated)
+    public Result AddItem(
+        Guid productVariantId, 
+        int quantity, 
+        Money unitPrice, 
+        decimal? itemDiscount = null,
+        DiscountType? discountType = null,
+        string? discountReason = null, 
+        OrderItemStatus initialStatus = OrderItemStatus.Allocated)
     {
         if (Status != OrderStatus.Pending)
             return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot add items unless order is in Pending status."));
@@ -98,13 +106,73 @@ public class Order : AuditableEntity<Guid>
         if (itemResult.IsFailure)
             return Result.Failure(itemResult.Error);
 
+        var item = itemResult.Value;
+        if (itemDiscount.HasValue && discountType.HasValue)
+            item.ApplyItemDiscount(itemDiscount.Value, discountType.Value, discountReason);
+
         _items.Add(itemResult.Value);
         return Result.Success();
     }
 
+    public Result ApplyShippingCost(Money shippingCost)
+    {
+        ShippingCost = shippingCost;
+        RecalculateTotals();
+        return Result.Success();
+    }
+
+    public Result ApplyOrderDiscount(decimal discountValue, DiscountType type, string? reason = null)
+    {
+        if (Status != OrderStatus.Pending)
+            return Result.Failure(Error.Validation("Order.CannotDiscount", "Discounts can only be applied to pending orders."));
+
+        if (discountValue < 0)
+            return Result.Failure(Error.Validation("Order.InvalidDiscount", "Discount value cannot be negative."));
+
+        if (!_items.Any())
+            return Result.Failure(Error.Validation("Order.EmptyCart", "Cannot apply a discount to an empty order."));
+
+        var currency = SubTotal.Currency;
+
+        if(type == DiscountType.Percentage)
+        {
+            if (discountValue > 100)
+                return Result.Failure(Error.Validation("Order.InvalidDiscount", "Percentage discount cannot exceed 100%."));
+
+            decimal calculatedDiscount = SubTotal.Amount * (discountValue / 100m);
+            DiscountAmount = new Money(calculatedDiscount, currency);
+        }
+        else
+        {
+            decimal flatDiscount = Math.Min(discountValue, SubTotal.Amount);
+            DiscountAmount = new Money(flatDiscount, currency);
+        }
+
+        DiscountReason = reason;
+        
+        RecalculateTotals();
+
+        return Result.Success();
+    }
+
+    private void RecalculateTotals()
+    {
+        if(!_items.Any()) return;
+
+        var currency = _items.First().UnitPrice.Currency;
+
+        decimal subTotal = _items.Sum(i => i.LineTotal.Amount);
+        SubTotal = new Money(subTotal, currency);
+
+        decimal grandTotal = (subTotal + ShippingCost.Amount + TaxAmount.Amount) - DiscountAmount.Amount;
+        GrandTotal = new Money(grandTotal, currency);
+
+        UpdatePaymentStatus();
+    }
+
     public Result AddPayment(Money amount, PaymentMethod method, string? reference, DateTime paymentDate, string? gatewayName = null, string? gatewayTransactionId = null, string? gatewayPaymentStatus = null)
     {
-        var paymentResult = Payment.Create(Id, amount, method, reference, paymentDate, gatewayName, gatewayTransactionId, gatewayPaymentStatus);
+        var paymentResult = OrderPayment.Create(Id, amount, method, reference, paymentDate, gatewayName, gatewayTransactionId, gatewayPaymentStatus);
         
         if (paymentResult.IsFailure)
             return Result.Failure(paymentResult.Error);
@@ -118,7 +186,7 @@ public class Order : AuditableEntity<Guid>
 
     private void UpdatePaymentStatus()
     {
-        if (TotalPaid.Amount >= TotalAmount.Amount)
+        if (TotalPaid.Amount >= GrandTotal.Amount)
         {
             PaymentStatus = PaymentStatus.FullyPaid;
         }
@@ -137,13 +205,26 @@ public class Order : AuditableEntity<Guid>
         if (Status != OrderStatus.Pending && Status != OrderStatus.PaymentFailed)
             return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Pending or PaymentFailed orders can be confirmed."));
 
-        bool hasCodPayment = _payments.Any(p => p.Method == PaymentMethod.CashOnDelivery);
         bool hasPaidAmount = TotalPaid.Amount > 0;
 
-        if (!hasCodPayment && !hasPaidAmount)
-            return Result.Failure(Error.Validation("Order.PaymentRequired", "Order cannot be confirmed unless marked COD or has a payment record."));
+        if (!IsCashOnDelivery && !hasPaidAmount)
+            return Result.Failure(Error.Validation("Order.PaymentRequired", "Order cannot be confirmed unless marked COD or an advance payment is recorded."));
         
         UpdateStatus(OrderStatus.Confirmed);
+        return Result.Success();
+    }
+
+    public Result Complete()
+    {
+        // The order must be physically in the customer's hands
+        if (Status != OrderStatus.Delivered)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Order must be Delivered before it can be Completed."));
+
+        // The money must be in account
+        if (PaymentStatus != PaymentStatus.FullyPaid)
+            return Result.Failure(Error.Validation("Order.Unpaid", "Order cannot be Completed until it is fully paid."));
+
+        UpdateStatus(OrderStatus.Completed);
         return Result.Success();
     }
 

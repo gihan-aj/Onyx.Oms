@@ -5,11 +5,11 @@ using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
-public class Payment : AuditableEntity<Guid>
+public class OrderPayment : AuditableEntity<Guid>
 {
-    private Payment() { }
+    private OrderPayment() { }
 
-    internal Payment(
+    private OrderPayment(
         Guid id,
         Guid orderId,
         Money amount,
@@ -41,7 +41,7 @@ public class Payment : AuditableEntity<Guid>
     public string? GatewayTransactionId { get; private set; }
     public string? GatewayPaymentStatus { get; private set; }
 
-    public static Result<Payment> Create(
+    public static Result<OrderPayment> Create(
         Guid orderId,
         Money amount,
         PaymentMethod method,
@@ -52,12 +52,12 @@ public class Payment : AuditableEntity<Guid>
         string? gatewayPaymentStatus = null)
     {
         if (orderId == Guid.Empty)
-            return Result.Failure<Payment>(Error.Validation("Payment.OrderIdRequired", "Order ID is required."));
+            return Result.Failure<OrderPayment>(Error.Validation("Payment.OrderIdRequired", "Order ID is required."));
 
         if (amount.Amount <= 0)
-            return Result.Failure<Payment>(Error.Validation("Payment.AmountInvalid", "Payment amount must be greater than zero."));
+            return Result.Failure<OrderPayment>(Error.Validation("Payment.AmountInvalid", "Payment amount must be greater than zero."));
 
-        return Result.Success(new Payment(
+        return Result.Success(new OrderPayment(
             Guid.NewGuid(),
             orderId,
             amount,

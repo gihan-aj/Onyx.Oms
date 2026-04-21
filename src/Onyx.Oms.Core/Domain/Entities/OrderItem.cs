@@ -9,13 +9,12 @@ public class OrderItem : AuditableEntity<Guid>
 {
     private OrderItem() { }
 
-    internal OrderItem(
-        Guid id,
+    private OrderItem(
         Guid orderId,
         Guid productVariantId,
         int quantity,
         Money unitPrice,
-        OrderItemStatus status) : base(id)
+        OrderItemStatus status) : base(Guid.NewGuid())
     {
         OrderId = orderId;
         ProductVariantId = productVariantId;
@@ -28,9 +27,11 @@ public class OrderItem : AuditableEntity<Guid>
     public Guid ProductVariantId { get; private set; }
     public int Quantity { get; private set; }
     public Money UnitPrice { get; private set; } = Money.Zero();
+    public Money DiscountAmount { get; private set; } = Money.Zero();
+    public string? DiscountReason { get; private set; }
     public OrderItemStatus Status { get; private set; }
 
-    public Money TotalPrice => new Money(UnitPrice.Amount * Quantity, UnitPrice.Currency);
+    public Money LineTotal {  get; private set; } = Money.Zero();
 
     public static Result<OrderItem> Create(
         Guid orderId,
@@ -48,13 +49,15 @@ public class OrderItem : AuditableEntity<Guid>
         if (quantity <= 0)
             return Result.Failure<OrderItem>(Error.Validation("OrderItem.QuantityInvalid", "Quantity must be greater than zero."));
 
-        return Result.Success(new OrderItem(
-            Guid.NewGuid(),
+        var item = new OrderItem(
             orderId,
             productVariantId,
             quantity,
             unitPrice,
-            status));
+            status);
+
+        item.CalculateLineTotal();
+        return item;
     }
 
     public Result UpdateStatus(OrderItemStatus newStatus)
@@ -64,6 +67,31 @@ public class OrderItem : AuditableEntity<Guid>
             return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Cannot move a ready item backwards."));
 
         Status = newStatus;
+        return Result.Success();
+    }
+
+    private void CalculateLineTotal()
+    {
+        decimal finalUnitPrice = Math.Max(0, UnitPrice.Amount - DiscountAmount.Amount);
+        LineTotal = new Money(finalUnitPrice * Quantity, UnitPrice.Currency);
+    }
+
+    public Result ApplyItemDiscount(decimal discountValue, DiscountType type, string? reason = null)
+    {
+        var baseLineTotal = UnitPrice.Amount * Quantity;
+
+        if(type == DiscountType.Percentage)
+        {
+            decimal calculated = baseLineTotal * (discountValue / 100m);
+            DiscountAmount = new Money(calculated, UnitPrice.Currency);
+        }
+        else
+        {
+            DiscountAmount = new Money(Math.Min(discountValue, baseLineTotal), UnitPrice.Currency);
+        }
+
+        DiscountReason = reason;
+        CalculateLineTotal();
         return Result.Success();
     }
 }

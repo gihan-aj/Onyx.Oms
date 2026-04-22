@@ -12,7 +12,6 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
 
     private OrderPayment(
         Guid tenantId,
-        Guid id,
         Guid orderId,
         Money amount,
         PaymentMethod method,
@@ -20,7 +19,7 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
         DateTime paymentDate,
         string? gatewayName = null,
         string? gatewayTransactionId = null,
-        string? gatewayPaymentStatus = null) : base(id)
+        string? gatewayPaymentStatus = null) : base(Guid.NewGuid())
     {
         TenantId = tenantId;
         OrderId = orderId;
@@ -64,7 +63,6 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
 
         return Result.Success(new OrderPayment(
             tenantId,
-            Guid.NewGuid(),
             orderId,
             amount,
             method,

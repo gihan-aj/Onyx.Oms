@@ -13,8 +13,8 @@ using Onyx.Oms.Infrastructure.Persistence;
 namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260421193201_AddOrderTables")]
-    partial class AddOrderTables
+    [Migration("20260422230243_AdOrderTables")]
+    partial class AdOrderTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -442,6 +442,9 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AllocatedQuantity")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier");

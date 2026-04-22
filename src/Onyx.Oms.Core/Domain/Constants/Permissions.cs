@@ -86,6 +86,16 @@ public static class Permissions
         public const string Delete = "tenant:customers:delete";
     }
 
+    public static class Orders
+    {
+        public const string View = "tenant:orders:view";
+        public const string Create = "tenant:orders:create";
+        public const string Edit = "tenant:orders:edit";
+        public const string Activate = "tenant:orders:activate";
+        public const string Deactivate = "tenant:orders:deactivate";
+        public const string Delete = "tenant:orders:delete";
+    }
+
     public static class AppSequences
     {
         public const string View = "tenant:appsequences:view";

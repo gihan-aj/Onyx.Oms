@@ -98,31 +98,35 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
     public Result AddItem(
         Guid productVariantId, 
         int quantity, 
+        int allocatedQuantity,
         Money unitPrice, 
         decimal? itemDiscount = null,
         DiscountType? discountType = null,
-        string? discountReason = null, 
-        OrderItemStatus initialStatus = OrderItemStatus.Allocated)
+        string? discountReason = null)
     {
         if (Status != OrderStatus.Pending)
             return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot add items unless order is in Pending status."));
 
-        var itemResult = OrderItem.Create(TenantId, Id, productVariantId, quantity, unitPrice, initialStatus);
+        var itemResult = OrderItem.Create(TenantId, Id, productVariantId, quantity, allocatedQuantity, unitPrice);
         
         if (itemResult.IsFailure)
             return Result.Failure(itemResult.Error);
 
         var item = itemResult.Value;
         if (itemDiscount.HasValue && discountType.HasValue)
-            item.ApplyItemDiscount(itemDiscount.Value, discountType.Value, discountReason);
+            item.ApplyDiscount(itemDiscount.Value, discountType.Value, discountReason);
 
         _items.Add(itemResult.Value);
         return Result.Success();
     }
 
-    public Result ApplyShippingCost(Money shippingCost)
+    public Result ApplyShippingAndTax(Money shippingFee, Money taxAmount)
     {
-        ShippingCost = shippingCost;
+        if (Status != OrderStatus.Pending)
+            return Result.Failure(Error.Validation("Order.CannotApplyTaxAndShippingFee", $"Cannot apply Tax and Shipping fee on a {Status} Order"));
+
+        ShippingCost = shippingFee;
+        TaxAmount = taxAmount;
         RecalculateTotals();
         return Result.Success();
     }
@@ -159,6 +163,19 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         RecalculateTotals();
 
         return Result.Success();
+    }
+
+    public Result ApplyItemDiscount(Guid orderItemId, decimal value, DiscountType type, string reason)
+    {
+        var item = _items.FirstOrDefault(i => i.Id == orderItemId);
+        if (item == null) return Result.Failure(Error.NotFound("OrderItem.NotFound", "Order item is not found"));
+
+        var result = item.ApplyDiscount(value, type, reason);
+        if (result.IsSuccess)
+        {
+            RecalculateTotals(); // Re-sum the SubTotal because an item got cheaper!
+        }
+        return result;
     }
 
     private void RecalculateTotals()

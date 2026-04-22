@@ -15,6 +15,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         Guid orderId,
         Guid productVariantId,
         int quantity,
+        int allocatedQuantity,
         Money unitPrice,
         OrderItemStatus status) : base(Guid.NewGuid())
     {
@@ -30,6 +31,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
     public Guid OrderId { get; private set; }
     public Guid ProductVariantId { get; private set; }
     public int Quantity { get; private set; }
+    public int AllocatedQuantity { get; private set; }
+    public int PendingQuantity => Quantity - AllocatedQuantity;
     public Money UnitPrice { get; private set; } = Money.Zero();
     public Money DiscountAmount { get; private set; } = Money.Zero();
     public string? DiscountReason { get; private set; }
@@ -42,8 +45,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         Guid orderId,
         Guid productVariantId,
         int quantity,
-        Money unitPrice,
-        OrderItemStatus status = OrderItemStatus.Allocated)
+        int allocatedQuantity,
+        Money unitPrice)
     {
         if (orderId == Guid.Empty)
             return Result.Failure<OrderItem>(Error.Validation("OrderItem.OrderIdRequired", "Order ID is required."));
@@ -54,11 +57,16 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         if (quantity <= 0)
             return Result.Failure<OrderItem>(Error.Validation("OrderItem.QuantityInvalid", "Quantity must be greater than zero."));
 
+        var status = allocatedQuantity >= quantity
+            ? OrderItemStatus.Allocated
+            : OrderItemStatus.Pending;
+
         var item = new OrderItem(
             tenantId,
             orderId,
             productVariantId,
             quantity,
+            allocatedQuantity,
             unitPrice,
             status);
 
@@ -82,7 +90,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         LineTotal = new Money(finalUnitPrice * Quantity, UnitPrice.Currency);
     }
 
-    public Result ApplyItemDiscount(decimal discountValue, DiscountType type, string? reason = null)
+    public Result ApplyDiscount(decimal discountValue, DiscountType type, string? reason = null)
     {
         var baseLineTotal = UnitPrice.Amount * Quantity;
 

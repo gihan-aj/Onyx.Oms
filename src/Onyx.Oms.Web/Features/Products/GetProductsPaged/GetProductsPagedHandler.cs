@@ -18,10 +18,8 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
     public async Task<Result<PagedResult<ProductDto>>> Handle(GetProductsPagedQuery request, CancellationToken cancellationToken)
     {
         var query = _context.Products
-            .Include(p => p.Category)
-            .Include(p => p.Variants)
-            .Include(p => p.Images)
-            .AsNoTracking();
+            .AsNoTracking()
+            .AsSplitQuery();
 
         // Stock filtering
         if(request.StockFilterStatus != StockFilterStatus.All)

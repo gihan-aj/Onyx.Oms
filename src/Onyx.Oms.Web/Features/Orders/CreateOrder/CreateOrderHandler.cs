@@ -39,7 +39,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
             {
                 bool courierExists = await _context.Couriers
                     .AnyAsync(c => c.Id == request.CourierId && c.IsActive, cancellationToken);
-                if(courierExists)
+                if(!courierExists)
                     return Result.Failure<Guid>(Error.NotFound("Courier.NotFound", "Courier is not found or inactive."));
             }
 
@@ -81,7 +81,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                 foreach(var item in request.Items)
                 {
                     var variant = await _context.ProductVariants
-                        .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId && v.IsActive && !v.IsDeleted, cancellationToken);
+                        .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId && v.IsActive, cancellationToken);
                     if(variant is null)
                         return Result.Failure<Guid>(Error.NotFound(
                             "ProductVariant.NotFound", 
@@ -140,6 +140,14 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                     return Result.Failure<Guid>(orderPaymentResult.Error);
             }
 
+            _context.Orders.Add(order);
+            foreach(var item in order.Items)
+                _context.OrderItems.Add(item);
+            if (order.Payments.Any())
+            {
+                foreach(var item in order.Payments)
+                    _context.OrderPayments.Add(item);
+            }
             await _context.SaveChangesAsync(cancellationToken);
 
             return order.Id;

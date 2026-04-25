@@ -7,8 +7,6 @@ using Onyx.Oms.Core.Domain.Enums;
 
 namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
 {
-    internal record OrderCustomerResult(Order Order, Customer Customer);
-
     public class GetOrdersPagedHandler : IRequestHandler<GetOrdersPagedQuery, Result<PagedResult<OrderSummaryDto>>>
     {
         private readonly IApplicationDbContext _context;
@@ -22,7 +20,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
         {
             var query = from o in _context.Orders.AsNoTracking()
                         join c in _context.Customers.AsNoTracking() on o.CustomerId equals c.Id
-                        select new OrderCustomerResult(o, c);
+                        select new { Order = o, Customer = c };
 
             // Filtering
             if (request.Status.HasValue)
@@ -61,7 +59,26 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
             }
 
             // Sorting
-            query = ApplySorting(query, request.SortColumn, request.SortOrder);
+            bool isDesc = request.SortOrder?.ToLower() == "desc";
+
+            if (string.IsNullOrWhiteSpace(request.SortColumn))
+            {
+                query = isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc);
+            }
+            else
+            {
+                query = request.SortColumn.ToLower() switch
+                {
+                    "ordernumber" => isDesc ? query.OrderByDescending(x => x.Order.OrderNumber) : query.OrderBy(x => x.Order.OrderNumber),
+                    "orderdate" => isDesc ? query.OrderByDescending(x => x.Order.OrderDate) : query.OrderBy(x => x.Order.OrderDate),
+                    "customername" => isDesc ? query.OrderByDescending(x => x.Customer.Name) : query.OrderBy(x => x.Customer.Name),
+                    "grandtotal" => isDesc ? query.OrderByDescending(x => x.Order.GrandTotal.Amount) : query.OrderBy(x => x.Order.GrandTotal.Amount),
+                    "status" => isDesc ? query.OrderByDescending(x => x.Order.Status) : query.OrderBy(x => x.Order.Status),
+                    "paymentstatus" => isDesc ? query.OrderByDescending(x => x.Order.PaymentStatus) : query.OrderBy(x => x.Order.PaymentStatus),
+                    "createddate" => isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc),
+                    _ => isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc)
+                };
+            }
 
             // Projections
             IQueryable<OrderSummaryDto> dtoQuery;
@@ -133,26 +150,5 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
             return Result.Success(pagedResult);
         }
 
-        private static IQueryable<OrderCustomerResult> ApplySorting(IQueryable<OrderCustomerResult> query, string? sortColumn, string? sortOrder)
-        {
-            bool isDesc = sortOrder?.ToLower() == "desc";
-
-            if (string.IsNullOrWhiteSpace(sortColumn))
-            {
-                return isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc);
-            }
-
-            return sortColumn.ToLower() switch
-            {
-                "ordernumber" => isDesc ? query.OrderByDescending(x => x.Order.OrderNumber) : query.OrderBy(x => x.Order.OrderNumber),
-                "orderdate" => isDesc ? query.OrderByDescending(x => x.Order.OrderDate) : query.OrderBy(x => x.Order.OrderDate),
-                "customername" => isDesc ? query.OrderByDescending(x => x.Customer.Name) : query.OrderBy(x => x.Customer.Name),
-                "grandtotal" => isDesc ? query.OrderByDescending(x => x.Order.GrandTotal.Amount) : query.OrderBy(x => x.Order.GrandTotal.Amount),
-                "status" => isDesc ? query.OrderByDescending(x => x.Order.Status) : query.OrderBy(x => x.Order.Status),
-                "paymentstatus" => isDesc ? query.OrderByDescending(x => x.Order.PaymentStatus) : query.OrderBy(x => x.Order.PaymentStatus),
-                "createddate" => isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc),
-                _ => query.OrderByDescending(x => x.Order.CreatedOnUtc)
-            };
-        }
     }
 }

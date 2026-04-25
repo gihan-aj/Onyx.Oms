@@ -7,7 +7,7 @@ public record UpdateProcurementTaskCommand(
     Guid ProcurementTaskId,
     int RequestedQuantity,
     string? PurchaseOrderNumber,
-    MoneyDto? Cost,
+    MoneyDto Cost,
     DateTimeOffset? ExpectedCompletionDate,
     TaskPriority Priority,
     string? Notes) : ICommand;

@@ -261,6 +261,58 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
+    public Result Pack()
+    {
+        if (Status != OrderStatus.ReadyToPack)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only ReadyToPack orders can be packed."));
+
+        UpdateStatus(OrderStatus.Packed);
+        return Result.Success();
+    }
+
+    public Result Ship(Guid courierId, string? trackingNumber)
+    {
+        if (Status != OrderStatus.Packed && Status != OrderStatus.ReadyToPack)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Packed or ReadyToPack orders can be shipped."));
+
+        CourierId = courierId;
+        if (!string.IsNullOrWhiteSpace(trackingNumber))
+        {
+            TrackingNumber = trackingNumber;
+        }
+
+        UpdateStatus(OrderStatus.Shipped);
+        return Result.Success();
+    }
+
+    public Result Deliver()
+    {
+        if (Status != OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can be delivered."));
+
+        UpdateStatus(OrderStatus.Delivered);
+        return Result.Success();
+    }
+
+    public Result Cancel()
+    {
+        if (Status >= OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Cannot cancel an order that has already shipped or is further along."));
+
+        UpdateStatus(OrderStatus.Cancelled);
+        RaiseDomainEvent(new Onyx.Oms.Core.Domain.Events.OrderCancelledEvent(Id));
+        return Result.Success();
+    }
+
+    public Result FailDelivery(bool isReturnedToSender)
+    {
+        if (Status != OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can fail delivery."));
+
+        UpdateStatus(isReturnedToSender ? OrderStatus.ReturnedToSender : OrderStatus.DeliveryFailed);
+        return Result.Success();
+    }
+
     public Result UpdateStatus(OrderStatus newStatus)
     {
         // Business Rule: Order cannot transition to "Ready to Pack" unless all Order Items are "Ready" or "Allocated"

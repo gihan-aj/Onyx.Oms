@@ -105,7 +105,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                     if(addOrderItemResult.IsFailure)
                         return Result.Failure<Guid>(addOrderItemResult.Error);
 
-                    variant.ReserveStock(allocatedQuantity);
+                    //variant.ReserveStock(allocatedQuantity);
                 }
             }
             else

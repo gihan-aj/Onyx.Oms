@@ -178,6 +178,16 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return result;
     }
 
+    public Result ClearItems()
+    {
+        if (Status != OrderStatus.Pending)
+            return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot modify items unless order is in Pending status."));
+
+        _items.Clear();
+        RecalculateTotals();
+        return Result.Success();
+    }
+
     private void RecalculateTotals()
     {
         if(!_items.Any()) return;
@@ -273,6 +283,22 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             return Result.Failure(Error.Validation("Order.TrackingNumberRequired", "Tracking number is required."));
 
         TrackingNumber = trackingNumber;
+        return Result.Success();
+    }
+
+    public Result UpdateLogistics(Guid? courierId, Address shippingAddress)
+    {
+        if (Status >= OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("Order.LogisticsLocked", "Cannot update logistics after the order has been shipped."));
+
+        CourierId = courierId;
+        ShippingAddress = shippingAddress;
+        return Result.Success();
+    }
+
+    public Result UpdateNotes(string? notes)
+    {
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes;
         return Result.Success();
     }
 }

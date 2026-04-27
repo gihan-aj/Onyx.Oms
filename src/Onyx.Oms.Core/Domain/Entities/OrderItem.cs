@@ -84,6 +84,21 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
+    public Result AllocateFromTask(int quantity)
+    {
+        if (quantity <= 0)
+            return Result.Failure(Error.Validation("OrderItem.QuantityInvalid", "Quantity to allocate must be greater than zero."));
+
+        AllocatedQuantity += quantity;
+        
+        if (AllocatedQuantity >= Quantity)
+        {
+            Status = OrderItemStatus.Ready;
+        }
+
+        return Result.Success();
+    }
+
     private void CalculateLineTotal()
     {
         decimal finalUnitPrice = Math.Max(0, UnitPrice.Amount - DiscountAmount.Amount);

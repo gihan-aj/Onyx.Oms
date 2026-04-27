@@ -189,6 +189,11 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
         if (CompletedQuantity == RequestedQuantity)
         {
             Status = FulfillmentTaskStatus.Ready;
+            
+            if (LinkedOrderItemId.HasValue)
+            {
+                RaiseDomainEvent(new Events.FulfillmentTaskCompletedEvent(Id, LinkedOrderItemId.Value, RequestedQuantity));
+            }
         }
 
         return Result.Success();

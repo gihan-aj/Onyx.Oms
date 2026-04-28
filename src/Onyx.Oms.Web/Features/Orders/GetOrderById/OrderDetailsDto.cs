@@ -1,0 +1,70 @@
+using Onyx.Oms.Core.Domain.Enums;
+using Onyx.Oms.Core.Domain.ValueObjects;
+
+namespace Onyx.Oms.Web.Features.Orders.GetOrderById
+{
+    public record OrderDetailsDto(
+        Guid Id,
+        string OrderNumber,
+        CustomerDetailsDto Customer,
+        Guid? CourierId,
+        string? TrackingNumber,
+        string ShippingAddressStreet,
+        string ShippingAddressCity,
+        string ShippingAddressDistrict,
+        string ShippingAddressState,
+        string ShippingAddressPostalCode,
+        string ShippingAddressCountry,
+        OrderStatus Status,
+        PaymentStatus PaymentStatus,
+        bool IsCashOnDelivery,
+        string? Notes,
+        decimal SubTotal,
+        decimal DiscountAmount,
+        string? DiscountReason,
+        decimal ShippingCost,
+        decimal TaxAmount,
+        decimal GrandTotal,
+        decimal TotalPaid,
+        decimal BalanceAmount,
+        DateTimeOffset? OrderDate,
+        DateTimeOffset CreatedOnUtc,
+        List<OrderItemDetailsDto> Items,
+        List<OrderPaymentDetailsDto> Payments
+    );
+
+    public record CustomerDetailsDto(
+        Guid Id,
+        string Name,
+        string PrimaryPhone,
+        string? SecondaryPhone,
+        string? Email,
+        Address Address,
+        string? LastOrderNumber,
+        string? Notes
+    );
+
+    public record OrderItemDetailsDto(
+        Guid Id,
+        Guid ProductVariantId,
+        int Quantity,
+        int AllocatedQuantity,
+        int PendingQuantity,
+        decimal UnitPrice,
+        decimal DiscountAmount,
+        string? DiscountReason,
+        decimal LineTotal,
+        OrderItemStatus Status
+    );
+
+    public record OrderPaymentDetailsDto(
+        Guid Id,
+        decimal Amount,
+        PaymentMethod Method,
+        string? Reference,
+        DateTime PaymentDate,
+        string? GatewayName,
+        string? GatewayTransactionId,
+        string? GatewayPaymentStatus
+    );
+}

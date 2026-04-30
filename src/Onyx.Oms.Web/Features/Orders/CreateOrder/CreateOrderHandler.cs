@@ -81,6 +81,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                 foreach(var item in request.Items)
                 {
                     var variant = await _context.ProductVariants
+                        .Include(v => v.Product)
                         .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId && v.IsActive, cancellationToken);
                     if(variant is null)
                         return Result.Failure<Guid>(Error.NotFound(
@@ -95,6 +96,8 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
 
                     var addOrderItemResult = order.AddItem(
                         item.ProductVariantId,
+                        variant.DisplayName,
+                        variant.Sku,
                         item.Quantity,
                         allocatedQuantity,
                         variant.Price,

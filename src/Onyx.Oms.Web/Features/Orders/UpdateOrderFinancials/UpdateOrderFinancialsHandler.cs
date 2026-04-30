@@ -46,6 +46,8 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
 
                 var addResult = order.AddItem(
                     item.ProductVariantId,
+                    variant.DisplayName,
+                    variant.Sku,
                     item.Quantity,
                     allocatedQuantity,
                     variant.Price,

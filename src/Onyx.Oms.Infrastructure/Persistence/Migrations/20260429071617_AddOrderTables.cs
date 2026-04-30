@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AdOrderTables : Migration
+    public partial class AddOrderTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -61,6 +61,8 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ProductVariantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ProductName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Sku = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     AllocatedQuantity = table.Column<int>(type: "int", nullable: false),
                     DiscountReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),

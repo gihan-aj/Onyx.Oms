@@ -14,6 +14,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         Guid tenantId,
         Guid orderId,
         Guid productVariantId,
+        string productName,
+        string sku,
         int quantity,
         int allocatedQuantity,
         Money unitPrice,
@@ -22,6 +24,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         TenantId = tenantId;
         OrderId = orderId;
         ProductVariantId = productVariantId;
+        ProductName = productName;
+        Sku = sku;
         Quantity = quantity;
         UnitPrice = unitPrice;
         Status = status;
@@ -30,6 +34,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
     public Guid TenantId { get; private set; }
     public Guid OrderId { get; private set; }
     public Guid ProductVariantId { get; private set; }
+    public string ProductName { get; private set; } = string.Empty;
+    public string Sku { get; private set; } = string.Empty;
     public int Quantity { get; private set; }
     public int AllocatedQuantity { get; private set; }
     public int PendingQuantity => Quantity - AllocatedQuantity;
@@ -44,6 +50,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         Guid tenantId,
         Guid orderId,
         Guid productVariantId,
+        string productName,
+        string sku,
         int quantity,
         int allocatedQuantity,
         Money unitPrice)
@@ -65,6 +73,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
             tenantId,
             orderId,
             productVariantId,
+            productName,
+            sku,
             quantity,
             allocatedQuantity,
             unitPrice,

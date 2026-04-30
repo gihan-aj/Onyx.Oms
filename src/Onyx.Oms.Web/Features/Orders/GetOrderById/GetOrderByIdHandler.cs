@@ -33,6 +33,34 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
             if (customer == null)
                 return Result.Failure<OrderDetailsDto>(Error.NotFound("Customer.NotFound", "Customer not found."));
 
+            var variantIds = order.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+
+            var stockData = await _context.ProductVariants
+                .AsNoTracking()
+                .Where(v => variantIds.Contains(v.Id))
+                .Select(v => new
+                {
+                    VariantId = v.Id,
+                    v.ProductId,
+                    v.Attributes,
+                    AvailableStock = v.StockOnHand - v.ReservedQuantity
+                })
+                .ToDictionaryAsync(x => x.VariantId, x => x.AvailableStock, cancellationToken);
+
+            var variantDataList = await _context.ProductVariants
+                .AsNoTracking()
+                .Where(v => variantIds.Contains(v.Id))
+                .Select(v => new
+                {
+                    VariantId = v.Id,
+                    AvailableStock = v.StockOnHand - v.ReservedQuantity,
+                    Attributes = v.Attributes.Select(a => new { a.Name, a.Value }).ToList(),
+                    Images = v.Product.Images.Select(i => new { i.Url, i.IsMain, i.OptionName, i.OptionValue }).ToList()
+                })
+                .ToListAsync(cancellationToken);
+
+            var variantDataDict = variantDataList.ToDictionary(v => v.VariantId);
+
             var dto = new OrderDetailsDto(
                 order.Id,
                 order.OrderNumber,
@@ -65,20 +93,52 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
                 order.GrandTotal.Amount,
                 order.TotalPaid.Amount,
                 order.BalanceAmount.Amount,
+                order.GrandTotal.Currency,
                 order.OrderDate,
                 order.CreatedOnUtc,
-                order.Items.Select(i => new OrderItemDetailsDto(
-                    i.Id,
-                    i.ProductVariantId,
-                    i.Quantity,
-                    i.AllocatedQuantity,
-                    i.PendingQuantity,
-                    i.UnitPrice.Amount,
-                    i.DiscountAmount.Amount,
-                    i.DiscountReason,
-                    i.LineTotal.Amount,
-                    i.Status
-                )).ToList(),
+                order.Items.Select(i =>
+                {
+                    var variantInfo = variantDataDict.GetValueOrDefault(i.ProductVariantId);
+
+                    string? resolvedImageUrl = null;
+                    if(variantInfo != null && variantInfo.Images.Any())
+                    {
+                        var taggedImage = variantInfo.Images.FirstOrDefault(img => 
+                            !string.IsNullOrWhiteSpace(img.OptionName) &&
+                            !string.IsNullOrWhiteSpace(img.OptionValue) &&
+                            variantInfo.Attributes.Any(attr =>
+                                attr.Name.Equals(img.OptionName, StringComparison.OrdinalIgnoreCase) &&
+                                attr.Value.Equals(img.OptionValue, StringComparison.OrdinalIgnoreCase))
+                            );
+
+                        if(taggedImage != null)
+                        {
+                            resolvedImageUrl = taggedImage.Url;
+                        }
+                        else
+                        {
+                            resolvedImageUrl = variantInfo.Images.FirstOrDefault(img => img.IsMain)?.Url
+                                ?? variantInfo.Images.FirstOrDefault()?.Url;
+                        }
+                    }
+
+                    return new OrderItemDetailsDto(
+                        i.Id,
+                        i.ProductVariantId,
+                        i.ProductName,
+                        i.Sku,
+                        resolvedImageUrl,
+                        variantInfo?.AvailableStock ?? 0,
+                        i.Quantity,
+                        i.AllocatedQuantity,
+                        i.PendingQuantity,
+                        i.UnitPrice.Amount,
+                        i.DiscountAmount.Amount,
+                        i.DiscountReason,
+                        i.LineTotal.Amount,
+                        i.Status
+                    );
+                }).ToList(),
                 order.Payments.Select(p => new OrderPaymentDetailsDto(
                     p.Id,
                     p.Amount.Amount,

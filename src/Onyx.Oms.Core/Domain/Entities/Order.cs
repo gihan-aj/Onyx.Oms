@@ -97,6 +97,8 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
 
     public Result AddItem(
         Guid productVariantId, 
+        string productName,
+        string sku,
         int quantity, 
         int allocatedQuantity,
         Money unitPrice, 
@@ -107,7 +109,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         if (Status != OrderStatus.Pending)
             return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot add items unless order is in Pending status."));
 
-        var itemResult = OrderItem.Create(TenantId, Id, productVariantId, quantity, allocatedQuantity, unitPrice);
+        var itemResult = OrderItem.Create(TenantId, Id, productVariantId, productName, sku, quantity, allocatedQuantity, unitPrice);
         
         if (itemResult.IsFailure)
             return Result.Failure(itemResult.Error);

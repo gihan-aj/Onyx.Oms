@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
@@ -55,7 +56,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                     request.ShippingAddress.Country ?? string.Empty);
             }
 
-            var orderNumberResult = await _appSequenceService.GetNextNumberAsync("ORD", cancellationToken);
+            var orderNumberResult = await _appSequenceService.GetNextNumberAsync(Prefixes.OrderNumber, cancellationToken);
             if (orderNumberResult.IsFailure)
                 return Result.Failure<Guid>(orderNumberResult.Error);
 
@@ -87,19 +88,17 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                         return Result.Failure<Guid>(Error.NotFound(
                             "ProductVariant.NotFound", 
                             request.Items.Count == 1
-                            ? "Product Variant or product is not found."
-                            : "One of the product variants or products is not found."));
+                            ? "Product is not found."
+                            : "One of the products is not found."));
 
-                    var allocatedQuantity = variant.AvailableQuantity >= item.Quantity
-                        ? item.Quantity
-                        : variant.AvailableQuantity;
+                    // Do not allocate stock when creating an order! Order State -> Pending
 
                     var addOrderItemResult = order.AddItem(
                         item.ProductVariantId,
                         variant.DisplayName,
                         variant.Sku,
                         item.Quantity,
-                        allocatedQuantity,
+                        0,
                         variant.Price,
                         item.Discount?.Value,
                         item.Discount?.Type,
@@ -107,8 +106,6 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
 
                     if(addOrderItemResult.IsFailure)
                         return Result.Failure<Guid>(addOrderItemResult.Error);
-
-                    //variant.ReserveStock(allocatedQuantity);
                 }
             }
             else

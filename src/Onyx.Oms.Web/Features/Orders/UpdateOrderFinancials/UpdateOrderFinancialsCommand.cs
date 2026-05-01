@@ -11,6 +11,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
         UpdateOrderDiscountDto? Discount) : ICommand;
 
     public record UpdateOrderItemDto(
+        Guid? Id,
         Guid ProductVariantId,
         int Quantity,
         UpdateOrderDiscountDto? Discount);

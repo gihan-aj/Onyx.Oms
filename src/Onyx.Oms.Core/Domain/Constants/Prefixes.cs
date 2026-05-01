@@ -2,7 +2,7 @@
 {
     public static class Prefixes
     {
-        public const string Sku = "PROD";
+        public const string Sku = "PRD";
         public const string OrderNumber = "ORD";
     }
 }

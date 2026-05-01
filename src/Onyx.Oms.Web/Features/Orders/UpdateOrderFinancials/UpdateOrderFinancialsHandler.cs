@@ -25,38 +25,101 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
             if (order == null)
                 return Result.Failure(Error.NotFound("Order.NotFound", "Order not found."));
 
-            var existingItems = await _context.OrderItems.Where(i => i.OrderId == order.Id).ToListAsync(cancellationToken);
-            _context.OrderItems.RemoveRange(existingItems);
+            var requestItems = request.Items.ToList();
+            var existingItems = order.Items.ToList();
 
-            var clearResult = order.ClearItems();
-            if (clearResult.IsFailure)
-                return clearResult;
-
-            foreach(var item in request.Items)
+            // Remove items not in request
+            var itemsToRemove = existingItems.Where(ei => !requestItems.Any(ri => ri.Id.HasValue && ri.Id.Value == ei.Id)).ToList();
+            foreach (var itemToRemove in itemsToRemove)
             {
-                var variant = await _context.ProductVariants
-                    .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId && v.IsActive, cancellationToken);
-                
-                if (variant == null)
-                    return Result.Failure(Error.NotFound("ProductVariant.NotFound", "Product Variant not found."));
+                var removeResult = order.RemoveItem(itemToRemove.Id);
+                if (removeResult.IsFailure) return removeResult;
 
-                var allocatedQuantity = variant.AvailableQuantity >= item.Quantity
-                    ? item.Quantity
-                    : variant.AvailableQuantity;
+                // Release reserved stock if there's any
+                int releasingQty = removeResult.Value;
+                if(releasingQty > 0)
+                {
+                    var variant = await _context.ProductVariants
+                        .FirstOrDefaultAsync(v => v.Id == itemToRemove.ProductVariantId, cancellationToken);
+                    if (variant is null)
+                        return Result.Failure(Error.NotFound("ProductVariant.NotFound", "One of the product variants is not found."));
 
-                var addResult = order.AddItem(
-                    item.ProductVariantId,
-                    variant.DisplayName,
-                    variant.Sku,
-                    item.Quantity,
-                    allocatedQuantity,
-                    variant.Price,
-                    item.Discount?.Value,
-                    item.Discount?.Type,
-                    item.Discount?.Reason);
+                    variant.ReleaseReservation(releasingQty);
+                }
+                _context.OrderItems.Remove(itemToRemove);
+            }
 
-                if (addResult.IsFailure)
-                    return addResult;
+            // Add or Update items
+            foreach (var item in requestItems)
+            {
+                if (item.Id.HasValue && item.Id.Value != Guid.Empty)
+                {
+                    // Update
+                    var updateResult = order.UpdateItem(item.Id.Value, item.Quantity, item.Discount?.Value, item.Discount?.Type, item.Discount?.Reason);
+                    if (updateResult.IsFailure) 
+                        return Result.Failure(updateResult.Error);
+
+                    // Release reserved stock if there's any
+                    int releasingQty = updateResult.Value;
+                    if (releasingQty > 0)
+                    {
+                        var variant = await _context.ProductVariants
+                            .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId, cancellationToken);
+                        if (variant is null)
+                            return Result.Failure(Error.NotFound("ProductVariant.NotFound", "One of the product variants is not found."));
+
+                        variant.ReleaseReservation(releasingQty);
+                    }
+                }
+                else
+                {
+                    // Add
+                    var variant = await _context.ProductVariants
+                        .Include(v => v.Product)
+                        .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId && v.IsActive, cancellationToken);
+                    
+                    if (variant == null)
+                        return Result.Failure(Error.NotFound("ProductVariant.NotFound", "Product Variant not found."));
+
+                    // if order is already confirmed, reserve available quantity 
+                    int allocatingQty = 0;
+                    if(order.Status >= Core.Domain.Enums.OrderStatus.Confirmed)
+                    {
+                        allocatingQty = variant.AvailableQuantity >= item.Quantity
+                            ? item.Quantity
+                            : variant.AvailableQuantity;
+                    }
+
+                    var addResult = order.AddItem(
+                        item.ProductVariantId,
+                        variant.DisplayName,
+                        variant.Sku,
+                        item.Quantity,
+                        allocatingQty,
+                        variant.Price,
+                        item.Discount?.Value,
+                        item.Discount?.Type,
+                        item.Discount?.Reason);
+
+                    if (addResult.IsFailure)
+                        return addResult;
+                }
+            }
+
+            if(order.Status == Core.Domain.Enums.OrderStatus.Confirmed ||
+                order.Status == Core.Domain.Enums.OrderStatus.Processing)
+            {
+                bool orderReady = order.Items.All(i => i.Status == Core.Domain.Enums.OrderItemStatus.Ready || i.Status == Core.Domain.Enums.OrderItemStatus.Allocated);
+                if (orderReady)
+                    order.UpdateStatus(Core.Domain.Enums.OrderStatus.ReadyToPack);
+            }
+
+            else if (order.Status == Core.Domain.Enums.OrderStatus.ReadyToPack ||
+                order.Status == Core.Domain.Enums.OrderStatus.Packed)
+            {
+                bool orderReady = order.Items.All(i => i.Status == Core.Domain.Enums.OrderItemStatus.Ready || i.Status == Core.Domain.Enums.OrderItemStatus.Allocated);
+                if (!orderReady)
+                    order.UpdateStatus(Core.Domain.Enums.OrderStatus.Processing);
             }
 
             var shippingFee = request.ShippingFee != null 
@@ -77,15 +140,12 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
                 if (applyDiscountResult.IsFailure)
                     return applyDiscountResult;
             }
-            else
-            {
-                order.ApplyOrderDiscount(0, Onyx.Oms.Core.Domain.Enums.DiscountType.Percentage, null);
-            }
+            //else
+            //{
+            //    order.ApplyOrderDiscount(0, Onyx.Oms.Core.Domain.Enums.DiscountType.Percentage, null);
+            //}
 
-            foreach(var item in order.Items)
-            {
-                _context.OrderItems.Add(item);
-            }
+
 
             await _context.SaveChangesAsync(cancellationToken);
 

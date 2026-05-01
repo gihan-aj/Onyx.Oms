@@ -106,8 +106,10 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         DiscountType? discountType = null,
         string? discountReason = null)
     {
-        if (Status != OrderStatus.Pending)
-            return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot add items unless order is in Pending status."));
+        if (Status >= OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("Order.CannotModifyItems", $"Cannot add items at this stage of the order (Status : {Status.ToString()})."));
+        //if (Status != OrderStatus.Pending)
+        //    return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot add items unless order is in Pending status."));
 
         var itemResult = OrderItem.Create(TenantId, Id, productVariantId, productName, sku, quantity, allocatedQuantity, unitPrice);
         
@@ -122,10 +124,55 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
+    public Result<int> UpdateItem(Guid orderItemId, int quantity, decimal? itemDiscount = null, DiscountType? discountType = null, string? discountReason = null)
+    {
+        if (Status >= OrderStatus.Shipped)
+            return Result.Failure<int>(Error.Validation("Order.CannotModifyItems", $"Cannot modify items at this stage of the order (Status : {Status.ToString()})."));
+        //if (Status != OrderStatus.Pending)
+        //    return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot modify items unless order is in Pending status."));
+
+        var item = _items.FirstOrDefault(i => i.Id == orderItemId);
+        if (item == null) return Result.Failure<int>(Error.NotFound("OrderItem.NotFound", "Order item not found."));
+
+        var result = item.UpdateQuantity(quantity);
+        if (result.IsFailure) return result;
+
+        if (itemDiscount.HasValue && discountType.HasValue)
+        {
+            item.ApplyDiscount(itemDiscount.Value, discountType.Value, discountReason);
+        }
+        else
+        {
+            item.ApplyDiscount(0, DiscountType.Percentage, null);
+        }
+
+        RecalculateTotals();
+        return result.Value;
+    }
+
+    public Result<int> RemoveItem(Guid orderItemId)
+    {
+        int releasingQuantity = 0;
+
+        if (Status != OrderStatus.Pending)
+            return Result.Failure<int>(Error.Validation("Order.CannotModifyItems", "Cannot modify items unless order is in Pending status."));
+
+        var item = _items.FirstOrDefault(i => i.Id == orderItemId);
+        if (item == null) return Result.Failure<int>(Error.NotFound("OrderItem.NotFound", "Order item not found."));
+        releasingQuantity = item.AllocatedQuantity;
+
+        _items.Remove(item);
+        RecalculateTotals();
+
+        return releasingQuantity;
+    }
+
     public Result ApplyShippingAndTax(Money shippingFee, Money taxAmount)
     {
-        if (Status != OrderStatus.Pending)
+        if (Status >= OrderStatus.Shipped)
             return Result.Failure(Error.Validation("Order.CannotApplyTaxAndShippingFee", $"Cannot apply Tax and Shipping fee on a {Status} Order"));
+        //if (Status != OrderStatus.Pending)
+        //    return Result.Failure(Error.Validation("Order.CannotApplyTaxAndShippingFee", $"Cannot apply Tax and Shipping fee on a {Status} Order"));
 
         ShippingCost = shippingFee;
         TaxAmount = taxAmount;
@@ -135,8 +182,10 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
 
     public Result ApplyOrderDiscount(decimal discountValue, DiscountType type, string? reason = null)
     {
-        if (Status != OrderStatus.Pending)
-            return Result.Failure(Error.Validation("Order.CannotDiscount", "Discounts can only be applied to pending orders."));
+        if (Status >= OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("Order.CannotDiscount", $"Discounts cannot be applied to orders at this stage (Status : {Status.ToString()})."));
+        //if (Status != OrderStatus.Pending)
+        //    return Result.Failure(Error.Validation("Order.CannotDiscount", "Discounts can only be applied to pending orders."));
 
         if (discountValue < 0)
             return Result.Failure(Error.Validation("Order.InvalidDiscount", "Discount value cannot be negative."));
@@ -180,15 +229,15 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return result;
     }
 
-    public Result ClearItems()
-    {
-        if (Status != OrderStatus.Pending)
-            return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot modify items unless order is in Pending status."));
+    //public Result ClearItems()
+    //{
+    //    if (Status != OrderStatus.Pending)
+    //        return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot modify items unless order is in Pending status."));
 
-        _items.Clear();
-        RecalculateTotals();
-        return Result.Success();
-    }
+    //    _items.Clear();
+    //    RecalculateTotals();
+    //    return Result.Success();
+    //}
 
     private void RecalculateTotals()
     {

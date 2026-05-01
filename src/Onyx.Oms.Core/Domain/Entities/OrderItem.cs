@@ -65,7 +65,13 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         if (quantity <= 0)
             return Result.Failure<OrderItem>(Error.Validation("OrderItem.QuantityInvalid", "Quantity must be greater than zero."));
 
-        var status = allocatedQuantity >= quantity
+        if (allocatedQuantity < 0)
+            return Result.Failure<OrderItem>(Error.Validation("OrderItem.AllocatedQuantityInvalid", "Allocated Quantity must be greater than or equal to zero."));
+
+        if (allocatedQuantity > quantity)
+            return Result.Failure<OrderItem>(Error.Validation("OrderItem.AllocatedQuantityInvalid", "Allocated Quantity must be less than or equal to needed quantity for the order."));
+
+        var status = allocatedQuantity == quantity
             ? OrderItemStatus.Allocated
             : OrderItemStatus.Pending;
 
@@ -86,7 +92,6 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
 
     public Result UpdateStatus(OrderItemStatus newStatus)
     {
-        // Add specific validation business logic here, e.g., transitions
         if (Status == OrderItemStatus.Ready && newStatus != OrderItemStatus.Ready)
             return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Cannot move a ready item backwards."));
 
@@ -94,10 +99,43 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
+    public Result<int> UpdateQuantity(int quantity)
+    {
+        int releasedQuantity = 0;
+
+        if (quantity <= 0)
+            return Result.Failure<int>(Error.Validation("OrderItem.QuantityInvalid", "Quantity must be greater than zero."));
+
+        if (AllocatedQuantity > quantity)
+        {
+            releasedQuantity = AllocatedQuantity - quantity;
+            AllocatedQuantity = quantity;
+            Status = OrderItemStatus.Ready;
+        }
+        //return Result.Failure<int>(Error.Validation("OrderItem.CannotReduceQuantity", "Cannot reduce quantity below the already allocated quantity."));
+        else if(AllocatedQuantity == quantity)
+        {
+            Status = OrderItemStatus.Ready;
+        }
+        else
+        {
+            Status = OrderItemStatus.Pending;
+        }
+
+
+        Quantity = quantity;
+        CalculateLineTotal();
+
+        return releasedQuantity;
+    }
+
     public Result AllocateFromTask(int quantity)
     {
         if (quantity <= 0)
             return Result.Failure(Error.Validation("OrderItem.QuantityInvalid", "Quantity to allocate must be greater than zero."));
+
+        if (quantity > PendingQuantity)
+            return Result.Failure(Error.Validation("OrderItem.QuantityInvalid", "Quantity to allocate must be less than or equal to pending quanity."));
 
         AllocatedQuantity += quantity;
         
@@ -111,8 +149,9 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
 
     private void CalculateLineTotal()
     {
-        decimal finalUnitPrice = Math.Max(0, UnitPrice.Amount - DiscountAmount.Amount);
-        LineTotal = new Money(finalUnitPrice * Quantity, UnitPrice.Currency);
+        decimal baseLineTotal = UnitPrice.Amount * Quantity;
+        decimal discountedTotal = Math.Max(0, baseLineTotal - DiscountAmount.Amount);
+        LineTotal = new Money(discountedTotal, UnitPrice.Currency);
     }
 
     public Result ApplyDiscount(decimal discountValue, DiscountType type, string? reason = null)

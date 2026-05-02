@@ -39,7 +39,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
         MoneyDto Amount,
         PaymentMethod Method,
         string? Reference,
-        DateTime PaymentDate);
+        DateTimeOffset PaymentDate);
 
     public record MoneyDto(decimal Amount, string Currency = "LKR");
 }

@@ -52,6 +52,6 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
         string Currency,
         PaymentMethod Method,
         string? Reference,
-        DateTime PaymentDate
+        DateTimeOffset PaymentDate
     );
 }

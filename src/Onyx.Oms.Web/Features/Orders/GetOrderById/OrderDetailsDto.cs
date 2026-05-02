@@ -67,7 +67,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
         decimal Amount,
         PaymentMethod Method,
         string? Reference,
-        DateTime PaymentDate,
+        DateTimeOffset PaymentDate,
         string? GatewayName,
         string? GatewayTransactionId,
         string? GatewayPaymentStatus

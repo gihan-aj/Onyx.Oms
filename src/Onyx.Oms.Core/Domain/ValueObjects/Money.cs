@@ -7,7 +7,7 @@
 
         public Money(decimal amount, string currency = "LKR")
         {
-            if (amount < 0) throw new ArgumentException("Amount cannot be negative.", nameof(amount));
+            //if (amount < 0) throw new ArgumentException("Amount cannot be negative.", nameof(amount));
             if (string.IsNullOrWhiteSpace(currency)) throw new ArgumentException("Currency cannot be empty.", nameof(currency));
             Amount = amount;
             Currency = currency.ToUpperInvariant();

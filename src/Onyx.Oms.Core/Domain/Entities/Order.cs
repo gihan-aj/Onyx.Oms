@@ -201,7 +201,8 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
                 return Result.Failure(Error.Validation("Order.InvalidDiscount", "Percentage discount cannot exceed 100%."));
 
             decimal calculatedDiscount = SubTotal.Amount * (discountValue / 100m);
-            DiscountAmount = new Money(calculatedDiscount, currency);
+            decimal roundedValue = Math.Round(calculatedDiscount, 0, MidpointRounding.AwayFromZero);
+            DiscountAmount = new Money(roundedValue, currency);
         }
         else
         {
@@ -254,18 +255,18 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         UpdatePaymentStatus();
     }
 
-    public Result AddPayment(Money amount, PaymentMethod method, string? reference, DateTime paymentDate, string? gatewayName = null, string? gatewayTransactionId = null, string? gatewayPaymentStatus = null)
+    public Result<OrderPayment> AddPayment(Money amount, PaymentMethod method, string? reference, DateTimeOffset paymentDate, string? gatewayName = null, string? gatewayTransactionId = null, string? gatewayPaymentStatus = null)
     {
         var paymentResult = OrderPayment.Create(TenantId, Id, amount, method, reference, paymentDate, gatewayName, gatewayTransactionId, gatewayPaymentStatus);
         
         if (paymentResult.IsFailure)
-            return Result.Failure(paymentResult.Error);
+            return Result.Failure<OrderPayment>(paymentResult.Error);
 
         _payments.Add(paymentResult.Value);
         
         UpdatePaymentStatus();
 
-        return Result.Success();
+        return paymentResult.Value;
     }
 
     private void UpdatePaymentStatus()

@@ -13,7 +13,7 @@ using Onyx.Oms.Infrastructure.Persistence;
 namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260429071617_AddOrderTables")]
+    [Migration("20260502214639_AddOrderTables")]
     partial class AddOrderTables
     {
         /// <inheritdoc />
@@ -580,8 +580,8 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("PaymentDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Reference")
                         .HasMaxLength(200)

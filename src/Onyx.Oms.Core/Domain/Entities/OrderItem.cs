@@ -161,7 +161,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         if(type == DiscountType.Percentage)
         {
             decimal calculated = baseLineTotal * (discountValue / 100m);
-            DiscountAmount = new Money(calculated, UnitPrice.Currency);
+            decimal rounded = Math.Round(calculated, 0, MidpointRounding.AwayFromZero);
+            DiscountAmount = new Money(rounded, UnitPrice.Currency);
         }
         else
         {

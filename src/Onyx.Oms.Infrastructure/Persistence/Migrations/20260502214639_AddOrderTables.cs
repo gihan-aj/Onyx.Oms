@@ -98,7 +98,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Method = table.Column<int>(type: "int", nullable: false),
                     Reference = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    PaymentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PaymentDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     GatewayName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     GatewayTransactionId = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     GatewayPaymentStatus = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),

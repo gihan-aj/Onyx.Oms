@@ -222,6 +222,9 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
 
     public Result<int> ReserveStock(int requestedQuantity)
     {
+        if (requestedQuantity <= 0)
+            return Result.Failure<int>(Error.Validation("ProductVariant.InvalidRequestQuantity", "Request to reserve quantity should be greater than zero."));
+
         int allocatableQuantity = Math.Min(requestedQuantity, AvailableQuantity);
 
         ReservedQuantity += allocatableQuantity;

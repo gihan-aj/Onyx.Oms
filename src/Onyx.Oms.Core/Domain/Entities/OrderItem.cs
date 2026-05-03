@@ -129,6 +129,27 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         return releasedQuantity;
     }
 
+    public Result<int> AllocateAvailableQuantity(int availableQuantity)
+    {
+        if (availableQuantity < 0)
+            return Result.Failure<int>(Error.Validation("OrderItem.QuantityInvalid", "Quantity to allocate must be greater than zero."));
+
+        int newlyAllocatedQty = 0;
+        if (availableQuantity >= PendingQuantity)
+        {
+            AllocatedQuantity += PendingQuantity;
+            Status = OrderItemStatus.Ready;
+            newlyAllocatedQty = PendingQuantity;
+        }
+        else
+        {
+            AllocatedQuantity += availableQuantity;
+            newlyAllocatedQty = availableQuantity;
+        }
+
+        return newlyAllocatedQty;
+    }
+
     public Result AllocateFromTask(int quantity)
     {
         if (quantity <= 0)

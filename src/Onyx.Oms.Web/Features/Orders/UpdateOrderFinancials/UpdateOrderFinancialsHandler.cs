@@ -20,6 +20,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
         {
             var order = await _context.Orders
                 .Include(o => o.Items)
+                .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
             if (order == null)

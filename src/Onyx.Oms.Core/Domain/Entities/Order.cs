@@ -294,8 +294,9 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
 
         if (!IsCashOnDelivery && !hasPaidAmount)
             return Result.Failure(Error.Validation("Order.PaymentRequired", "Order cannot be confirmed unless marked COD or an advance payment is recorded."));
-        
-        UpdateStatus(OrderStatus.Confirmed);
+
+        Status = OrderStatus.Confirmed;
+
         return Result.Success();
     }
 

@@ -18,6 +18,7 @@ namespace Onyx.Oms.Web.Features.Orders.ShipOrder
         public async Task<Result> Handle(ShipOrderCommand request, CancellationToken cancellationToken)
         {
             var order = await _context.Orders
+                .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
             if (order == null)
@@ -30,6 +31,25 @@ namespace Onyx.Oms.Web.Features.Orders.ShipOrder
             var result = order.Ship(request.CourierId, request.TrackingNumber);
             if (result.IsFailure)
                 return result;
+
+            // Deduct stock physically
+            var allocatedItems = order.Items.Where(i => i.AllocatedQuantity > 0).ToList();
+            var variantIds = allocatedItems.Select(i => i.ProductVariantId).Distinct().ToList();
+            if (variantIds.Any())
+            {
+                var variants = await _context.ProductVariants
+                    .Where(v => variantIds.Contains(v.Id))
+                    .ToListAsync(cancellationToken);
+                foreach (var orderItem in allocatedItems)
+                {
+                    var variant = variants.FirstOrDefault(v => v.Id == orderItem.ProductVariantId);
+                    if (variant != null)
+                    {
+                        // deducts both StockOnHand and ReservedQuantity
+                        variant.MarkShipped(orderItem.AllocatedQuantity);
+                    }
+                }
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();

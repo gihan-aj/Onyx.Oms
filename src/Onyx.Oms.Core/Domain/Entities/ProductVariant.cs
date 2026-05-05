@@ -240,9 +240,9 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
         if (ReservedQuantity < 0) ReservedQuantity = 0;
     }
 
-    public void MarkPacked(int quantity)
+    public void MarkShipped(int quantity)
     {
-        // When packed, we remove from Stock AND remove from Reserved.
+        // When shipped, we remove from Stock AND remove from Reserved.
         StockOnHand -= quantity;
         ReservedQuantity -= quantity;
         if (ReservedQuantity < 0) ReservedQuantity = 0;

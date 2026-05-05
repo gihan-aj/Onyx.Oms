@@ -18,6 +18,7 @@ namespace Onyx.Oms.Web.Features.Orders.PackOrder
         public async Task<Result> Handle(PackOrderCommand request, CancellationToken cancellationToken)
         {
             var order = await _context.Orders
+                .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
             if (order == null)

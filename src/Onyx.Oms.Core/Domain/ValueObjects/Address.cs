@@ -16,6 +16,8 @@ public record Address(
         string.IsNullOrWhiteSpace(PostalCode) &&
         string.IsNullOrWhiteSpace(Country);
 
+    public bool IsValid => !string.IsNullOrWhiteSpace(Street) && !string.IsNullOrWhiteSpace(City);
+
     public static Address Empty => new(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
     public override string ToString()

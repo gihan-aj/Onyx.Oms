@@ -18,10 +18,29 @@ namespace Onyx.Oms.Web.Features.Orders.FailDelivery
         public async Task<Result> Handle(FailDeliveryCommand request, CancellationToken cancellationToken)
         {
             var order = await _context.Orders
+                .Include(o => o.Items)
+                .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
             if (order == null)
                 return Result.Failure(Error.NotFound("Order.NotFound", "Order not found."));
+
+            if (request.IsReturnedToSender)
+            {
+                var variantIds = order.Items.Select(oi => oi.ProductVariantId).Distinct().ToList();
+                var variants = await _context.ProductVariants
+                    .Where(v => variantIds.Contains(v.Id))
+                    .ToListAsync(cancellationToken);
+
+                foreach(var orderItem in order.Items)
+                {
+                    var variant = variants.FirstOrDefault(v => v.Id == orderItem.ProductVariantId);
+                    if(variant != null)
+                    {
+                        variant.AdjustStock(orderItem.Quantity);
+                    }
+                }
+            }
 
             var result = order.FailDelivery(request.IsReturnedToSender);
             if (result.IsFailure)

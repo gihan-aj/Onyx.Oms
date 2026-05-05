@@ -295,7 +295,11 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         if (!IsCashOnDelivery && !hasPaidAmount)
             return Result.Failure(Error.Validation("Order.PaymentRequired", "Order cannot be confirmed unless marked COD or an advance payment is recorded."));
 
-        Status = OrderStatus.Confirmed;
+        bool areItemsReady = Items.All(i => i.PendingQuantity == 0 && (i.Status == OrderItemStatus.Allocated || i.Status == OrderItemStatus.Ready));
+        if (areItemsReady)
+            Status = OrderStatus.ReadyToPack;
+        else
+            Status = OrderStatus.Confirmed;
 
         return Result.Success();
     }
@@ -303,30 +307,45 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
     public Result Complete()
     {
         // The order must be physically in the customer's hands
-        if (Status != OrderStatus.Delivered)
-            return Result.Failure(Error.Validation("Order.InvalidStatus", "Order must be Delivered before it can be Completed."));
+        //if (Status != OrderStatus.Delivered)
+        //    return Result.Failure(Error.Validation("Order.InvalidStatus", "Order must be Delivered before it can be Completed."));
+        if(CourierId == null)
+            return Result.Failure(Error.Validation("Order.CourierRequired", "A courier is requierd before deliver and complete an order."));
+
+        if (!ShippingAddress.IsValid)
+            return Result.Failure(Error.Validation("Order.AddressRequired", "Shipping address is requierd before deliver and complete an order."));
+
+        bool areItemsReady = Items.All(i => i.PendingQuantity == 0 && (i.Status == OrderItemStatus.Allocated || i.Status == OrderItemStatus.Ready));
+        if (!areItemsReady)
+            return Result.Failure(Error.Validation("Order.ItemsNotReady", "Items should be ready before deliver and complete an order."));
 
         // The money must be in account
         if (PaymentStatus != PaymentStatus.FullyPaid)
             return Result.Failure(Error.Validation("Order.Unpaid", "Order cannot be Completed until it is fully paid."));
 
-        UpdateStatus(OrderStatus.Completed);
+        Status = OrderStatus.Completed;
+
         return Result.Success();
     }
 
     public Result Pack()
     {
-        if (Status != OrderStatus.ReadyToPack)
-            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only ReadyToPack orders can be packed."));
+        //if (Status != OrderStatus.ReadyToPack)
+        //    return Result.Failure(Error.Validation("Order.InvalidStatus", "Only ReadyToPack orders can be packed."));
 
-        UpdateStatus(OrderStatus.Packed);
+        bool areItemsReady = Items.All(i => i.PendingQuantity == 0 && (i.Status == OrderItemStatus.Allocated || i.Status == OrderItemStatus.Ready));
+        if(!areItemsReady)
+            return Result.Failure(Error.Validation("Order.ItemsNotReady", "Items should be ready before pack."));
+
+        Status = OrderStatus.Packed;
+
         return Result.Success();
     }
 
     public Result Ship(Guid courierId, string? trackingNumber)
     {
-        if (Status != OrderStatus.Packed && Status != OrderStatus.ReadyToPack)
-            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Packed or ReadyToPack orders can be shipped."));
+        //if (Status != OrderStatus.Packed && Status != OrderStatus.ReadyToPack)
+        //    return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Packed or ReadyToPack orders can be shipped."));
 
         CourierId = courierId;
         if (!string.IsNullOrWhiteSpace(trackingNumber))
@@ -334,16 +353,34 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             TrackingNumber = trackingNumber;
         }
 
-        UpdateStatus(OrderStatus.Shipped);
+        if(!ShippingAddress.IsValid)
+            return Result.Failure(Error.Validation("Order.AddressRequired", "Shipping address is requierd before ship."));
+
+        bool areItemsReady = Items.All(i => i.PendingQuantity == 0 && (i.Status == OrderItemStatus.Allocated || i.Status == OrderItemStatus.Ready));
+        if (!areItemsReady)
+            return Result.Failure(Error.Validation("Order.ItemsNotReady", "Items should be ready before ship."));
+
+        Status = OrderStatus.Shipped;
+
         return Result.Success();
     }
 
     public Result Deliver()
     {
-        if (Status != OrderStatus.Shipped)
-            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can be delivered."));
+        //if (Status != OrderStatus.Shipped)
+        //    return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can be delivered."));
+        if (CourierId == null)
+            return Result.Failure(Error.Validation("Order.CourierRequired", "A courier is requierd before deliver and complete an order."));
 
-        UpdateStatus(OrderStatus.Delivered);
+        if (!ShippingAddress.IsValid)
+            return Result.Failure(Error.Validation("Order.AddressRequired", "Shipping address is requierd before ship and deliver."));
+
+        bool areItemsReady = Items.All(i => i.PendingQuantity == 0 && (i.Status == OrderItemStatus.Allocated || i.Status == OrderItemStatus.Ready));
+        if (!areItemsReady)
+            return Result.Failure(Error.Validation("Order.ItemsNotReady", "Items should be ready before ship and deliver."));
+
+        Status = OrderStatus.Delivered;
+
         return Result.Success();
     }
 
@@ -352,8 +389,9 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         if (Status >= OrderStatus.Shipped)
             return Result.Failure(Error.Validation("Order.InvalidStatus", "Cannot cancel an order that has already shipped or is further along."));
 
-        UpdateStatus(OrderStatus.Cancelled);
-        RaiseDomainEvent(new Onyx.Oms.Core.Domain.Events.OrderCancelledEvent(Id));
+        Status = OrderStatus.Cancelled;
+
+        //RaiseDomainEvent(new Onyx.Oms.Core.Domain.Events.OrderCancelledEvent(Id));
         return Result.Success();
     }
 
@@ -362,7 +400,11 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         if (Status != OrderStatus.Shipped)
             return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can fail delivery."));
 
-        UpdateStatus(isReturnedToSender ? OrderStatus.ReturnedToSender : OrderStatus.DeliveryFailed);
+        if (isReturnedToSender)
+            Status = OrderStatus.ReturnedToSender;
+        else 
+            Status = OrderStatus.DeliveryFailed;
+
         return Result.Success();
     }
 

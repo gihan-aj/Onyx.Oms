@@ -92,6 +92,7 @@ public class GetProductsPagedHandler : IRequestHandler<GetProductsPagedQuery, Re
                         v.Weight != null ? v.Weight.Unit : null,
                         v.StockOnHand,
                         v.ReservedQuantity,
+                        v.IncomingStock,
                         v.IsActive))
                     .ToList(),
                 p.Images

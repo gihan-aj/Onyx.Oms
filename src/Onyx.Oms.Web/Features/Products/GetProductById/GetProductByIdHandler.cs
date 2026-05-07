@@ -52,6 +52,7 @@ public class GetProductByIdHandler : IQueryHandler<GetProductByIdQuery, ProductD
                 v.Weight?.Unit,
                 v.StockOnHand,
                 v.ReservedQuantity,
+                v.IncomingStock,
                 v.IsActive)).ToList()
             : new List<ProductVariantDto>();
 

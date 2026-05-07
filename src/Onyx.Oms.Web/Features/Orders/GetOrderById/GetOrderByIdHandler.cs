@@ -54,6 +54,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
                 {
                     VariantId = v.Id,
                     AvailableStock = v.StockOnHand - v.ReservedQuantity,
+                    IncomingStock = v.IncomingStock,
                     Attributes = v.Attributes.Select(a => new { a.Name, a.Value }).ToList(),
                     Images = v.Product.Images.Select(i => new { i.Url, i.IsMain, i.OptionName, i.OptionValue }).ToList()
                 })
@@ -100,9 +101,13 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
                 {
                     var variantInfo = variantDataDict.GetValueOrDefault(i.ProductVariantId);
 
+                    var incomingStock = 0;
+
                     string? resolvedImageUrl = null;
                     if(variantInfo != null && variantInfo.Images.Any())
                     {
+                        incomingStock = variantInfo.IncomingStock;
+
                         var taggedImage = variantInfo.Images.FirstOrDefault(img => 
                             !string.IsNullOrWhiteSpace(img.OptionName) &&
                             !string.IsNullOrWhiteSpace(img.OptionValue) &&
@@ -132,6 +137,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
                         i.Quantity,
                         i.AllocatedQuantity,
                         i.PendingQuantity,
+                        incomingStock,
                         i.UnitPrice.Amount,
                         i.DiscountAmount.Amount,
                         i.DiscountReason,

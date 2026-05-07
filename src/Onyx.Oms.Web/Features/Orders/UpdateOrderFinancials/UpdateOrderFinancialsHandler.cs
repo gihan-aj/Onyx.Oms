@@ -189,7 +189,9 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
                         item.Discount?.Reason);
 
                     if (addResult.IsFailure)
-                        return addResult;
+                        return Result.Failure(addResult.Error);
+
+                    _context.OrderItems.Add(addResult.Value);
 
                     if(allocatingQty > 0)
                     {

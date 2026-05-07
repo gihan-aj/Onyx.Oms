@@ -52,6 +52,7 @@ public record ProductVariantDto(
     string? WeightUnit,
     int StockOnHand,
     int ReservedQuantity,
+    int IncomingStock,
     bool IsActive
 );
 

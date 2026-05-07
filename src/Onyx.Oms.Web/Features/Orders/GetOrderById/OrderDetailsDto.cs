@@ -55,6 +55,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
         int Quantity,
         int AllocatedQuantity,
         int PendingQuantity,
+        int IncomingStock,
         decimal UnitPrice,
         decimal DiscountAmount,
         string? DiscountReason,

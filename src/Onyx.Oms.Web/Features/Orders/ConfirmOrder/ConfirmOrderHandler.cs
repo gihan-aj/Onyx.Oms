@@ -25,6 +25,12 @@ namespace Onyx.Oms.Web.Features.Orders.ConfirmOrder
             if (order == null)
                 return Result.Failure(Error.NotFound("Order.NotFound", "Order not found."));
 
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Id == order.CustomerId && c.IsActive, cancellationToken);
+
+            if(customer == null)
+                return Result.Failure(Error.NotFound("Customer.NotFound", "Customer not found or inactive."));
+
             var variantIds = order.Items.Select(i => i.ProductVariantId).Distinct().ToList();
             var variants = await _context.ProductVariants
                 .Where(v => variantIds.Contains(v.Id))
@@ -52,6 +58,8 @@ namespace Onyx.Oms.Web.Features.Orders.ConfirmOrder
             var result = order.Confirm();
             if (result.IsFailure)
                 return result;
+
+            customer.UpdateLastOrder(order.OrderNumber);
 
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();

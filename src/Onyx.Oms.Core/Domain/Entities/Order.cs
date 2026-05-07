@@ -95,7 +95,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             notes));
     }
 
-    public Result AddItem(
+    public Result<OrderItem> AddItem(
         Guid productVariantId, 
         string productName,
         string sku,
@@ -107,21 +107,21 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         string? discountReason = null)
     {
         if (Status >= OrderStatus.Shipped)
-            return Result.Failure(Error.Validation("Order.CannotModifyItems", $"Cannot add items at this stage of the order (Status : {Status.ToString()})."));
+            return Result.Failure<OrderItem>(Error.Validation("Order.CannotModifyItems", $"Cannot add items at this stage of the order (Status : {Status.ToString()})."));
         //if (Status != OrderStatus.Pending)
         //    return Result.Failure(Error.Validation("Order.CannotModifyItems", "Cannot add items unless order is in Pending status."));
 
         var itemResult = OrderItem.Create(TenantId, Id, productVariantId, productName, sku, quantity, allocatedQuantity, unitPrice);
         
         if (itemResult.IsFailure)
-            return Result.Failure(itemResult.Error);
+            return Result.Failure<OrderItem>(itemResult.Error);
 
         var item = itemResult.Value;
         if (itemDiscount.HasValue && discountType.HasValue)
             item.ApplyDiscount(itemDiscount.Value, discountType.Value, discountReason);
 
         _items.Add(itemResult.Value);
-        return Result.Success();
+        return itemResult.Value;
     }
 
     public Result<int> UpdateItem(Guid orderItemId, int quantity, decimal? itemDiscount = null, DiscountType? discountType = null, string? discountReason = null)
@@ -154,8 +154,8 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
     {
         int releasingQuantity = 0;
 
-        if (Status != OrderStatus.Pending)
-            return Result.Failure<int>(Error.Validation("Order.CannotModifyItems", "Cannot modify items unless order is in Pending status."));
+        if (Status >= OrderStatus.Shipped)
+            return Result.Failure<int>(Error.Validation("Order.CannotModifyItems", "Cannot modify items when order is shipped."));
 
         var item = _items.FirstOrDefault(i => i.Id == orderItemId);
         if (item == null) return Result.Failure<int>(Error.NotFound("OrderItem.NotFound", "Order item not found."));

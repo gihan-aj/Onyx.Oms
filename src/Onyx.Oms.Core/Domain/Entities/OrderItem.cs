@@ -27,6 +27,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         ProductName = productName;
         Sku = sku;
         Quantity = quantity;
+        AllocatedQuantity = allocatedQuantity;
         UnitPrice = unitPrice;
         Status = status;
     }
@@ -137,9 +138,10 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         int newlyAllocatedQty = 0;
         if (availableQuantity >= PendingQuantity)
         {
-            AllocatedQuantity += PendingQuantity;
+            int pendingQty = PendingQuantity;
+            AllocatedQuantity += pendingQty;
             Status = OrderItemStatus.Ready;
-            newlyAllocatedQty = PendingQuantity;
+            newlyAllocatedQty = pendingQty;
         }
         else
         {

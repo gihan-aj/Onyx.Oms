@@ -28,13 +28,13 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
                 join u in _context.AppUsers on t.AssignedUserId equals u.Id into userGrp
                 from u in userGrp.DefaultIfEmpty()
 
-                // LEFT JOIN: Order Item is optional
-                //join oi in _context.OrderItems on t.LinkedOrderItemId equals oi.Id into oiGrp
-                //from oi in oiGrp.DefaultIfEmpty()
+                    // LEFT JOIN: Order Item is optional
+                join oi in _context.OrderItems on t.LinkedOrderItemId equals oi.Id into oiGrp
+                from oi in oiGrp.DefaultIfEmpty()
 
-                // LEFT JOIN: Order (Requires OrderItem to exist)
-                //join o in _context.Orders on oi.OrderId equals o.Id into orderGrp
-                //from o in orderGrp.DefaultIfEmpty()
+                    // LEFT JOIN: Order (Requires OrderItem to exist)
+                join o in _context.Orders on oi.OrderId equals o.Id into orderGrp
+                from o in orderGrp.DefaultIfEmpty()
 
                 select new
                 {
@@ -42,8 +42,8 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
                     Variant = pv,
                     Product = p,
                     User = u,
-                    //OrderItem = oi,
-                    //Order = o
+                    OrderItem = oi,
+                    Order = o
                 };
 
             if (request.Type.HasValue)
@@ -74,18 +74,17 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
 
             if (!string.IsNullOrWhiteSpace(request.OrderNumber))
             {
-                // Now we can filter by the joined Order table!
-                //baseQuery = baseQuery.Where(x => x.Order != null && x.Order.OrderNumber == request.OrderNumber);
+                baseQuery = baseQuery.Where(x => x.Order != null && x.Order.OrderNumber == request.OrderNumber);
             }
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var search = request.SearchTerm.ToLower();
-                baseQuery = baseQuery.Where( x => x.Product.Name.ToLower().Contains(search));
-                //baseQuery = baseQuery.Where(x =>
-                //    x.Product.Name.ToLower().Contains(search) ||
-                //    (x.Order != null && x.Order.OrderNumber.ToLower().Contains(search)) ||
-                //    (x.Task.PurchaseOrderNumber != null && x.Task.PurchaseOrderNumber.ToLower().Contains(search)));
+                //baseQuery = baseQuery.Where( x => x.Product.Name.ToLower().Contains(search));
+                baseQuery = baseQuery.Where(x =>
+                    x.Product.Name.ToLower().Contains(search) ||
+                    (x.Order != null && x.Order.OrderNumber.ToLower().Contains(search)) ||
+                    (x.Task.PurchaseOrderNumber != null && x.Task.PurchaseOrderNumber.ToLower().Contains(search)));
             }
 
             bool isDesc = request.SortOrder?.Equals("desc", StringComparison.OrdinalIgnoreCase) == true;
@@ -117,7 +116,7 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.GetFulfillmentTasksPaged
                 x.Variant.Attributes.Select(a => new VariantAttributeDto(a.Name, a.Value)).ToList(),
                 x.Task.RequestedQuantity,
                 x.Task.LinkedOrderItemId,
-                null, //x.Order != null ? x.Order.OrderNumber : null,
+                x.Order != null ? x.Order.OrderNumber : null,
                 x.Task.Cost,
                 x.Task.AssignedUserId,
                 x.User != null ? x.User.FirstName : null,

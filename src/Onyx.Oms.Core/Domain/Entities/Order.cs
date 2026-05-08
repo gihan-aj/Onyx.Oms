@@ -3,6 +3,7 @@ using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
+using static Onyx.Oms.Core.Domain.Constants.Permissions;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
@@ -326,6 +327,17 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         Status = OrderStatus.Completed;
 
         return Result.Success();
+    }
+
+    public Result<bool> Ready()
+    {
+        bool areAllItemsReady = false;
+
+        areAllItemsReady = Items.All(i => i.Status == OrderItemStatus.Ready || i.Status == OrderItemStatus.Allocated);
+        if(areAllItemsReady && Status < OrderStatus.ReadyToPack)
+            Status = OrderStatus.ReadyToPack;
+
+        return areAllItemsReady;
     }
 
     public Result Pack()

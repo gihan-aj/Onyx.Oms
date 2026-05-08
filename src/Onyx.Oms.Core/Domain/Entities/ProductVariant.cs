@@ -234,6 +234,19 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
         return Result.Success(unfulfilledQuantity);
     }
 
+    public Result ReserveStockFromTask(int requestedQuantity)
+    {
+        if (requestedQuantity <= 0)
+            return Result.Failure<int>(Error.Validation("ProductVariant.InvalidRequestQuantity", "Request to reserve quantity should be greater than zero."));
+
+        if (requestedQuantity > StockOnHand)
+            return Result.Failure<int>(Error.Validation("ProductVariant.InvalidRequestQuantity", "Request to reserve quantity should not be greater than stock on hand."));
+
+        ReservedQuantity += requestedQuantity;
+
+        return Result.Success();
+    }
+
     public void ReleaseReservation(int quantity)
     {
         ReservedQuantity -= quantity;

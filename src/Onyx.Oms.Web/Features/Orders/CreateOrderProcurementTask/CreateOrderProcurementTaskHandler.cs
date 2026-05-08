@@ -32,7 +32,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrderProcurementTask
             if (order == null)
                 return Result.Failure<Guid>(Error.NotFound("Order.NotFound", "Order not found."));
 
-            if (order.Status < OrderStatus.Confirmed || order.Status >= OrderStatus.ReadyToPack)
+            if (order.Status < OrderStatus.Confirmed || order.Status >= OrderStatus.Packed)
                 return Result.Failure<Guid>(Error.Validation("Order.InvalidStatus", "Cannot create tasks for an order that is not Confirmed or Processing."));
 
             var orderItem = order.Items.FirstOrDefault(i => i.Id == request.OrderItemId);

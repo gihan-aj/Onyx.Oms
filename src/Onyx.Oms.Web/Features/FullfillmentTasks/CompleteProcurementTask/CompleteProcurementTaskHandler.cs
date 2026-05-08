@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
@@ -53,7 +54,42 @@ public class CompleteProcurementTaskHandler : ICommandHandler<CompleteProcuremen
         if (stockResult.IsFailure)
             return Result.Failure(stockResult.Error);
 
-        // TODO: If there is an order id Reserved should be added
+        // Allocate to order if an order item is linked
+        if(request.allocateToOrder.HasValue 
+            && request.allocateToOrder.Value 
+            && task.LinkedOrderItemId.HasValue 
+            && task.LinkedOrderItemId.Value != Guid.Empty)
+        {
+            var orderItem = await _context.OrderItems
+                .FirstOrDefaultAsync(oi => oi.Id == task.LinkedOrderItemId, cancellationToken);
+            if (orderItem == null)
+                return Result.Failure(Error.NotFound("OrderItem.NotFound", "The order item that linked with the procurement task is not found"));
+
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == orderItem.OrderId, cancellationToken);
+            if (order == null)
+                return Result.Failure(Error.NotFound("OrderItem.NotFound", "The order that linked with the procurement task is not found"));
+
+            // Allocate up to the PendingQuantity
+            int pendingQuantity = orderItem.PendingQuantity;
+            int quantityToAllocate = Math.Min(request.QuantityToComplete, pendingQuantity);
+
+            if (quantityToAllocate > 0)
+            {
+                var allocateResult = orderItem.AllocateFromTask(quantityToAllocate);
+                if (allocateResult.IsFailure)
+                    return Result.Failure(allocateResult.Error);
+            }
+
+            // Check and mark if Order can be marked as ReadyToPack
+            order.Ready();
+
+            // reserve the allocated quantity
+            var reserveStockResult = variant.ReserveStockFromTask(quantityToAllocate);
+            if (reserveStockResult.IsFailure)
+                return Result.Failure(reserveStockResult.Error);
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Success();

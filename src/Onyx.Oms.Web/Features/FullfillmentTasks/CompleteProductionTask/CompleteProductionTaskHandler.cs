@@ -54,8 +54,8 @@ public class CompleteProductionTaskHandler : ICommandHandler<CompleteProductionT
             return Result.Failure(stockResult.Error);
 
         // Allocate to order if an order item is linked
-        if (request.allocateToOrder.HasValue
-            && request.allocateToOrder.Value
+        if (request.AllocateToOrder.HasValue
+            && request.AllocateToOrder.Value
             && task.LinkedOrderItemId.HasValue
             && task.LinkedOrderItemId.Value != Guid.Empty)
         {

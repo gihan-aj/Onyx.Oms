@@ -82,13 +82,23 @@ public class CompleteProductionTaskHandler : ICommandHandler<CompleteProductionT
             }
 
             // Check and mark if Order can be marked as ReadyToPack
-            order.Ready();
+            order.MarkIfReady();
 
             // reserve the allocated quantity
             var reserveStockResult = variant.ReserveStockFromTask(quantityToAllocate);
             if (reserveStockResult.IsFailure)
                 return Result.Failure(reserveStockResult.Error);
         }
+        //else
+        //{
+        //    if(task.Status == FulfillmentTaskStatus.Ready && task.LinkedOrderItemId.HasValue)
+        //    {
+        //        var orderItem = await _context.OrderItems
+        //            .FirstOrDefaultAsync(oi => oi.Id == task.LinkedOrderItemId, cancellationToken);
+        //        if (orderItem != null)
+        //            orderItem.UpdateStatus(OrderItemStatus.Pending);
+        //    }
+        //}
 
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Success();

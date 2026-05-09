@@ -49,6 +49,27 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.IssuePurchaseOrder
             if (variantUpdateResult.IsFailure)
                 return Result.Failure(variantUpdateResult.Error);
 
+            // Order item status
+            if (procurementTask.LinkedOrderItemId.HasValue)
+            {
+                var orderItem = await _context.OrderItems
+                    .FirstOrDefaultAsync(oi => oi.Id == procurementTask.LinkedOrderItemId.Value, cancellationToken);
+
+                if (orderItem != null)
+                {
+                    var order = await _context.Orders
+                        .Include(o => o.Items)
+                        .FirstOrDefaultAsync(o => o.Id == orderItem.OrderId, cancellationToken);
+
+                    if (order != null)
+                    {
+                        order.UpdateStatus(Core.Domain.Enums.OrderStatus.Processing);
+                        orderItem.UpdateStatus(Core.Domain.Enums.OrderItemStatus.Ordered);
+                    }
+                }
+
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }

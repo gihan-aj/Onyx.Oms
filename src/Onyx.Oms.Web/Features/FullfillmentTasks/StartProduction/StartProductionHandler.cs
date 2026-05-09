@@ -36,6 +36,27 @@ namespace Onyx.Oms.Web.Features.FullfillmentTasks.StartProduction
             if (variantUpdateResult.IsFailure)
                 return Result.Failure(variantUpdateResult.Error);
 
+            // Order item status
+            if (productionTask.LinkedOrderItemId.HasValue)
+            {
+                var orderItem = await _context.OrderItems
+                    .FirstOrDefaultAsync(oi => oi.Id == productionTask.LinkedOrderItemId.Value, cancellationToken);
+
+                if(orderItem != null)
+                {
+                    var order = await _context.Orders
+                        .Include(o => o.Items)
+                        .FirstOrDefaultAsync(o => o.Id == orderItem.OrderId, cancellationToken);
+
+                    if(order != null)
+                    {
+                        order.UpdateStatus(Core.Domain.Enums.OrderStatus.Processing);
+                        orderItem.UpdateStatus(Core.Domain.Enums.OrderItemStatus.InProduction);
+                    }
+                }
+                
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }

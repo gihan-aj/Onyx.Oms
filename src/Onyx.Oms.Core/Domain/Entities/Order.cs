@@ -329,7 +329,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
-    public Result<bool> Ready()
+    public Result<bool> MarkIfReady()
     {
         bool areAllItemsReady = false;
 

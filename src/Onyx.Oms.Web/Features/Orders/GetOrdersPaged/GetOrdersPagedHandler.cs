@@ -2,8 +2,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
-using Onyx.Oms.Core.Domain.Entities;
-using Onyx.Oms.Core.Domain.Enums;
 
 namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
 {
@@ -23,9 +21,9 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
                         select new { Order = o, Customer = c };
 
             // Filtering
-            if (request.Status.HasValue)
+            if (request.Statuses != null && request.Statuses.Any())
             {
-                query = query.Where(x => x.Order.Status == request.Status.Value);
+                query = query.Where(x => request.Statuses.Contains(x.Order.Status));
             }
 
             if (request.PaymentStatus.HasValue)
@@ -37,6 +35,17 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
             {
                 query = query.Where(x => x.Order.CustomerId == request.CustomerId.Value);
             }
+
+            if (request.CourierId.HasValue)
+            {
+                query = query.Where(x => x.Order.CourierId == request.CourierId.Value);
+            }
+
+            if (request.IsCashOnDelivery.HasValue)
+            {
+                query = query.Where(x => x.Order.IsCashOnDelivery == request.IsCashOnDelivery.Value);
+            }
+
 
             if (request.FromDate.HasValue)
             {
@@ -54,6 +63,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
                     x.Order.OrderNumber.Contains(request.SearchTerm) ||
                     x.Customer.Name.Contains(request.SearchTerm) ||
                     (x.Customer.Email != null && x.Customer.Email.Contains(request.SearchTerm)) ||
+                    (x.Customer.PrimaryPhone != null && x.Customer.PrimaryPhone.Contains(request.SearchTerm)) ||
                     (x.Order.TrackingNumber != null && x.Order.TrackingNumber.Contains(request.SearchTerm))
                 );
             }
@@ -63,7 +73,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
 
             if (string.IsNullOrWhiteSpace(request.SortColumn))
             {
-                query = isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc);
+                query = isDesc ? query.OrderByDescending(x => x.Order.OrderDate) : query.OrderBy(x => x.Order.OrderDate);
             }
             else
             {
@@ -76,7 +86,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
                     "status" => isDesc ? query.OrderByDescending(x => x.Order.Status) : query.OrderBy(x => x.Order.Status),
                     "paymentstatus" => isDesc ? query.OrderByDescending(x => x.Order.PaymentStatus) : query.OrderBy(x => x.Order.PaymentStatus),
                     "createddate" => isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc),
-                    _ => isDesc ? query.OrderByDescending(x => x.Order.CreatedOnUtc) : query.OrderBy(x => x.Order.CreatedOnUtc)
+                    _ => isDesc ? query.OrderByDescending(x => x.Order.OrderDate) : query.OrderBy(x => x.Order.OrderDate)
                 };
             }
 

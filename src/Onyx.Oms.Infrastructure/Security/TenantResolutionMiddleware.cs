@@ -17,7 +17,17 @@ namespace Onyx.Oms.Infrastructure.Security
         {
             if (currentUserService.IsAuthenticated)
             {
-                await currentUserService.GetActiveTenantIdAsync(httpContext.RequestAborted);
+                try
+                {
+                    await currentUserService.GetActiveTenantIdAsync(httpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception
+                    httpContext.Items["TenantResolutionError"] = ex.Message;
+                    // Optionally return 401 or let it continue
+                    // return;
+                }
             }
 
             await _next(httpContext);

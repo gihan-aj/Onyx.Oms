@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Messaging;
@@ -6,9 +7,12 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrdersPaged
 {
     public record GetOrdersPagedQuery : PagedRequest, IQuery<PagedResult<OrderSummaryDto>>
     {
-        public OrderStatus? Status { get; init; }
+        [FromQuery]
+        public OrderStatus[]? Statuses { get; init; }
         public PaymentStatus? PaymentStatus { get; init; }
         public Guid? CustomerId { get; init; }
+        public Guid? CourierId { get; init; }
+        public bool? IsCashOnDelivery { get; init; }
         public DateTimeOffset? FromDate { get; init; }
         public DateTimeOffset? ToDate { get; init; }
         public bool? IncludeDetails { get; init; }

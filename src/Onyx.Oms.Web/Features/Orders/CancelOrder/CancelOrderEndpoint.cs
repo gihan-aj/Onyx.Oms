@@ -15,9 +15,9 @@ namespace Onyx.Oms.Web.Features.Orders.CancelOrder
                 .WithApiVersionSet(app.NewApiVersionSet("Orders").Build())
                 .HasApiVersion(1);
 
-            group.MapPost("{id}/cancel", async (Guid id, ISender sender) =>
+            group.MapPost("{id}/cancel", async (Guid id, [FromBody]CancelOrderRequest request, ISender sender) =>
             {
-                Result result = await sender.Send(new CancelOrderCommand(id));
+                Result result = await sender.Send(new CancelOrderCommand(id, request.Reason));
                 return result.ToMinimalApiResult();
             })
             .WithTags("Orders")
@@ -27,4 +27,6 @@ namespace Onyx.Oms.Web.Features.Orders.CancelOrder
             .HasPermission(Permissions.Orders.Edit);
         }
     }
+
+    public record CancelOrderRequest(string? Reason);
 }

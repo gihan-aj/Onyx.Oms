@@ -219,7 +219,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
                     var oldStatus = order.Status;
                     order.UpdateStatus(OrderStatus.Confirmed);
 
-                    string regressNote = $"[{DateTimeOffset.UtcNow:g}] System Note: Order status reverted from {oldStatus} to Processing due to item modifications.";
+                    string regressNote = $"[{DateTimeOffset.UtcNow:g}] (UTC) System Note: Order status reverted from {oldStatus} to {order.Status.ToString()} due to item modifications.";
                     string updatedNotes = string.IsNullOrWhiteSpace(order.Notes)
                         ? regressNote
                         : order.Notes + Environment.NewLine + regressNote;

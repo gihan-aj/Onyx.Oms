@@ -61,6 +61,16 @@ namespace Onyx.Oms.Web.Features.Orders.CancelOrder
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(request.Reason))
+            {
+                string regressNote = $"[{DateTimeOffset.UtcNow:g}] (UTC) System Note: Order Cancelled: {request.Reason}.";
+                string updatedNotes = string.IsNullOrWhiteSpace(order.Notes)
+                    ? regressNote
+                    : order.Notes + Environment.NewLine + regressNote;
+
+                order.UpdateNotes(updatedNotes);
+            }
+
             var result = order.Cancel();
             if (result.IsFailure)
                 return result;

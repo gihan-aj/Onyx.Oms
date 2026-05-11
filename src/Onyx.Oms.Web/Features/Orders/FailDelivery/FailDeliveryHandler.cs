@@ -42,6 +42,16 @@ namespace Onyx.Oms.Web.Features.Orders.FailDelivery
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(request.Reason))
+            {
+                string regressNote = $"[{DateTimeOffset.UtcNow:g}] (UTC) System Note: Delivery Failed: {request.Reason}.";
+                string updatedNotes = string.IsNullOrWhiteSpace(order.Notes)
+                    ? regressNote
+                    : order.Notes + Environment.NewLine + regressNote;
+
+                order.UpdateNotes(updatedNotes);
+            }
+
             var result = order.FailDelivery(request.IsReturnedToSender);
             if (result.IsFailure)
                 return result;

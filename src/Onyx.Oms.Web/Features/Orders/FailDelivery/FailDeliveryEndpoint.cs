@@ -17,7 +17,7 @@ namespace Onyx.Oms.Web.Features.Orders.FailDelivery
 
             group.MapPost("{id}/fail-delivery", async (Guid id, [FromBody] FailDeliveryRequest request, ISender sender) =>
             {
-                Result result = await sender.Send(new FailDeliveryCommand(id, request.IsReturnedToSender));
+                Result result = await sender.Send(new FailDeliveryCommand(id, request.IsReturnedToSender, request.Reason));
                 return result.ToMinimalApiResult();
             })
             .WithTags("Orders")
@@ -28,5 +28,5 @@ namespace Onyx.Oms.Web.Features.Orders.FailDelivery
         }
     }
 
-    public record FailDeliveryRequest(bool IsReturnedToSender);
+    public record FailDeliveryRequest(bool IsReturnedToSender, string? Reason);
 }

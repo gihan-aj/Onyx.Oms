@@ -10,15 +10,19 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateRegionalSettings;
 public class UpdateRegionalSettingsHandler : ICommandHandler<UpdateRegionalSettingsCommand>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public UpdateRegionalSettingsHandler(IApplicationDbContext context)
+    public UpdateRegionalSettingsHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result> Handle(UpdateRegionalSettingsCommand request, CancellationToken cancellationToken)
     {
-        var profile = await _context.Tenants.FirstOrDefaultAsync(cancellationToken);
+        var profile = await _context.Tenants
+            .Where(t => t.Id == _currentUserService.ActiveTenantId)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (profile == null)
         {

@@ -10,15 +10,19 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdatePreferences;
 public class UpdatePreferencesHandler : ICommandHandler<UpdatePreferencesCommand>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public UpdatePreferencesHandler(IApplicationDbContext context)
+    public UpdatePreferencesHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result> Handle(UpdatePreferencesCommand request, CancellationToken cancellationToken)
     {
-        var profile = await _context.Tenants.FirstOrDefaultAsync(cancellationToken);
+        var profile = await _context.Tenants
+            .Where(t => t.Id == _currentUserService.ActiveTenantId)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (profile == null)
         {

@@ -7,5 +7,6 @@ public record UpdateStoreInfoCommand(
     string? LegalName,
     string? TaxRegistrationNumber,
     string ContactEmail,
-    string? ContactPhone
+    string? ContactPhone,
+    string? InvoiceFooterText
 ) : ICommand;

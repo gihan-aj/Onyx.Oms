@@ -11,15 +11,19 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateStoreAddress;
 public class UpdateStoreAddressHandler : ICommandHandler<UpdateStoreAddressCommand>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public UpdateStoreAddressHandler(IApplicationDbContext context)
+    public UpdateStoreAddressHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result> Handle(UpdateStoreAddressCommand request, CancellationToken cancellationToken)
     {
-        var profile = await _context.Tenants.FirstOrDefaultAsync(cancellationToken);
+        var profile = await _context.Tenants
+            .Where(t => t.Id == _currentUserService.ActiveTenantId)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (profile == null)
         {

@@ -10,14 +10,18 @@ namespace Onyx.Oms.Web.Features.Settings.TenantProfile.UpdateHeroImage
     public class UpdateTenantHeroImageHandler : ICommandHandler<UpdateTenantHeroImageCommand>
     {
         private readonly IApplicationDbContext _context;
-        public UpdateTenantHeroImageHandler(IApplicationDbContext context)
+        private readonly ICurrentUserService _currentUserService;
+        public UpdateTenantHeroImageHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Result> Handle(UpdateTenantHeroImageCommand request, CancellationToken cancellationToken)
         {
-            var profile = await _context.Tenants.FirstOrDefaultAsync(cancellationToken);
+            var profile = await _context.Tenants
+                .Where(t => t.Id == _currentUserService.ActiveTenantId)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (profile == null)
             {

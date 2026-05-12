@@ -66,7 +66,7 @@ namespace Onyx.Oms.Core.Domain.Entities
         }
 
         // --- Domain Behaviors ---
-        public Result UpdateStoreInfo(string companyName, string? legalName, string? taxId, string contactEmail, string? phone)
+        public Result UpdateStoreInfo(string companyName, string? legalName, string? taxId, string contactEmail, string? phone, string? invoiceFooterText)
         {
             if (string.IsNullOrWhiteSpace(companyName))
                 return Result.Failure(Error.Validation("Tenant.CompanyNameRequired", "Company Name is required."));
@@ -79,6 +79,7 @@ namespace Onyx.Oms.Core.Domain.Entities
             TaxRegistrationNumber = taxId;
             ContactEmail = contactEmail;
             ContactPhone = phone;
+            InvoiceFooterText = string.IsNullOrWhiteSpace(invoiceFooterText) ? null : invoiceFooterText;
 
             return Result.Success();
         }

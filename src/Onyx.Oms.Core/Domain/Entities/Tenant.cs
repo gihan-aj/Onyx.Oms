@@ -104,9 +104,21 @@ namespace Onyx.Oms.Core.Domain.Entities
             return Result.Success();
         }
 
-        public void UpdateLogo(string logoUrl) => LogoUrl = logoUrl;
+        public void UpdateLogo(string? logoUrl)
+        {
+            if (string.IsNullOrWhiteSpace(logoUrl))
+                LogoUrl = null;
+            else
+                LogoUrl = logoUrl;
+        }
 
-        public void UpdateHeroImage(string heroImageUrl) => HeroImageUrl = heroImageUrl;
+        public void UpdateHeroImage(string? heroImageUrl)
+        {
+            if(string.IsNullOrWhiteSpace(heroImageUrl))
+                HeroImageUrl = null;
+            else
+                HeroImageUrl = heroImageUrl;
+        }
 
         public Result UpdatePreferences(string jsonFormattedPreferences)
         {

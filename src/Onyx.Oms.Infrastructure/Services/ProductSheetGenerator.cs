@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
+using Onyx.Oms.Core.Domain.ValueObjects;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -10,71 +12,133 @@ namespace Onyx.Oms.Infrastructure.Services
 {
     public class ProductSheetGenerator : IProductSheetGenerator
     {
-        private readonly IApplicationDbContext _context;
-
-        public ProductSheetGenerator(IApplicationDbContext context)
+        public byte[] Generate(Product product, List<SpecDefinition>? allSpecDefs, Tenant tenant, string imageStoragePath, string logoStoragePath)
         {
-            _context = context;
-        }
+            bool hasPriceVariance = false;
+            decimal displayPrice = product.BasePrice.Amount;
 
-        public async Task<Result<byte[]>> GenerateAsync(Guid productId, string imageStoragePath, CancellationToken cancellationToken = default)
-        {
-            var product = await _context.Products
-                .Include(p => p.Images)
-                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-            if (product == null)
-                return Result.Failure<byte[]>(Error.NotFound("Product.NotFound", "Product not found."));
+            if (product.HasVariants && product.Variants.Any(v => v.IsActive))
+            {
+                var activeVariants = product.Variants.Where(v => v.IsActive).ToList();
+                var minPrice = activeVariants.Min(v => v.Price.Amount);
+                var maxPrice = activeVariants.Max(v => v.Price.Amount);
+
+                if (minPrice < maxPrice)
+                {
+                    hasPriceVariance = true;
+                    displayPrice = minPrice;
+                }
+            }
+
+            if(allSpecDefs == null)
+            {
+                allSpecDefs = new List<SpecDefinition>();
+            }
+
+            var specs = allSpecDefs
+                .Where(s => product.Specifications.TryGetValue(s.Key, out var value) && !string.IsNullOrWhiteSpace(value))
+                .Select(s => new KeyValuePair<string, string>(s.Label, product.Specifications[s.Key]))
+                .ToList();
 
             var document = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(36, Unit.Point);
-                    page.DefaultTextStyle(x => x.FontFamily(Fonts.Lato));
+                    page.Margin(1, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(11).FontFamily(Fonts.Lato));
 
-                    // Header
-                    page.Header().Row(row =>
+                    // --- HEADER: Branding & Contact Info ---
+                    page.Header().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingBottom(10).Row(row =>
                     {
-                        row.RelativeItem().Text("LOGO HERE").FontSize(20).Black();
-                        row.RelativeItem().AlignRight().Text("PRODUCT SHEET").FontSize(12).FontColor(Colors.Grey.Medium);
-                    });
-
-                    // Content
-                    page.Content().PaddingVertical(18, Unit.Point).Column(col =>
-                    {
-                        // Hero Section: Image Left, Info Right
-                        col.Item().Row(row =>
+                        // Left: Logo or Company Name
+                        row.ConstantItem(120).Column(col =>
                         {
-                            // Left: Main Image
-                            var mainImage = product.Images.FirstOrDefault(i => i.IsMain);
-                            string? mainImagePath = mainImage != null ? Path.Combine(imageStoragePath, mainImage.Url) : null;
-                            if (File.Exists(mainImagePath))
+                            string logoFile = !string.IsNullOrEmpty(tenant.LogoUrl)
+                                ? Path.Combine(logoStoragePath, tenant.LogoUrl) : string.Empty;
+
+                            if (File.Exists(logoFile))
                             {
-                                row.ConstantItem(250).Image(mainImagePath);
+                                col.Item().Height(50).Image(logoFile).FitArea();
                             }
                             else
                             {
-                                row.ConstantItem(250).Background(Colors.Grey.Lighten3).Height(250); // Placeholder
+                                col.Item().Text(tenant.CompanyName).FontSize(16).Bold().FontColor(Colors.Blue.Darken2);
+                            }
+                        });
+
+                        // Right: Company Details
+                        row.RelativeItem().AlignRight().Column(col =>
+                        {
+                            col.Item().Text("PRODUCT SPECIFICATION").FontSize(16).Bold().FontColor(Colors.Grey.Darken3);
+                            col.Item().Text(tenant.CompanyName).FontSize(10).SemiBold();
+
+                            if (tenant.StoreAddress != null)
+                            {
+                                string addressLine = $"{tenant.StoreAddress.Street}, {tenant.StoreAddress.City}, {tenant.StoreAddress.Country}";
+                                col.Item().Text(addressLine).FontSize(9).FontColor(Colors.Grey.Medium);
                             }
 
-                            // Right: Title, Sku, Price, Desc
-                            row.RelativeItem().PaddingLeft(20).Column(rightCol =>
+                            string contactInfo = $"{tenant.ContactEmail} | {tenant.ContactPhone}";
+                            col.Item().Text(contactInfo.Trim(' ', '|')).FontSize(9).FontColor(Colors.Grey.Medium);
+
+                            if (!string.IsNullOrEmpty(tenant.TaxRegistrationNumber))
+                                col.Item().Text($"Tax ID: {tenant.TaxRegistrationNumber}").FontSize(9).FontColor(Colors.Grey.Medium);
+                        });
+                    });
+
+                    // --- CONTENT: Product Data ---
+                    page.Content().PaddingVertical(1, Unit.Centimetre).Column(col =>
+                    {
+                        // 1. Hero Section (Image + Title/Price)
+                        col.Item().Row(row =>
+                        {
+                            // Main Product Image
+                            row.ConstantItem(200).Column(imgCol =>
                             {
-                                rightCol.Item().Text(product.Name).FontSize(24).SemiBold();
-                                rightCol.Item().Text($"SKU: {product.BaseSku}").FontSize(12).FontColor(Colors.Grey.Medium);
+                                var mainImage = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.FirstOrDefault();
+                                string imgFile = mainImage != null ? Path.Combine(imageStoragePath, mainImage.Url) : string.Empty;
 
-                                rightCol.Item().PaddingTop(10).Text($"{product.BasePrice.Currency} {product.BasePrice.Amount:N2}")
-                                        .FontSize(18).FontColor(Colors.Blue.Darken2).SemiBold();
+                                if (File.Exists(imgFile))
+                                {
+                                    imgCol.Item().Image(imgFile).FitWidth();
+                                }
+                                else
+                                {
+                                    imgCol.Item().Background(Colors.Grey.Lighten4).Height(200).AlignCenter().AlignMiddle()
+                                          .Text("NO IMAGE").FontColor(Colors.Grey.Medium);
+                                }
+                            });
 
-                                rightCol.Item().PaddingTop(15).Text(product.Description).FontSize(11);
+                            // Product Title, SKU, Price, Description
+                            row.RelativeItem().PaddingLeft(25).Column(infoCol =>
+                            {
+                                infoCol.Item().Text(product.Category?.Name?.ToUpperInvariant() ?? "PRODUCT").FontSize(9).FontColor(Colors.Grey.Medium).SemiBold();
+                                infoCol.Item().Text(product.Name).FontSize(24).Bold().FontColor(Colors.Black);
+                                infoCol.Item().Text($"SKU: {product.BaseSku}").FontSize(11).FontColor(Colors.Grey.Darken1);
+
+                                infoCol.Item().PaddingTop(10).Text(text =>
+                                {
+                                    if (hasPriceVariance)
+                                    {
+                                        text.Span("From ").FontSize(14).FontColor(Colors.Grey.Darken2);
+                                    }
+                                    text.Span($"{product.BasePrice.Currency} {displayPrice:N2}")
+                                        .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                                });
+
+                                if (!string.IsNullOrWhiteSpace(product.Description))
+                                {
+                                    infoCol.Item().PaddingTop(15).Text(product.Description).FontSize(10).LineHeight(1.4f);
+                                }
                             });
                         });
 
-                        // Specifications Table
+                        // 2. Specifications Table
                         if (product.Specifications.Any())
                         {
-                            col.Item().PaddingTop(30).Text("SPECIFICATIONS").FontSize(14).SemiBold().Underline();
+                            col.Item().PaddingTop(30).Text("TECHNICAL SPECIFICATIONS").FontSize(12).Bold().FontColor(Colors.Grey.Darken3);
                             col.Item().PaddingTop(10).Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
@@ -83,32 +147,87 @@ namespace Onyx.Oms.Infrastructure.Services
                                     columns.RelativeColumn();
                                 });
 
-                                foreach (var spec in product.Specifications)
+                                foreach (var spec in specs)
                                 {
-                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(5).Text(spec.Key).SemiBold();
-                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(5).Text(spec.Value);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6)
+                                         .Text(spec.Key).FontSize(10).SemiBold().FontColor(Colors.Grey.Darken2);
+
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6)
+                                         .Text(spec.Value).FontSize(10);
+                                }
+
+                                // Add Base Weight if it exists
+                                if (product.BaseWeight != null)
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6)
+                                         .Text("Base Weight").FontSize(10).SemiBold().FontColor(Colors.Grey.Darken2);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6)
+                                         .Text($"{product.BaseWeight.Value} {product.BaseWeight.Unit}").FontSize(10);
                                 }
                             });
                         }
 
-                        // Available Options (If Variants exist)
+                        // 3. Options (Sizes, Colors, etc.)
                         if (product.HasVariants && product.Options.Any())
                         {
-                            col.Item().PaddingTop(20).Text("AVAILABLE OPTIONS").FontSize(14).SemiBold().Underline();
-                            col.Item().PaddingTop(10).Column(optCol =>
+                            col.Item().PaddingTop(25).Text("AVAILABLE CONFIGURATIONS").FontSize(12).Bold().FontColor(Colors.Grey.Darken3);
+                            col.Item().PaddingTop(10).Row(row =>
                             {
                                 foreach (var option in product.Options.OrderBy(o => o.DisplayOrder))
                                 {
-                                    string values = string.Join(", ", option.Values);
-                                    optCol.Item().Text($"{option.Name}: {values}").FontSize(11);
+                                    row.AutoItem().PaddingRight(30).Column(optCol =>
+                                    {
+                                        optCol.Item().Text(option.Name.ToUpperInvariant()).FontSize(9).SemiBold().FontColor(Colors.Grey.Medium);
+                                        optCol.Item().PaddingTop(2).Text(string.Join(", ", option.Values)).FontSize(10).Bold();
+                                    });
+                                }
+                            });
+                        }
+
+                        // 4. Additional Image Gallery ---
+                        // Grab up to 4 other images that are NOT the main image
+                        var additionalImages = product.Images
+                            .Where(i => !i.IsMain && i.Url != (product.Images.FirstOrDefault(m => m.IsMain)?.Url ?? ""))
+                            .OrderBy(i => i.DisplayOrder)
+                            .Take(4)
+                            .ToList();
+
+                        if (additionalImages.Any())
+                        {
+                            col.Item().PaddingTop(30).Text("ADDITIONAL VIEWS").FontSize(12).Bold().FontColor(Colors.Grey.Darken3);
+                            col.Item().PaddingTop(10).Row(galleryRow =>
+                            {
+                                foreach (var img in additionalImages)
+                                {
+                                    string thumbFile = Path.Combine(imageStoragePath, img.Url);
+                                    if (File.Exists(thumbFile))
+                                    {
+                                        // Give them a fixed height so they look like uniform thumbnails
+                                        galleryRow.AutoItem().PaddingRight(15).Height(80).Image(thumbFile).FitArea();
+                                    }
                                 }
                             });
                         }
                     });
 
-                    // FOOTER
-                    page.Footer().AlignCenter().Text("www.yourcompany.com | contact@yourcompany.com | +94 77 123 4567")
-                        .FontSize(10).FontColor(Colors.Grey.Medium);
+                    // --- FOOTER ---
+                    page.Footer().Column(col =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(tenant.InvoiceFooterText))
+                        {
+                            col.Item().AlignCenter().Text(tenant.InvoiceFooterText).FontSize(9).FontColor(Colors.Grey.Medium).Italic();
+                        }
+
+                        col.Item().PaddingTop(5).AlignCenter().Text(x =>
+                        {
+                            x.Span("Generated on ");
+                            x.Span(DateTime.Now.ToString("MMM dd, yyyy")).SemiBold();
+                            x.Span("  |  Page ");
+                            x.CurrentPageNumber();
+                            x.Span(" of ");
+                            x.TotalPages();
+                        });
+                    });
                 });
             });
 

@@ -103,6 +103,7 @@ public static class DependencyInjection
 
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         services.AddScoped<IProductSheetGenerator, ProductSheetGenerator>();
+        services.AddScoped<IOrderInvoiceGenerator, OrderInvoiceGenerator>();
 
         return services;
     }

@@ -67,6 +67,9 @@ namespace Onyx.Oms.Web.Features.Products.UpdateProductVariants
 
                 if (updatedVariantDetails.StockOnHand != originalVariant.StockOnHand)
                 {
+                    if(updatedVariantDetails.StockOnHand < originalVariant.ReservedQuantity)
+                        return Result.Failure(Error.Conflict("ProductVariant.StockConflict", $"Stock on hand cannot be less than reserved quantity of {originalVariant.ReservedQuantity}."));
+
                     originalVariant.AdjustStock(updatedVariantDetails.StockOnHand - originalVariant.StockOnHand);
                 }
 

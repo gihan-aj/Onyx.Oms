@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
 
@@ -31,6 +32,21 @@ public class DeactivateCustomerHandler : ICommandHandler<DeactivateCustomerComma
         }
 
         // CHECK FOR UNFINISHED ORDERS LATER....
+        var processingOrdersExists = await _context.Orders
+            .AnyAsync(o => 
+                o.CustomerId == customer.Id &&
+                (o.Status == OrderStatus.Pending || 
+                o.Status == OrderStatus.Confirmed || 
+                o.Status == OrderStatus.Processing || 
+                o.Status == OrderStatus.ReadyToPack ||
+                o.Status == OrderStatus.Packed ||
+                o.Status == OrderStatus.Shipped ||
+                o.Status == OrderStatus.Delivered), 
+                cancellationToken);
+        if(processingOrdersExists)
+        {
+            return Result.Failure(Error.Validation("Customer.HasUnfinishedOrders", "Customer has unfinished orders and cannot be deactivated."));
+        }
 
         customer.Deactivate();
         await _context.SaveChangesAsync(cancellationToken);

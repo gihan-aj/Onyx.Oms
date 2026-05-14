@@ -13,4 +13,5 @@ public record CreateCustomerCommand(
     string? State,
     string? PostalCode,
     string? Country,
-    string? Notes) : ICommand<Guid>;
+    string? Notes,
+    string? DeliveryInstructions) : ICommand<Guid>;

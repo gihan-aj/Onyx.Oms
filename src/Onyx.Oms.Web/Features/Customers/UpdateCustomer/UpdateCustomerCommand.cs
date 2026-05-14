@@ -15,4 +15,5 @@ public record UpdateCustomerCommand(
     string? State,
     string? PostalCode,
     string? Country,
-    string? Notes) : ICommand;
+    string? Notes,
+    string? DeliveryInstructions) : ICommand;

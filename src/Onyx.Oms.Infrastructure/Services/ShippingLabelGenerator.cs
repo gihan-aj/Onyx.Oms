@@ -66,14 +66,14 @@ namespace Onyx.Oms.Infrastructure.Services
                         });
 
                         // --- SECTION 3: DELIVERY NOTES ---
-                        //if (!string.IsNullOrWhiteSpace(order.Notes))
-                        //{
-                        //    col.Item().PaddingTop(15).Border(1).Padding(5).Column(noteCol =>
-                        //    {
-                        //        noteCol.Item().Text("DELIVERY INSTRUCTIONS:").FontSize(8).Bold();
-                        //        noteCol.Item().Text(order.Notes).FontSize(10).Bold();
-                        //    });
-                        //}
+                        if (!string.IsNullOrWhiteSpace(order.DeliveryInstructions))
+                        {
+                            col.Item().PaddingTop(15).Border(1).Padding(5).Column(noteCol =>
+                            {
+                                noteCol.Item().Text("DELIVERY INSTRUCTIONS:").FontSize(8).Bold();
+                                noteCol.Item().Text(order.DeliveryInstructions).FontSize(10).Bold();
+                            });
+                        }
 
                         // Push the COD box to the absolute bottom of the label
                         //col.Item().Element(filler => filler.ExtendVertical());

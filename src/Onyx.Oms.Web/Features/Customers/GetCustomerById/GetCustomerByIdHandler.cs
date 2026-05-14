@@ -35,6 +35,7 @@ public class GetCustomerByIdHandler : IQueryHandler<GetCustomerByIdQuery, Custom
             customer.Address,
             customer.LastOrderNumber,
             customer.Notes,
+            customer.DeliveryInstructions,
             customer.IsActive,
             customer.CreatedOnUtc);
 

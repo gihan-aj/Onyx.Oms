@@ -21,7 +21,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(o => o.OrderNumber).IsUnique();
 
         builder.Property(o => o.Notes)
-            .HasMaxLength(1000);
+            .HasMaxLength(4000);
+
+        builder.Property(o => o.DeliveryInstructions)
+            .HasMaxLength(500);
 
         builder.Property(o => o.TrackingNumber)
             .HasMaxLength(100);

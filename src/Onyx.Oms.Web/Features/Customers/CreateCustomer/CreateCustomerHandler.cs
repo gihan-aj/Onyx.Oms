@@ -53,7 +53,8 @@ public class CreateCustomerHandler : ICommandHandler<CreateCustomerCommand, Guid
             request.PrimaryPhone,
             request.SecondaryPhone,
             address,
-            request.Notes);
+            request.Notes,
+            request.DeliveryInstructions);
 
         if (result.IsFailure)
         {

@@ -60,7 +60,7 @@ namespace Onyx.Oms.Infrastructure.Services
 
                             if (File.Exists(logoFile))
                             {
-                                col.Item().Height(50).Image(logoFile).FitArea();
+                                col.Item().Height(40).Image(logoFile).FitArea();
                             }
                             else
                             {

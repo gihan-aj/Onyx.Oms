@@ -40,6 +40,9 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Notes)
             .HasMaxLength(1000);
 
+        builder.Property(c => c.DeliveryInstructions)
+            .HasMaxLength(500);
+
         builder.Property(c => c.IsActive)
             .HasDefaultValue(true);
 

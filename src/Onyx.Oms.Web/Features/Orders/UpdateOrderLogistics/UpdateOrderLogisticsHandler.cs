@@ -44,7 +44,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
                     request.ShippingAddress.Country ?? string.Empty);
             }
 
-            var result = order.UpdateLogistics(request.CourierId, address);
+            var result = order.UpdateLogistics(request.CourierId, address, request.DeliveryInstructions);
             if (result.IsFailure)
                 return result;
 

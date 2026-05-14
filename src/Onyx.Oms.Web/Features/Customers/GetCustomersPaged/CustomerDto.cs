@@ -11,5 +11,6 @@ public record CustomerDto(
     string? LastOrderNumber,
     Address Address,
     string? Notes,
+    string? DeliveryInstructions,
     bool IsActive,
     DateTimeOffset CreatedDate);

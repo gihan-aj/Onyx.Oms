@@ -9,6 +9,12 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
             RuleFor(x => x.CustomerId)
                 .NotEmpty().WithMessage("Customer ID is required.");
 
+            RuleFor(c => c.Notes)
+                .MaximumLength(4000);
+
+            RuleFor(c => c.DeliveryInstructions)
+                .MaximumLength(500);
+
             RuleFor(x => x.Items)
                 .NotEmpty().WithMessage("At least one order item is required.")
                 .Must(i => i != null && i.Count > 0).WithMessage("Items cannot be empty.");

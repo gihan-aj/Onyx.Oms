@@ -24,6 +24,9 @@ public class CreateCustomerValidator : AbstractValidator<CreateCustomerCommand>
 
         RuleFor(c => c.Notes)
             .MaximumLength(1000);
+
+        RuleFor(c => c.DeliveryInstructions)
+            .MaximumLength(500);
             
         // Address validation (if provided)
         RuleFor(c => c.Street).MaximumLength(200);

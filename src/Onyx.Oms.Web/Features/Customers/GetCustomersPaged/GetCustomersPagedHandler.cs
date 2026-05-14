@@ -47,6 +47,7 @@ public class GetCustomersPagedHandler : IQueryHandler<GetCustomersPagedQuery, Pa
             c.LastOrderNumber,
             c.Address,
             c.Notes,
+            c.DeliveryInstructions,
             c.IsActive,
             c.CreatedOnUtc));
 

@@ -20,7 +20,8 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
                 var command = new UpdateOrderLogisticsCommand(
                     id, 
                     request.CourierId, 
-                    request.ShippingAddress);
+                    request.ShippingAddress,
+                    request.DeliveryInstructions);
                     
                 Result result = await sender.Send(command);
 
@@ -36,5 +37,6 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
 
     public record UpdateOrderLogisticsRequest(
         Guid? CourierId,
-        UpdateShippingAddressDto? ShippingAddress);
+        UpdateShippingAddressDto? ShippingAddress,
+        string? DeliveryInstructions);
 }

@@ -11,6 +11,9 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
             RuleFor(x => x.ShippingAddress!)
                 .SetValidator(new UpdateShippingAddressDtoValidator())
                 .When(x => x.ShippingAddress != null);
+
+            RuleFor(c => c.DeliveryInstructions)
+                .MaximumLength(500);
         }
     }
 

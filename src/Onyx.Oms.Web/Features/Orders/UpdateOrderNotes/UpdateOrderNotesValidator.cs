@@ -7,7 +7,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderNotes
         public UpdateOrderNotesValidator()
         {
             RuleFor(x => x.OrderId).NotEmpty();
-            RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.Notes).MaximumLength(4000);
         }
     }
 }

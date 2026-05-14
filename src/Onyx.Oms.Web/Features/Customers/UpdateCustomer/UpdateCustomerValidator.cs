@@ -28,6 +28,9 @@ public class UpdateCustomerValidator : AbstractValidator<UpdateCustomerCommand>
         RuleFor(c => c.Notes)
             .MaximumLength(1000);
 
+        RuleFor(c => c.DeliveryInstructions)
+            .MaximumLength(500);
+
         RuleFor(c => c.Street).MaximumLength(200);
         RuleFor(c => c.City).MaximumLength(100);
         RuleFor(c => c.District).MaximumLength(100);

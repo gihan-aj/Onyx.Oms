@@ -19,7 +19,8 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         bool isCashOnDelivery,
         Guid? courierId,
         Address shippingAddress,
-        string? notes) : base(Guid.NewGuid())
+        string? notes,
+        string? deliveryInstructions) : base(Guid.NewGuid())
     {
         TenantId = tenantId;
         OrderNumber = orderNumber;  
@@ -29,7 +30,8 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         CourierId = courierId.HasValue ? courierId.Value : null;
         ShippingAddress = shippingAddress;
         Notes = string.IsNullOrWhiteSpace(notes) ? null : notes;
-        
+        DeliveryInstructions = string.IsNullOrWhiteSpace(deliveryInstructions) ? null : deliveryInstructions;
+
         Status = OrderStatus.Pending;
         PaymentStatus = PaymentStatus.Unpaid;
     }
@@ -46,6 +48,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
     public Address ShippingAddress { get; private set; } = Address.Empty;
     public string? TrackingNumber { get; private set; }
     public string? Notes { get; private set; }
+    public string? DeliveryInstructions { get; private set; }
 
     public Money SubTotal { get; private set; } = Money.Zero();
     public Money DiscountAmount { get; private set; } = Money.Zero();
@@ -80,7 +83,8 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         bool isCashOnDelivery,
         Guid? courierId,
         Address? shippingAddress,
-        string? notes)
+        string? notes,
+        string? deliveryInstructions)
     {
         if (customerId == Guid.Empty)
             return Result.Failure<Order>(Error.Validation("Order.CustomerRequired", "Customer is required."));
@@ -93,7 +97,8 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             isCashOnDelivery,
             courierId,
             shippingAddress ?? Address.Empty,
-            notes));
+            notes,
+            deliveryInstructions));
     }
 
     public Result<OrderItem> AddItem(
@@ -445,13 +450,14 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
-    public Result UpdateLogistics(Guid? courierId, Address shippingAddress)
+    public Result UpdateLogistics(Guid? courierId, Address shippingAddress, string? deliveryInstructions)
     {
         if (Status >= OrderStatus.Shipped)
             return Result.Failure(Error.Validation("Order.LogisticsLocked", "Cannot update logistics after the order has been shipped."));
 
         CourierId = courierId;
         ShippingAddress = shippingAddress;
+        DeliveryInstructions = string.IsNullOrWhiteSpace(deliveryInstructions) ? null : deliveryInstructions;
         return Result.Success();
     }
 

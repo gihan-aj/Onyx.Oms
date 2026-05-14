@@ -15,12 +15,13 @@ public class Customer : AuditableEntity<Guid>, IMustHaveTenant
     public Address Address { get; private set; } = Address.Empty;
     public string? LastOrderNumber { get; private set; }
     public string? Notes { get; private set; }
+    public string? DeliveryInstructions { get; private set; }
     public bool IsActive { get; private set; }
 
     // Private constructor for EF Core
     private Customer(): base(Guid.NewGuid()) { }
 
-    private Customer(Guid tenantId, string name, string? email, string primaryPhone, string? secondaryPhone, Address? address, string? notes)
+    private Customer(Guid tenantId, string name, string? email, string primaryPhone, string? secondaryPhone, Address? address, string? notes, string? deliveryInstructions)
         : base(Guid.NewGuid())
     {
         TenantId = tenantId;
@@ -30,6 +31,7 @@ public class Customer : AuditableEntity<Guid>, IMustHaveTenant
         SecondaryPhone = string.IsNullOrWhiteSpace(secondaryPhone) ? null : secondaryPhone;
         Address = address ?? Address.Empty;
         Notes = string.IsNullOrWhiteSpace(notes) ? null : notes;
+        DeliveryInstructions = string.IsNullOrWhiteSpace(deliveryInstructions) ? null : deliveryInstructions;
         IsActive = true;
     }
 
@@ -40,7 +42,8 @@ public class Customer : AuditableEntity<Guid>, IMustHaveTenant
         string primaryPhone,
         string? secondaryPhone,
         Address? address,
-        string? notes)
+        string? notes,
+        string? deliveryInstructions)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Result.Failure<Customer>(Error.Validation("Customer.NameRequired", "Name is required."));
@@ -48,7 +51,7 @@ public class Customer : AuditableEntity<Guid>, IMustHaveTenant
         if (string.IsNullOrWhiteSpace(primaryPhone))
             return Result.Failure<Customer>(Error.Validation("Customer.PrimaryPhoneRequired", "Primary Phone is required."));
 
-        var customer = new Customer(tenantId, name, email, primaryPhone, secondaryPhone, address, notes);
+        var customer = new Customer(tenantId, name, email, primaryPhone, secondaryPhone, address, notes, deliveryInstructions);
 
         return customer;
     }
@@ -59,14 +62,16 @@ public class Customer : AuditableEntity<Guid>, IMustHaveTenant
         string primaryPhone,
         string? secondaryPhone,
         Address? address,
-        string? notes)
+        string? notes,
+        string? deliveryInstructions)
     {
         Name = name;
         Email = email;
         PrimaryPhone = primaryPhone;
         SecondaryPhone = secondaryPhone;
         Address = address ?? Address.Empty;
-        Notes = notes;
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes;
+        DeliveryInstructions = string.IsNullOrWhiteSpace(deliveryInstructions) ? null : deliveryInstructions;
     }
 
     public void Activate() => IsActive = true;

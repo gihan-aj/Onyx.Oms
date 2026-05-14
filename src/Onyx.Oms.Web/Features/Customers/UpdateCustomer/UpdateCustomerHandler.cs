@@ -52,7 +52,8 @@ public class UpdateCustomerHandler : ICommandHandler<UpdateCustomerCommand>
             request.PrimaryPhone,
             request.SecondaryPhone,
             address,
-            request.Notes);
+            request.Notes,
+            request.DeliveryInstructions);
 
         await _context.SaveChangesAsync(cancellationToken);
 

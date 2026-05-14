@@ -11,6 +11,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
         List<OrderItemDto> Items,
         Guid? CourierId,
         ShippingAddressDto? ShippingAddress,
+        string? DeliveryInstructions,
         MoneyDto? ShippingFee,
         MoneyDto? TaxAmount,
         OrderDiscountDto? Discount,

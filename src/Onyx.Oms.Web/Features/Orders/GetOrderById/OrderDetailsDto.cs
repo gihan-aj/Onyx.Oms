@@ -18,6 +18,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
         OrderStatus Status,
         PaymentStatus PaymentStatus,
         bool IsCashOnDelivery,
+        string? DeliveryInstructions,
         string? Notes,
         decimal SubTotal,
         decimal DiscountAmount,
@@ -42,6 +43,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
         string? Email,
         Address Address,
         string? LastOrderNumber,
+        string? DeliveryInstructions,
         string? Notes
     );
 

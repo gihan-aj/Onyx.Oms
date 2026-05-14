@@ -70,7 +70,8 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                 request.IsCashOnDelivery,
                 request.CourierId,
                 address,
-                request.Notes);
+                request.Notes,
+                request.DeliveryInstructions);
 
             if (orderResult.IsFailure)
                 return Result.Failure<Guid>(orderResult.Error);

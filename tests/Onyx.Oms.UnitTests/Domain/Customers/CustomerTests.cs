@@ -18,7 +18,7 @@ public class CustomerTests
         var address = new Address("123 Main St","Nugegoda", "Colombo", "Western", "00100", "Sri Lanka");
 
         // Act
-        var result = Customer.Create(tenantId, name, email, phone, null, address, "Test Notes");
+        var result = Customer.Create(tenantId, name, email, phone, null, address, "Test Notes", null);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -35,7 +35,7 @@ public class CustomerTests
         var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
         // Act
-        var result = Customer.Create(tenantId, "", "email@test.com", "123", null, null, null);
+        var result = Customer.Create(tenantId, "", "email@test.com", "123", null, null, null, null);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -49,7 +49,7 @@ public class CustomerTests
         var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
         // Act
-        var result = Customer.Create(tenantId, "Name", "email@test.com", "", null, null, null);
+        var result = Customer.Create(tenantId, "Name", "email@test.com", "", null, null, null, null);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -72,7 +72,7 @@ public class CustomerTests
         // Arrange
         var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-        var customer = Customer.Create(tenantId, "Name", "e@e.com", "123", null, null, null).Value;
+        var customer = Customer.Create(tenantId, "Name", "e@e.com", "123", null, null, null, null).Value;
         customer.Deactivate();
 
         // Act

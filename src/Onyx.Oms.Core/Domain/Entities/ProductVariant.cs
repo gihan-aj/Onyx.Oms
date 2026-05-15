@@ -52,7 +52,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
                 {
                     parts.Add(attr.Value);
                 }
-                return string.Join(" - ", parts);
+                return string.Join(" · ", parts);
             }
             return parts[0];
         }

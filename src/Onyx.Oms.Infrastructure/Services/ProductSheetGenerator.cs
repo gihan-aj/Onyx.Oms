@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Common.Utils;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
@@ -124,8 +125,8 @@ namespace Onyx.Oms.Infrastructure.Services
                                     {
                                         text.Span("From ").FontSize(14).FontColor(Colors.Grey.Darken2);
                                     }
-                                    text.Span($"{product.BasePrice.Currency} {displayPrice:N2}")
-                                        .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                                    text.Span($"{CurrencyHelper.GetSymbol(product.BasePrice.Currency)} ").FontSize(14).Bold().FontColor(Colors.Blue.Darken2);
+                                    text.Span($"{displayPrice:N2}").FontSize(22).Bold().FontColor(Colors.Blue.Darken2);
                                 });
 
                                 if (!string.IsNullOrWhiteSpace(product.Description))

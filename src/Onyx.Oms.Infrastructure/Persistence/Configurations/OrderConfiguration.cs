@@ -77,7 +77,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         // One-to-many relationship mapping
         builder.HasMany(o => o.Items)
-            .WithOne()
+            .WithOne(i => i.Order)
             .HasForeignKey(i => i.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 

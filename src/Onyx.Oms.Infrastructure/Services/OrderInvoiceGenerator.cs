@@ -1,4 +1,5 @@
-﻿using Onyx.Oms.Core.Common.Interfaces;
+using Onyx.Oms.Core.Common.Interfaces;
+using Onyx.Oms.Core.Common.Utils;
 using Onyx.Oms.Core.Domain.Entities;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -143,7 +144,14 @@ namespace Onyx.Oms.Infrastructure.Services
                             row.ConstantItem(250).Column(sumCol =>
                             {
                                 // Subtotal
-                                sumCol.Item().Row(r => { r.RelativeItem().Text("Subtotal:"); r.RelativeItem().AlignRight().Text($"{order.SubTotal.Currency} {order.SubTotal.Amount:N2}"); });
+                                sumCol.Item().Row(r => { 
+                                    r.RelativeItem().Text("Subtotal:"); 
+                                    r.RelativeItem().AlignRight().Text(text => 
+                                    {
+                                        text.Span($"{CurrencyHelper.GetSymbol(order.SubTotal.Currency)} ").FontSize(8);
+                                        text.Span($"{order.SubTotal.Amount:N2}");
+                                    }); 
+                                });
 
                                 // Shipping (Only show if > 0)
                                 if (order.ShippingCost.Amount > 0)
@@ -156,8 +164,12 @@ namespace Onyx.Oms.Infrastructure.Services
                                 // Grand Total
                                 sumCol.Item().PaddingTop(10).BorderTop(1).BorderColor(Colors.Grey.Lighten2).PaddingTop(5).Row(r =>
                                 {
-                                    r.RelativeItem().Text("GRAND TOTAL:").SemiBold().FontSize(12);
-                                    r.RelativeItem().AlignRight().Text($"{order.GrandTotal.Currency} {order.GrandTotal.Amount:N2}").Bold().FontSize(12);
+                                    r.RelativeItem().AlignMiddle().Text("GRAND TOTAL:").SemiBold().FontSize(12);
+                                    r.RelativeItem().AlignRight().AlignMiddle().Text(text => 
+                                    {
+                                        text.Span($"{CurrencyHelper.GetSymbol(order.GrandTotal.Currency)} ").FontSize(10).Bold();
+                                        text.Span($"{order.GrandTotal.Amount:N2}").Bold().FontSize(14);
+                                    });
                                 });
 
                                 // Payments Made
@@ -175,8 +187,12 @@ namespace Onyx.Oms.Infrastructure.Services
                                 {
                                     sumCol.Item().PaddingTop(10).Background(order.IsCashOnDelivery ? Colors.Yellow.Lighten3 : Colors.Grey.Lighten3).Padding(8).Row(r =>
                                     {
-                                        r.RelativeItem().Text(order.IsCashOnDelivery ? "CASH ON DELIVERY:" : "BALANCE DUE:").Bold().FontSize(12).FontColor(Colors.Black);
-                                        r.RelativeItem().AlignRight().Text($"{order.BalanceAmount.Currency} {order.BalanceAmount.Amount:N2}").Bold().FontSize(12).FontColor(Colors.Black);
+                                        r.RelativeItem().AlignMiddle().Text(order.IsCashOnDelivery ? "CASH ON DELIVERY:" : "BALANCE DUE:").Bold().FontSize(12).FontColor(Colors.Black);
+                                        r.RelativeItem().AlignRight().AlignMiddle().Text(text => 
+                                        {
+                                            text.Span($"{CurrencyHelper.GetSymbol(order.BalanceAmount.Currency)} ").FontSize(10).FontColor(Colors.Black);
+                                            text.Span($"{order.BalanceAmount.Amount:N2}").Bold().FontSize(14).FontColor(Colors.Black);
+                                        });
                                     });
                                 }
                             });

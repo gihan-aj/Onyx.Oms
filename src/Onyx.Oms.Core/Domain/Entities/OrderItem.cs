@@ -34,6 +34,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
 
     public Guid TenantId { get; private set; }
     public Guid OrderId { get; private set; }
+    public virtual Order Order { get; private set; } = null!;
     public Guid ProductVariantId { get; private set; }
     public string ProductName { get; private set; } = string.Empty;
     public string Sku { get; private set; } = string.Empty;

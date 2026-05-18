@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
 using Onyx.Oms.Core.Messaging;
@@ -28,7 +29,16 @@ namespace Onyx.Oms.Web.Features.Orders.AddOrderPayment
 
             var amount = new Money(request.Amount, request.Currency);
 
-            var paymentResult = order.AddPayment(amount, request.Method, request.Reference, request.PaymentDate);
+            var paymentConfig = await _context.PaymentMethodConfigs
+                .FirstOrDefaultAsync(p => p.Type == request.Method, cancellationToken);
+
+            Money? fixedFee = null;
+            if (request.Method == PaymentMethod.CashOnDelivery)
+            {
+                fixedFee = order.ShippingCost;
+            }
+
+            var paymentResult = order.AddPayment(request.Method, amount, paymentConfig?.FeeRate ?? 0, request.Reference, request.Note, request.PaymentDate, fixedFee);
             if(paymentResult.IsFailure)
                 return Result.Failure<Guid>(paymentResult.Error);
 

@@ -1,10 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Entities;
+using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
 using Onyx.Oms.Infrastructure.Identity.IdP;
-using Microsoft.EntityFrameworkCore;
-using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Web.Features.Users.RegisterUser;
 
@@ -41,6 +42,9 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
             return Result.Failure<Guid>(tenantResult.Error);
 
         var tenant = tenantResult.Value;
+
+        var defaultPaymentConfigs = DefaultPaymentMethods.GetConfigs(tenant.Id);
+        _context.PaymentMethodConfigs.AddRange(defaultPaymentConfigs);
 
         // Create TenantSubscription
         var trialEnd = plan.TrialPeriodInDays > 0 ? DateTimeOffset.UtcNow.AddDays(plan.TrialPeriodInDays) : (DateTimeOffset?)null;

@@ -13,9 +13,12 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
     private OrderPayment(
         Guid tenantId,
         Guid orderId,
-        Money amount,
         PaymentMethod method,
+        Money amount,
+        Money fee,
+        Money net,
         string? reference,
+        string? note,
         DateTimeOffset paymentDate,
         string? gatewayName = null,
         string? gatewayTransactionId = null,
@@ -23,9 +26,12 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
     {
         TenantId = tenantId;
         OrderId = orderId;
-        Amount = amount;
         Method = method;
-        Reference = reference;
+        Amount = amount;
+        GatewayFee = fee;
+        Received = net;
+        Reference = string.IsNullOrWhiteSpace(reference) ? null : reference;
+        Note = string.IsNullOrWhiteSpace(note) ? null : note;
         PaymentDate = paymentDate;
         GatewayName = gatewayName;
         GatewayTransactionId = gatewayTransactionId;
@@ -34,9 +40,12 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
 
     public Guid TenantId { get; private set; }
     public Guid OrderId { get; private set; }
-    public Money Amount { get; private set; } = Money.Zero();
     public PaymentMethod Method { get; private set; }
+    public Money Amount { get; private set; } = Money.Zero();
+    public Money GatewayFee { get; private set; } = Money.Zero();
+    public Money Received { get; private set; } = Money.Zero();
     public string? Reference { get; private set; }
+    public string? Note { get; private set; }
     public DateTimeOffset PaymentDate { get; private set; }
     
     // Online Payment Gateway Fields
@@ -47,10 +56,13 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
     public static Result<OrderPayment> Create(
         Guid tenantId,
         Guid orderId,
-        Money amount,
         PaymentMethod method,
+        Money amount,
+        decimal feeRate,
         string? reference,
+        string? note,
         DateTimeOffset paymentDate,
+        Money? fixedFee = null,
         string? gatewayName = null,
         string? gatewayTransactionId = null,
         string? gatewayPaymentStatus = null)
@@ -61,15 +73,39 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
         if (amount.Amount == 0)
             return Result.Failure<OrderPayment>(Error.Validation("Payment.AmountInvalid", "Payment amount must not be zero."));
 
+        Money fee;
+        if (fixedFee != null)
+            fee = fixedFee;
+        else
+            fee = new Money(
+                Math.Round(amount.Amount * feeRate, 0, MidpointRounding.AwayFromZero),
+                amount.Currency);
+
+        var net = amount - fee;
+
         return Result.Success(new OrderPayment(
             tenantId,
             orderId,
-            amount,
             method,
+            amount,
+            fee,
+            net,
             reference,
+            note,
             paymentDate,
             gatewayName,
             gatewayTransactionId,
             gatewayPaymentStatus));
+    }
+
+    // Just to update older records
+    public void TempUpdateReceived(decimal feeRate)
+    {
+        var fee = new Money(
+            Math.Round(Amount.Amount * feeRate, 0, MidpointRounding.AwayFromZero),
+            Amount.Currency);
+
+        GatewayFee = fee;
+        Received = Amount - fee;
     }
 }

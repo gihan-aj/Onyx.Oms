@@ -9,5 +9,6 @@ namespace Onyx.Oms.Web.Features.Orders.AddOrderPayment
         string Currency,
         PaymentMethod Method,
         string? Reference,
+        string? Note,
         DateTimeOffset PaymentDate) : ICommand<Guid>;
 }

@@ -44,6 +44,11 @@ namespace Onyx.Oms.Infrastructure.Services
                             col.Item().PaddingTop(5).Text(tenant.ContactEmail).FontColor(Colors.Grey.Darken1);
                             if (!string.IsNullOrWhiteSpace(tenant.ContactPhone))
                                 col.Item().Text(tenant.ContactPhone).FontColor(Colors.Grey.Darken1);
+                            if (tenant.StoreAddress != null)
+                            {
+                                col.Item().PaddingTop(4).Text(tenant.StoreAddress.Street).FontSize(9).FontColor(Colors.Grey.Darken1);
+                                col.Item().Text($"{tenant.StoreAddress.City}, {tenant.StoreAddress.Country}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                            }
                         });
 
                         // Right: Invoice Details

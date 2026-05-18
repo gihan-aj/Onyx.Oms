@@ -15,6 +15,7 @@ public interface IApplicationDbContext
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
     DbSet<OrderPayment> OrderPayments { get; }
+    DbSet<PaymentMethodConfig> PaymentMethodConfigs {  get; }
     DbSet<AppUser> AppUsers { get; }
     DbSet<Role> Roles { get; }
     //DbSet<TenantProfile> TenantProfiles { get; }

@@ -37,6 +37,21 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                     await _context.SaveChangesAsync(cancellationToken);
                 }
 
+                var allTenants = await _context.Tenants.ToListAsync(cancellationToken);
+                foreach (var tenant in allTenants)
+                {
+                    var hasPaymentConfigs = await _context.PaymentMethodConfigs
+                        .AnyAsync(p => p.TenantId == tenant.Id, cancellationToken);
+
+                    if (!hasPaymentConfigs)
+                    {
+                        var defaultConfigs = DefaultPaymentMethods.GetConfigs(tenant.Id);
+                        _context.PaymentMethodConfigs.AddRange(defaultConfigs);
+                    }
+                }
+
+                await _context.SaveChangesAsync(cancellationToken);
+
                 await SeedRolesAndPermissionsAsync(hostTenant.Id, cancellationToken);
 
                 var adminUser = await _context.AppUsers
@@ -61,6 +76,17 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                 if (!adminUser.Roles.Any(r => r.Name == Roles.Oms.SystemAdmin))
                 {
                     adminUser.AssignRole(systemAdminRole!);
+                }
+
+                // Populating empty money fields in OrderPayment
+                var payments = await _context.OrderPayments
+                    .Where(p => p.Received.Amount == 0)
+                    .ToListAsync(cancellationToken);
+                foreach (var payment in payments)
+                {
+                    var config = await _context.PaymentMethodConfigs
+                        .FirstOrDefaultAsync(pc => pc.Type == payment.Method, cancellationToken);
+                    payment.TempUpdateReceived(config?.FeeRate ?? 0m);
                 }
 
                 await _context.SaveChangesAsync(cancellationToken);

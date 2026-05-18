@@ -3,7 +3,6 @@ using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.ValueObjects;
-using static Onyx.Oms.Core.Domain.Constants.Permissions;
 
 namespace Onyx.Oms.Core.Domain.Entities;
 
@@ -261,9 +260,36 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         UpdatePaymentStatus();
     }
 
-    public Result<OrderPayment> AddPayment(Money amount, PaymentMethod method, string? reference, DateTimeOffset paymentDate, string? gatewayName = null, string? gatewayTransactionId = null, string? gatewayPaymentStatus = null)
+    public Result<OrderPayment> AddPayment(
+        PaymentMethod method, 
+        Money amount, 
+        decimal feeRate, 
+        string? reference, 
+        string? note, 
+        DateTimeOffset paymentDate,
+        Money? fixedFee = null,
+        string? gatewayName = null, 
+        string? gatewayTransactionId = null, 
+        string? gatewayPaymentStatus = null)
     {
-        var paymentResult = OrderPayment.Create(TenantId, Id, amount, method, reference, paymentDate, gatewayName, gatewayTransactionId, gatewayPaymentStatus);
+        if (_payments.Any(p => p.Method == PaymentMethod.CashOnDelivery) && method == PaymentMethod.CashOnDelivery)
+        {
+            return Result.Failure<OrderPayment>(Error.Conflict("Order.InvalidPayment", "Cannot add another Cash on Delivery payment when a Cash on Delivery payment already exists."));
+        }
+
+        var paymentResult = OrderPayment.Create(
+            TenantId, 
+            Id, 
+            method, 
+            amount, 
+            feeRate, 
+            reference, 
+            note, 
+            paymentDate, 
+            fixedFee,
+            gatewayName, 
+            gatewayTransactionId, 
+            gatewayPaymentStatus);
         
         if (paymentResult.IsFailure)
             return Result.Failure<OrderPayment>(paymentResult.Error);
@@ -277,7 +303,11 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
 
     private void UpdatePaymentStatus()
     {
-        if (TotalPaid.Amount >= GrandTotal.Amount)
+        var receivable = IsCashOnDelivery
+            ? GrandTotal - ShippingCost
+            : GrandTotal;
+
+        if (TotalPaid.Amount >= receivable.Amount)
         {
             PaymentStatus = PaymentStatus.FullyPaid;
         }

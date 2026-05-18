@@ -17,6 +17,9 @@ public class OrderPaymentConfiguration : IEntityTypeConfiguration<OrderPayment>
         builder.Property(p => p.Reference)
             .HasMaxLength(200);
 
+        builder.Property(p => p.Note)
+            .HasMaxLength(200);
+
         builder.Property(p => p.GatewayName)
             .HasMaxLength(100);
 
@@ -30,6 +33,18 @@ public class OrderPaymentConfiguration : IEntityTypeConfiguration<OrderPayment>
         {
             pb.Property(m => m.Amount).HasColumnName("PaymentAmount").HasPrecision(18, 2);
             pb.Property(m => m.Currency).HasColumnName("PaymentCurrency").HasMaxLength(3);
+        });
+
+        builder.ComplexProperty(p => p.GatewayFee, pb =>
+        {
+            pb.Property(m => m.Amount).HasColumnName("GatewayFeeAmount").HasPrecision(18, 2);
+            pb.Property(m => m.Currency).HasColumnName("GatewayFeeCurrency").HasMaxLength(3);
+        });
+
+        builder.ComplexProperty(p => p.Received, pb =>
+        {
+            pb.Property(m => m.Amount).HasColumnName("ReceivedAmount").HasPrecision(18, 2);
+            pb.Property(m => m.Currency).HasColumnName("ReceivedFeeCurrency").HasMaxLength(3);
         });
 
         builder.HasIndex(p => p.TenantId);

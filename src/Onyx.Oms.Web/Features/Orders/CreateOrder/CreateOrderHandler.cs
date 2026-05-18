@@ -130,11 +130,16 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
 
             if(request.Payment != null)
             {
+                var paymentConfig = await _context.PaymentMethodConfigs
+                    .FirstOrDefaultAsync(p => p.Type == request.Payment.Method, cancellationToken);
+
                 Money amount = new(request.Payment.Amount.Amount, request.Payment.Amount.Currency);
                 var orderPaymentResult = order.AddPayment(
-                    amount, 
                     request.Payment.Method, 
+                    amount, 
+                    paymentConfig?.FeeRate ?? 0m,
                     request.Payment.Reference, 
+                    request.Payment.Note,
                     request.Payment.PaymentDate);
 
                 if(orderPaymentResult.IsFailure)

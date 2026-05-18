@@ -23,6 +23,7 @@ namespace Onyx.Oms.Web.Features.Orders.AddOrderPayment
                     request.Currency,
                     request.Method,
                     request.Reference,
+                    request.Note,
                     request.PaymentDate);
 
                 Result<Guid> result = await sender.Send(command);

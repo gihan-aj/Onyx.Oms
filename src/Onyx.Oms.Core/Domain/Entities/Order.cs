@@ -442,16 +442,37 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
-    public Result FailDelivery(bool isReturnedToSender)
+    public Result FailDelivery(bool isReturning)
     {
         if (Status != OrderStatus.Shipped)
             return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can fail delivery."));
 
-        if (isReturnedToSender)
-            Status = OrderStatus.ReturnedToSender;
+        if (isReturning)
+            Status = OrderStatus.ReturnInTransit;
         else 
             Status = OrderStatus.DeliveryFailed;
 
+        return Result.Success();
+    }
+
+    public Result ReceiveReturn(bool isReceived)
+    {
+        if (Status != OrderStatus.Shipped && Status != OrderStatus.ReturnInTransit)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can be received back."));
+
+        if (isReceived)
+            Status = OrderStatus.ReturnedToSender;
+        else
+            Status = OrderStatus.LostInTransit;
+        return Result.Success();
+    }
+
+    public Result ReturnProcess()
+    {
+        if (Status != OrderStatus.ReturnedToSender)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Returned orders can be processed take back to inventory."));
+
+        Status = OrderStatus.ReturnProcessed;
         return Result.Success();
     }
 

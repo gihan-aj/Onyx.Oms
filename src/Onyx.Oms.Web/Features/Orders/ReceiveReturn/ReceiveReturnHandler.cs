@@ -1,39 +1,38 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
 
-namespace Onyx.Oms.Web.Features.Orders.FailDelivery
+namespace Onyx.Oms.Web.Features.Orders.ReceiveReturn
 {
-    public class FailDeliveryHandler : ICommandHandler<FailDeliveryCommand>
+    public class ReceiveReturnHandler : ICommandHandler<ReceiveReturnCommand>
     {
         private readonly IApplicationDbContext _context;
 
-        public FailDeliveryHandler(IApplicationDbContext context)
+        public ReceiveReturnHandler(IApplicationDbContext context)
         {
             _context = context;
         }
 
-        public async Task<Result> Handle(FailDeliveryCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(ReceiveReturnCommand request, CancellationToken cancellationToken)
         {
             var order = await _context.Orders
-                .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
-
+            .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
             if (order == null)
                 return Result.Failure(Error.NotFound("Order.NotFound", "Order not found."));
 
             if (!string.IsNullOrWhiteSpace(request.Reason))
             {
-                string regressNote = $"[{DateTimeOffset.UtcNow:g}] (UTC) System Note: Delivery Failed: {request.Reason}.";
+                string statusString = request.IsReceived ? "Received Return" : "Lost in Transit";
+                string regressNote = $"[{DateTimeOffset.UtcNow:g}] (UTC) System Note: {statusString}: {request.Reason}.";
                 string updatedNotes = string.IsNullOrWhiteSpace(order.Notes)
                     ? regressNote
                     : order.Notes + Environment.NewLine + regressNote;
-
                 order.UpdateNotes(updatedNotes);
             }
 
-            var result = order.FailDelivery(request.IsReturning);
+            var result = order.ReceiveReturn(request.IsReceived);
             if (result.IsFailure)
                 return result;
 

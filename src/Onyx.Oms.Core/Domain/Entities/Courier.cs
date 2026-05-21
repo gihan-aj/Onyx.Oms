@@ -15,6 +15,9 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
     public string? TrackingUrlTemplate { get; private set; }
     public bool IsActive { get; private set; }
 
+    private readonly List<CourierZoneRate> _zoneRates = new();
+    public IReadOnlyCollection<CourierZoneRate> ZoneRates => _zoneRates.AsReadOnly();
+
     // EF Core Constructor
     private Courier() { }
 
@@ -65,6 +68,53 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success(courier);
     }
 
+    public Result<CourierZoneRate> AddZoneRate(
+        string zoneName,
+        decimal baseFee,
+        decimal baseWeight,
+        decimal excessFeePerWeightUnit,
+        decimal codPercentage,
+        string currency,
+        string weightUnit,
+        bool isDefault,
+        List<string> coveredDistricts)
+    {
+        var createResult = CourierZoneRate.Create(
+            TenantId,
+            Id,
+            zoneName,
+            baseFee,
+            baseWeight,
+            excessFeePerWeightUnit,
+            codPercentage,
+            currency,
+            weightUnit,
+            isDefault,
+            coveredDistricts);
+
+        if (createResult.IsFailure)
+            return Result.Failure<CourierZoneRate>(createResult.Error);
+
+        var zoneRate = createResult.Value;
+
+        if (isDefault && _zoneRates.Any(zr => zr.IsDefault))
+         return Result.Failure<CourierZoneRate>(Error.Conflict("CourierZoneRate.DefaultConflict", "Only one default zone rate is allowed per courier."));
+
+        _zoneRates.Add(zoneRate);
+        return Result.Success(zoneRate);
+    }
+
+    public Result RemoveZoneRate(Guid zoneRateId)
+    {
+        var zoneRate = _zoneRates.FirstOrDefault(zr => zr.Id == zoneRateId);
+
+        if (zoneRate == null)
+            return Result.Failure(Error.NotFound("CourierZoneRate.NotFound", "Zone rate not found."));
+
+        _zoneRates.Remove(zoneRate);
+        return Result.Success();
+    }
+
     public void UpdateDetails(
         string name,
         string? contactPerson,
@@ -80,6 +130,48 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         SecondaryPhone = secondaryPhone;
         WebsiteUrl = websiteUrl;
         TrackingUrlTemplate = trackingUrlTemplate;
+    }
+
+    public Result UpdateZoneRate(
+        Guid zoneRateId,
+        string zoneName,
+        decimal baseFee,
+        decimal baseWeight,
+        decimal excessFeePerWeightUnit,
+        decimal codPercentage,
+        string currency,
+        string weightUnit,
+        bool isDefault,
+        List<string> coveredDistricts)
+    {
+        var zoneRate = _zoneRates.FirstOrDefault(zr => zr.Id == zoneRateId);
+
+        if (zoneRate == null)
+            return Result.Failure(Error.NotFound("CourierZoneRate.NotFound", "Zone rate not found."));
+
+        if (isDefault && _zoneRates.Any(zr => zr.IsDefault && zr.Id != zoneRateId))
+            return Result.Failure<CourierZoneRate>(Error.Conflict("CourierZoneRate.DefaultConflict", "Only one default zone rate is allowed per courier."));
+
+        var updateResult = zoneRate.Update(
+            zoneName,
+            baseFee,
+            baseWeight,
+            excessFeePerWeightUnit,
+            codPercentage,
+            currency,
+            weightUnit,
+            isDefault,
+            coveredDistricts);
+
+        if (updateResult.IsFailure)
+            return updateResult;
+
+        return Result.Success();
+    }
+
+    public CourierZoneRate? GetDefaultZoneRate()
+    {
+        return _zoneRates.FirstOrDefault(zr => zr.IsDefault);
     }
 
     public void Activate()

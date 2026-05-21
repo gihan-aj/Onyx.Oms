@@ -6,6 +6,7 @@ namespace Onyx.Oms.Core.Common.Interfaces;
 public interface IApplicationDbContext
 {
     DbSet<Courier> Couriers { get; }
+    DbSet<CourierZoneRate> CourierZoneRates { get; set; }
     DbSet<Customer> Customers { get; }
     DbSet<ProductCategory> ProductCategories { get; }
     DbSet<Product> Products { get; }

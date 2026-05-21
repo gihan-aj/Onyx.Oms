@@ -22,6 +22,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
     }
 
     public DbSet<Courier> Couriers { get; set; }
+    public DbSet<CourierZoneRate> CourierZoneRates { get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
     public DbSet<Product> Products => Set<Product>();

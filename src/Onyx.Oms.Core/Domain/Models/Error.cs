@@ -22,4 +22,16 @@ public record Error
     public static Error Validation(string code, string description) => new(code, description, ErrorType.Validation);
     public static Error Unauthorized(string code, string description) => new(code, description, ErrorType.Unauthorized);
     public static Error Forbidden(string code, string description) => new(code, description, ErrorType.Forbidden);
+
+    public static Error ThirdPartyService(string code, string description)
+        => new(code, description, ErrorType.ThirdPartyService);
+
+    public static Error RateLimitExceeded(string code, string description)
+        => new(code, description, ErrorType.RateLimitExceeded);
+
+    public static Error ServiceUnavailable(string code, string description)
+        => new(code, description, ErrorType.ServiceUnavailable);
+
+    public static Error InvalidConfiguration(string code, string description)
+        => new(code, description, ErrorType.InvalidConfiguration);
 }

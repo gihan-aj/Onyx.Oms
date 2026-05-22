@@ -43,6 +43,10 @@ public static class ResultExtensions
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
             ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+            ErrorType.ThirdPartyService => StatusCodes.Status502BadGateway,
+            ErrorType.RateLimitExceeded => StatusCodes.Status429TooManyRequests,
+            ErrorType.ServiceUnavailable => StatusCodes.Status503ServiceUnavailable,
+            ErrorType.InvalidConfiguration => StatusCodes.Status500InternalServerError,
             _ => StatusCodes.Status500InternalServerError
         };
 
@@ -55,6 +59,10 @@ public static class ResultExtensions
             ErrorType.Conflict => "Conflict",
             ErrorType.Unauthorized => "Unauthorized",
             ErrorType.Forbidden => "Forbidden",
+            ErrorType.ThirdPartyService => "External Service Error",
+            ErrorType.RateLimitExceeded => "Rate Limit Exceeded",
+            ErrorType.ServiceUnavailable => "Service Unavailable",
+            ErrorType.InvalidConfiguration => "Configuration Error",
             _ => "Server Error"
         };
         
@@ -67,6 +75,10 @@ public static class ResultExtensions
             ErrorType.Conflict => "https://tools.ietf.org/html/rfc7231#section-6.5.8",
             ErrorType.Unauthorized => "https://tools.ietf.org/html/rfc7231#section-6.5.2",
             ErrorType.Forbidden => "https://tools.ietf.org/html/rfc7231#section-6.5.3",
+            ErrorType.ThirdPartyService => "https://tools.ietf.org/html/rfc7231#section-6.6.3",
+            ErrorType.RateLimitExceeded => "https://tools.ietf.org/html/rfc6585#section-4",
+            ErrorType.ServiceUnavailable => "https://tools.ietf.org/html/rfc7231#section-6.6.4",
+            ErrorType.InvalidConfiguration => "https://tools.ietf.org/html/rfc7231#section-6.6.1",
             _ => "https://tools.ietf.org/html/rfc7231#section-6.6.1"
         };
 

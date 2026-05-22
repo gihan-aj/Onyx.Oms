@@ -15,9 +15,9 @@ namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
                 .WithApiVersionSet(app.NewApiVersionSet("Orders").Build())
                 .HasApiVersion(1);
 
-            group.MapPost("{id:guid}/send-confirmation", async (ISender sender, [FromRoute] Guid id) =>
+            group.MapPost("{id:guid}/send-confirmation", async (ISender sender, [FromRoute] Guid id, [FromQuery] string logoStoragePath) =>
             {
-                var command = new SendOrderConfirmationCommand(id);
+                var command = new SendOrderConfirmationCommand(id, logoStoragePath);
                 Result<string> result = await sender.Send(command);
 
                 // If it's an error (like RateLimitExceeded or BadGateway), ToMinimalApiResult handles the HTTP status codes perfectly!

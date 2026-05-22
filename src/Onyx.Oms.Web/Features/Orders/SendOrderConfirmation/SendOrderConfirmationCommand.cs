@@ -2,5 +2,5 @@
 
 namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
 {
-    public record SendOrderConfirmationCommand(Guid OrderId) : ICommand<string>;
+    public record SendOrderConfirmationCommand(Guid OrderId, string LogoStoragePath) : ICommand<string>;
 }

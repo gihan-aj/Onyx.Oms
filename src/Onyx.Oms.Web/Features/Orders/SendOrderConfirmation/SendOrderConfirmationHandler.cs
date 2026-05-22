@@ -3,6 +3,7 @@ using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Messaging;
+using Onyx.Oms.Infrastructure.Identity;
 
 namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
 {
@@ -10,15 +11,26 @@ namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
     {
         private readonly IApplicationDbContext _context;
         private readonly IWhatsAppService _whatsAppService;
+        private readonly IOrderInvoiceGenerator _invoiceGenerator;
+        private readonly ICurrentUserService _currentUserService;
 
-        public SendOrderConfirmationHandler(IApplicationDbContext context, IWhatsAppService whatsAppService)
+        public SendOrderConfirmationHandler(IApplicationDbContext context, IWhatsAppService whatsAppService, IOrderInvoiceGenerator invoiceGenerator, ICurrentUserService currentUserService)
         {
             _context = context;
             _whatsAppService = whatsAppService;
+            _invoiceGenerator = invoiceGenerator;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Result<string>> Handle(SendOrderConfirmationCommand request, CancellationToken cancellationToken)
         {
+            var tenant = await _context.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == _currentUserService.ActiveTenantId, cancellationToken);
+
+            if (tenant == null)
+                return Result.Failure<string>(Error.NotFound("Tenant.NotFound", "Tenant profile not found."));
+
             var order = await _context.Orders
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
@@ -39,12 +51,30 @@ namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
             if (order.Status == Core.Domain.Enums.OrderStatus.Pending)
                 return Result.Failure<string>(Error.Validation("Order.Pending", "Cannot send confirmation for a pending order."));
 
-            string formattedPhone = FormatPhoneNumberForWhatsApp(customer.PrimaryPhone);
+            byte[] invoiceBytes = _invoiceGenerator.Generate(order, customer, tenant, request.LogoStoragePath);
 
-            var messageResult = await _whatsAppService.SendTemplateMessageAsync(
+            string fileName = $"Invoice_{order.OrderNumber}.pdf";
+
+            var mediaResult = await _whatsAppService.UploadMediaAsync(invoiceBytes, fileName, "application/pdf", cancellationToken);
+
+            if (mediaResult.IsFailure) 
+                return Result.Failure<string>(mediaResult.Error);
+
+            string mediaId = mediaResult.Value;
+
+            string formattedPhone = FormatPhoneNumberForWhatsApp("0714641633");
+            var templateVariables = new List<string>
+            {
+                customer.Name,      // {{1}}
+                order.OrderNumber        // {{2}}
+            };
+
+            var messageResult = await _whatsAppService.SendDocumentTemplateMessageAsync(
                 toPhoneNumber: formattedPhone,
-                templateName: "hello_world",
+                templateName: "oms_order_invoice",
                 languageCode: "en_US",
+                mediaId: mediaId,
+                bodyVariables: templateVariables,
                 cancellationToken: cancellationToken);
 
             if (messageResult.IsFailure)

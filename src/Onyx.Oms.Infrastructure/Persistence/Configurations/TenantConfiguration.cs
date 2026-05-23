@@ -45,5 +45,10 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .WithOne()
             .HasForeignKey<TenantSubscription>(ts => ts.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(t => t.WhatsAppSettings)
+           .WithOne()
+           .HasForeignKey<TenantWhatsAppSettings>(w => w.TenantId)
+           .OnDelete(DeleteBehavior.Cascade);
     }
 }

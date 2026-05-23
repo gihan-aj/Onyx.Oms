@@ -87,7 +87,7 @@ namespace Onyx.Oms.Infrastructure.External.Meta
             CancellationToken cancellationToken = default)
         {
             // Map the string variables to Meta's expected parameter object
-            var textParameters = bodyVariables.Select(v => new { type = "text", value = v }).ToList();
+            var textParameters = bodyVariables.Select(v => new { type = "text", text = v }).ToList();
 
             var payload = new
             {

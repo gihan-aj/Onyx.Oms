@@ -121,6 +121,8 @@ public static class DependencyInjection
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
+        services.AddSingleton<ICryptoService, AesCryptoService>();
+
         return services;
     }
 }

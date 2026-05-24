@@ -15,7 +15,10 @@ namespace Onyx.Oms.Core.Common.Interfaces
             string templateName,
             string languageCode,
             string mediaId,
+            string fileName,
             List<string> bodyVariables,
             CancellationToken cancellationToken = default);
+
+        string FormatPhoneNumberForWhatsApp(string rawPhone);
     }
 }

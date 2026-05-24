@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Domain.Models;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,16 +15,36 @@ namespace Onyx.Oms.Infrastructure.External.Meta
     internal class WhatsAppService : IWhatsAppService
     {
         private readonly HttpClient _httpClient;
+        private readonly IApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly ICryptoService _cryptoService;
         private readonly ILogger<WhatsAppService> _logger;
+        private readonly IConfiguration _configuration;
 
-        public WhatsAppService(HttpClient httpClient, ILogger<WhatsAppService> logger)
+        public WhatsAppService(
+            HttpClient httpClient,
+            ILogger<WhatsAppService> logger,
+            IApplicationDbContext context,
+            ICurrentUserService currentUserService,
+            ICryptoService cryptoService,
+            IConfiguration configuration)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _context = context;
+            _currentUserService = currentUserService;
+            _cryptoService = cryptoService;
+            _configuration = configuration;
         }
 
         public async Task<Result<string>> UploadMediaAsync(byte[] fileBytes, string fileName, string mimeType, CancellationToken cancellationToken = default)
         {
+            var settingsResult = await GetActiveTenantSettingsAsync(cancellationToken);
+            if (settingsResult.IsFailure) 
+                return Result.Failure<string>(settingsResult.Error);
+
+            var (phoneId, decryptedToken) = settingsResult.Value;
+
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent("whatsapp"), "messaging_product");
 
@@ -29,9 +52,18 @@ namespace Onyx.Oms.Infrastructure.External.Meta
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
             content.Add(fileContent, "file", fileName);
 
+            string baseUrl = _configuration["Meta:BaseUrl"] ?? "https://graph.facebook.com";
+            string apiVersion = _configuration["Meta:ApiVersion"] ?? "v19.0";
+
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/{apiVersion}/{phoneId}/media")
+            {
+                Content = content
+            };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", decryptedToken);
+
             try
             {
-                var response = await _httpClient.PostAsync("media", content, cancellationToken);
+                var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     var responseData = await response.Content.ReadFromJsonAsync<MediaUploadResponse>(cancellationToken: cancellationToken);
@@ -83,6 +115,7 @@ namespace Onyx.Oms.Infrastructure.External.Meta
             string templateName,
             string languageCode,
             string mediaId,
+            string fileName,
             List<string> bodyVariables,
             CancellationToken cancellationToken = default)
         {
@@ -105,7 +138,7 @@ namespace Onyx.Oms.Infrastructure.External.Meta
                             type = "header",
                             parameters = new object[]
                             {
-                                new { type = "document", document = new { id = mediaId}}
+                                new { type = "document", document = new { id = mediaId, filename = fileName }}
                             }
                         },
                         new // body
@@ -120,11 +153,32 @@ namespace Onyx.Oms.Infrastructure.External.Meta
             return await ExecuteMessagePostAsync(payload, cancellationToken);
         }
 
+        public string FormatPhoneNumberForWhatsApp(string rawPhone)
+        {
+            var digitsOnly = new string(rawPhone.Where(char.IsDigit).ToArray());
+            if (digitsOnly.StartsWith("0") && digitsOnly.Length == 10) return "94" + digitsOnly.Substring(1);
+            if (digitsOnly.StartsWith("94") && digitsOnly.Length == 11) return digitsOnly;
+            return rawPhone;
+        }
+
         private async Task<Result<string>> ExecuteMessagePostAsync(object payload, CancellationToken cancellationToken)
         {
+            var settingsResult = await GetActiveTenantSettingsAsync(cancellationToken);
+            if (settingsResult.IsFailure) return Result.Failure<string>(settingsResult.Error);
+            var (phoneId, decryptedToken) = settingsResult.Value;
+
+            string baseUrl = _configuration["Meta:BaseUrl"] ?? "https://graph.facebook.com";
+            string apiVersion = _configuration["Meta:ApiVersion"] ?? "v19.0";
+
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/{apiVersion}/{phoneId}/messages")
+            {
+                Content = JsonContent.Create(payload)
+            };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", decryptedToken);
+
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("messages", payload, cancellationToken);
+                var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     var responseData = await response.Content.ReadFromJsonAsync<WhatsAppSuccessResponse>(cancellationToken: cancellationToken);
@@ -168,6 +222,21 @@ namespace Onyx.Oms.Infrastructure.External.Meta
                 _logger.LogError(ex, "Network failure while reaching WhatsApp API.");
                 return Result.Failure<string>(Error.ServiceUnavailable("Meta.NetworkFailure", "Could not reach the WhatsApp servers."));
             }
+        }
+
+        private async Task<Result<(string PhoneId, string DecryptedToken)>> GetActiveTenantSettingsAsync(CancellationToken cancellationToken)
+        {
+            var settings = await _context.Tenants
+                .AsNoTracking()
+                .Where(t => t.Id == _currentUserService.ActiveTenantId)
+                .Select(t => t.WhatsAppSettings)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (settings == null || !settings.IsActive)
+                return Result.Failure<(string, string)>(Error.InvalidConfiguration("WhatsApp.MissingSettings", "WhatsApp integration is not configured or active for this tenant."));
+
+            string decryptedToken = _cryptoService.Decrypt(settings.EncryptedAccessToken);
+            return Result.Success((settings.PhoneNumberId, decryptedToken));
         }
 
         private record MediaUploadResponse([property: JsonPropertyName("id")] string Id);

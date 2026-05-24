@@ -13,6 +13,6 @@ public class TenantWhatsAppSettingsConfiguration : IEntityTypeConfiguration<Tena
         builder.HasKey(t => t.Id);
 
         builder.Property(t => t.PhoneNumberId).IsRequired().HasMaxLength(500);
-        builder.Property(t => t.EncryptedAccessToken).IsRequired().HasMaxLength(2000);
+        builder.Property(t => t.EncryptedAccessToken).IsRequired().HasMaxLength(4000);
     }
 }

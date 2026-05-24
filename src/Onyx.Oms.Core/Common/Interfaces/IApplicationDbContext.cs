@@ -21,6 +21,7 @@ public interface IApplicationDbContext
     DbSet<Role> Roles { get; }
     //DbSet<TenantProfile> TenantProfiles { get; }
     DbSet<Tenant> Tenants { get; }
+    DbSet<TenantWhatsAppSettings> TenantWhatsAppSettings { get; }
     DbSet<TenantSubscription> TenantSubscriptions { get; }
     DbSet<SubscriptionPlan> SubscriptionPlans { get; }
     Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }

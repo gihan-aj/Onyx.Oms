@@ -150,24 +150,26 @@ namespace Onyx.Oms.Core.Domain.Entities
             return Result.Success();
         }
 
-        public Result ConfigureWhatsAppSettings(string phoneNumberId, string encryptedAccessToken)
+        public Result<TenantWhatsAppSettings?> ConfigureWhatsAppSettings(string phoneNumberId, string encryptedAccessToken)
         {
+            bool isNewRecord = false;
             if (WhatsAppSettings == null)
             {
                 var settingsResult = TenantWhatsAppSettings.Create(Id, phoneNumberId, encryptedAccessToken);
                 if (settingsResult.IsFailure)
-                    return Result.Failure(settingsResult.Error);
+                    return Result.Failure<TenantWhatsAppSettings?>(settingsResult.Error);
 
                 WhatsAppSettings = settingsResult.Value;
+                isNewRecord = true;
             }
             else
             {
                 var updateResult = WhatsAppSettings.UpdateCredentials(phoneNumberId, encryptedAccessToken);
                 if (updateResult.IsFailure)
-                    return Result.Failure(updateResult.Error);
+                    return Result.Failure<TenantWhatsAppSettings?>(updateResult.Error);
             }
 
-            return Result.Success();
+            return Result.Success(isNewRecord? WhatsAppSettings : null);
         }
     }
 }

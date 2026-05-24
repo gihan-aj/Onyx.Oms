@@ -108,16 +108,8 @@ public static class DependencyInjection
         services.AddScoped<IOrderInvoiceGenerator, OrderInvoiceGenerator>();
         services.AddScoped<IShippingLabelGenerator, ShippingLabelGenerator>();
 
-        string metaToken = configuration["Meta:AccessToken"] ?? string.Empty;
-        string phoneNumberId = configuration["Meta:PhoneNumberId"] ?? string.Empty;
-        string apiVersion = configuration["Meta:ApiVersion"] ?? "v19.0";
-
         services.AddHttpClient<IWhatsAppService, WhatsAppService>(client =>
         {
-            // The base URL dynamically points to your specific WhatsApp Phone Number ID
-            client.BaseAddress = new Uri($"https://graph.facebook.com/{apiVersion}/{phoneNumberId}/");
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", metaToken);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 

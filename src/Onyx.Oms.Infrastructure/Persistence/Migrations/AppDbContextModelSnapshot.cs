@@ -1309,8 +1309,8 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("EncryptedAccessToken")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");

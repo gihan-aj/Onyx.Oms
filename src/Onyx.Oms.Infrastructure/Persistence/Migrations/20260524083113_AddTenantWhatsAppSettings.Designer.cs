@@ -13,7 +13,7 @@ using Onyx.Oms.Infrastructure.Persistence;
 namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260522165810_AddTenantWhatsAppSettings")]
+    [Migration("20260524083113_AddTenantWhatsAppSettings")]
     partial class AddTenantWhatsAppSettings
     {
         /// <inheritdoc />
@@ -1312,8 +1312,8 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("EncryptedAccessToken")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");

@@ -37,6 +37,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<AppSequence> AppSequences => Set<AppSequence>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<TenantWhatsAppSettings> TenantWhatsAppSettings => Set<TenantWhatsAppSettings>();
     public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
 

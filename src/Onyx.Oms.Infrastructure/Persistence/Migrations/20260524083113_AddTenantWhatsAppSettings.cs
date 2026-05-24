@@ -18,7 +18,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PhoneNumberId = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    EncryptedAccessToken = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    EncryptedAccessToken = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedOnUtc = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),

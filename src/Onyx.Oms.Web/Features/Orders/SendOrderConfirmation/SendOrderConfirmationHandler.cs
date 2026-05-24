@@ -74,6 +74,7 @@ namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
                 templateName: "oms_order_invoice",
                 languageCode: "en_US",
                 mediaId: mediaId,
+                fileName: fileName,
                 bodyVariables: templateVariables,
                 cancellationToken: cancellationToken);
 

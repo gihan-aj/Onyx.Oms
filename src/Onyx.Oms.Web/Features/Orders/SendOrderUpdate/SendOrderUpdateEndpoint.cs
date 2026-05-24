@@ -5,9 +5,9 @@ using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Web.Common;
 using Onyx.Oms.Web.Extensions;
 
-namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
+namespace Onyx.Oms.Web.Features.Orders.SendOrderUpdate
 {
-    public class SendOrderConfirmationEndpoint : IEndpoint
+    public class SendOrderUpdateEndpoint : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -15,9 +15,9 @@ namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
                 .WithApiVersionSet(app.NewApiVersionSet("Orders").Build())
                 .HasApiVersion(1);
 
-            group.MapPost("{id:guid}/send-confirmation", async (ISender sender, [FromRoute] Guid id, [FromQuery] string logoStoragePath) =>
+            group.MapPost("{id:guid}/send-update", async (ISender sender, [FromRoute] Guid id, [FromQuery] string logoStoragePath) =>
             {
-                var command = new SendOrderConfirmationCommand(id, logoStoragePath);
+                var command = new SendOrderUpdateCommand(id, logoStoragePath);
                 Result<string> result = await sender.Send(command);
 
                 // If it's an error (like RateLimitExceeded or BadGateway), ToMinimalApiResult handles the HTTP status codes perfectly!
@@ -29,15 +29,15 @@ namespace Onyx.Oms.Web.Features.Orders.SendOrderConfirmation
                 // Return 200 OK with the Meta Message ID
                 return Results.Ok(new { MessageId = result.Value, Status = "Sent" });
             })
-            .WithTags("Orders")
-            .WithName("SendOrderWhatsAppConfirmation")
-            .WithSummary("Send WhatsApp Order Confirmation")
-            .WithDescription("Triggers a WhatsApp template message to the customer confirming their order.")
-            .Produces(200)
-            .ProducesProblem(400) // Validation
-            .ProducesProblem(429) // Rate Limited
-            .ProducesProblem(502) // Meta API Error
-            .HasPermission(Permissions.Orders.Edit);
+                .WithTags("Orders")
+                .WithName("SendOrderStatus")
+                .WithSummary("Send WhatsApp Order Status")
+                .WithDescription("Triggers a WhatsApp template message to the customer informing their order status with a document.")
+                .Produces(200)
+                .ProducesProblem(400) // Validation
+                .ProducesProblem(429) // Rate Limited
+                .ProducesProblem(502) // Meta API Error
+                .HasPermission(Permissions.Orders.Edit);
         }
     }
 }

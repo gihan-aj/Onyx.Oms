@@ -102,6 +102,14 @@ public static class Permissions
         public const string Edit = "tenant:appsequences:edit";
     }
 
+    public static class PaymentMethods
+    {
+        public const string View = "tenant:paymentmethods:view";
+        public const string Edit = "tenant:paymentmethods:edit";
+        public const string Activate = "tenant:paymentmethods:activate";
+        public const string Deactivate = "tenant:paymentmethods:deactivate";
+    }
+
     public static List<string> GetAllPermissions()
     {
         var permissions = new List<string>();

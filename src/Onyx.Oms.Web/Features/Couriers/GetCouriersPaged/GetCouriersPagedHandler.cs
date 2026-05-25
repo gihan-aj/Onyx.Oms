@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Messaging;
-using Onyx.Oms.Web.Features.Couriers.GetCouriers;
 
 namespace Onyx.Oms.Web.Features.Couriers.GetCouriersPaged;
 

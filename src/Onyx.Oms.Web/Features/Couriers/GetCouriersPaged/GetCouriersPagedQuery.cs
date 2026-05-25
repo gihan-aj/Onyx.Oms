@@ -1,6 +1,5 @@
 using Onyx.Oms.Core.Common.Models;
 using Onyx.Oms.Core.Messaging;
-using Onyx.Oms.Web.Features.Couriers.GetCouriers; // Reusing CourierDto
 
 namespace Onyx.Oms.Web.Features.Couriers.GetCouriersPaged;
 
@@ -8,3 +7,12 @@ public record GetCouriersPagedQuery : PagedRequest, IQuery<PagedResult<CourierDt
 {
     public bool? IsActive { get; init; } // Optional filter specific to Couriers
 }
+
+public record CourierDto(
+    Guid Id,
+    string Name,
+    string? ContactPerson,
+    string? PrimaryPhone,
+    string? SecondaryPhone,
+    string? WebsiteUrl,
+    bool IsActive);

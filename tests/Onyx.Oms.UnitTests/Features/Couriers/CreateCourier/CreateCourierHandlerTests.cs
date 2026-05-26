@@ -24,7 +24,7 @@ public class CreateCourierHandlerTests
     public async Task Handle_ShouldReturnSuccess_WhenCourierIsValidAndUnique()
     {
         // Arrange
-        var command = new CreateCourierCommand("FedEx", "Jane Doe", "555-1234", null, "https://fedex.com", null);
+        var command = new CreateCourierCommand("FedEx", "Jane Doe", "555-1234", null, "https://fedex.com", null, null);
         
         // Mock DB: Empty list of couriers to simulate no existing courier with this name
         var dbSet = MockDbSet.Create<Courier>();

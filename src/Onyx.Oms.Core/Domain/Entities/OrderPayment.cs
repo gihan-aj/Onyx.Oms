@@ -78,7 +78,7 @@ public class OrderPayment : AuditableEntity<Guid>, IMustHaveTenant
             fee = fixedFee;
         else
             fee = new Money(
-                Math.Round(amount.Amount * feeRate, 0, MidpointRounding.AwayFromZero),
+                Math.Round(amount.Amount * (feeRate / 100m), 2, MidpointRounding.AwayFromZero),
                 amount.Currency);
 
         var net = amount - fee;

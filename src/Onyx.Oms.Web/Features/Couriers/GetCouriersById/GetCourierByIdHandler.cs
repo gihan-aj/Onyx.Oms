@@ -28,7 +28,21 @@ public class GetCourierByIdHandler : IQueryHandler<GetCourierByIdQuery, CourierD
                 c.SecondaryPhone,
                 c.WebsiteUrl,
                 c.TrackingUrlTemplate,
-                c.IsActive))
+                c.IsActive,
+                c.ZoneRates
+                    .Select(zr => new CourierZoneRateDto(
+                        zr.Id,
+                        zr.ZoneName,
+                        zr.BaseFee.Amount,
+                        zr.BaseFee.Currency,
+                        zr.BaseWeight.Value,
+                        zr.BaseWeight.Unit,
+                        zr.ExcessFeePerWeightUnit.Amount,
+                        zr.ExcessFeePerWeightUnit.Currency,
+                        zr.CodPercentage,
+                        zr.IsDefault,
+                        zr.CoveredDistrics))
+                    .ToList()))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (courier is null)

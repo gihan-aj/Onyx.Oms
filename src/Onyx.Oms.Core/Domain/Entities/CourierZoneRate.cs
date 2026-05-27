@@ -129,5 +129,23 @@ namespace Onyx.Oms.Core.Domain.Entities
                 _coveredDistrics.AddRange(coveredDistricts);
             return Result.Success();
         }
+
+        public decimal CalculateShippingFee(decimal totalOrderWeightKg, decimal totalCodAmount)
+        {
+            decimal shippingFee = BaseFee.Amount;
+
+            if(totalOrderWeightKg > BaseWeight.Value)
+            {
+                decimal excessWeight = Math.Ceiling(totalOrderWeightKg -  BaseWeight.Value);
+                shippingFee += (excessWeight * ExcessFeePerWeightUnit.Amount);
+            }
+
+            if(totalCodAmount > 0 && CodPercentage > 0)
+            {
+                shippingFee += (totalCodAmount * (CodPercentage / 100m));
+            }
+
+            return shippingFee;
+        }
     }
 }

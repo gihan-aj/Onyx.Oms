@@ -169,6 +169,24 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
+    public CourierZoneRate? GetApplicableRate(string targetDistrict)
+    {
+        if (string.IsNullOrWhiteSpace(targetDistrict) || ZoneRates.Count == 0)
+            return null;
+
+        var specificZone = ZoneRates
+            .FirstOrDefault(z => !z.IsDefault && z.CoveredDistrics.Contains(targetDistrict, StringComparer.OrdinalIgnoreCase));
+
+        if(specificZone != null)
+            return specificZone;
+
+        var defaultZone = ZoneRates.FirstOrDefault(z => z.IsDefault);
+        if (defaultZone != null) 
+            return defaultZone;
+
+        return null;
+    }
+
     public CourierZoneRate? GetDefaultZoneRate()
     {
         return _zoneRates.FirstOrDefault(zr => zr.IsDefault);

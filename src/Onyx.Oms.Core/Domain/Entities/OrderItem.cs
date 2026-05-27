@@ -19,6 +19,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         int quantity,
         int allocatedQuantity,
         Money unitPrice,
+        Weight weight,
         OrderItemStatus status) : base(Guid.NewGuid())
     {
         TenantId = tenantId;
@@ -29,6 +30,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         Quantity = quantity;
         AllocatedQuantity = allocatedQuantity;
         UnitPrice = unitPrice;
+        UnitWeight = weight;
         Status = status;
     }
 
@@ -42,6 +44,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
     public int AllocatedQuantity { get; private set; }
     public int PendingQuantity => Quantity - AllocatedQuantity;
     public Money UnitPrice { get; private set; } = Money.Zero();
+    public Weight? UnitWeight { get; private set; }
     public Money DiscountAmount { get; private set; } = Money.Zero();
     public string? DiscountReason { get; private set; }
     public OrderItemStatus Status { get; private set; }
@@ -56,7 +59,8 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         string sku,
         int quantity,
         int allocatedQuantity,
-        Money unitPrice)
+        Money unitPrice,
+        Weight unitWeight)
     {
         if (orderId == Guid.Empty)
             return Result.Failure<OrderItem>(Error.Validation("OrderItem.OrderIdRequired", "Order ID is required."));
@@ -86,6 +90,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
             quantity,
             allocatedQuantity,
             unitPrice,
+            unitWeight,
             status);
 
         item.CalculateLineTotal();
@@ -196,5 +201,11 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         DiscountReason = reason;
         CalculateLineTotal();
         return Result.Success();
+    }
+
+    // Temp method to populate null weights in older records
+    public void UpdateWeight(Weight productWeight)
+    {
+        UnitWeight = productWeight;
     }
 }

@@ -140,6 +140,8 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
                         i.AllocatedQuantity,
                         i.PendingQuantity,
                         incomingStock,
+                        i.UnitWeight?.Value ?? 0,
+                        i.UnitWeight?.Unit ?? "kg",
                         i.UnitPrice.Amount,
                         i.DiscountAmount.Amount,
                         i.DiscountReason,

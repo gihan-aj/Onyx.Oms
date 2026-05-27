@@ -31,6 +31,12 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
             pb.Property(m => m.Currency).HasColumnName("UnitPriceCurrency").HasMaxLength(3);
         });
 
+        builder.OwnsOne(i => i.UnitWeight, wb =>
+        {
+            wb.Property(w => w.Value).HasColumnName("UnitWeightValue").HasPrecision(10, 3);
+            wb.Property(w => w.Unit).HasColumnName("UnitWeightUnit").HasMaxLength(10);
+        });
+
         builder.ComplexProperty(i => i.LineTotal, pb =>
         {
             pb.Property(m => m.Amount).HasColumnName("LineTotalAmount").HasPrecision(18, 2);

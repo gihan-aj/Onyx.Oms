@@ -2,6 +2,7 @@
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Entities;
+using Onyx.Oms.Core.Domain.ValueObjects;
 
 namespace Onyx.Oms.Infrastructure.Persistence.Seeding
 {
@@ -87,6 +88,27 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                     var config = await _context.PaymentMethodConfigs
                         .FirstOrDefaultAsync(pc => pc.Type == payment.Method, cancellationToken);
                     payment.TempUpdateReceived(config?.FeeRate ?? 0m);
+                }
+
+                var orderItemsWithoutWeight = await _context.OrderItems
+                    .Where(oi => oi.UnitWeight == null)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var orderItem in orderItemsWithoutWeight)
+                {
+                    // Get the product variant to fetch its weight
+                    var variant = await _context.ProductVariants
+                        .FirstOrDefaultAsync(pv => pv.Id == orderItem.ProductVariantId, cancellationToken);
+
+                    if (variant?.Weight != null)
+                    {
+                        orderItem.UpdateWeight(new Weight(variant.Weight.Value, variant.Weight.Unit));
+                    }
+                    else
+                    {
+                        // Default to 0 kg if no weight available
+                        orderItem.UpdateWeight(Weight.Zero());
+                    }
                 }
 
                 await _context.SaveChangesAsync(cancellationToken);

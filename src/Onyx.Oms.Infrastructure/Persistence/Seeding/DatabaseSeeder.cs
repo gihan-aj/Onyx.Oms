@@ -41,6 +41,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                 var allTenants = await _context.Tenants.ToListAsync(cancellationToken);
                 foreach (var tenant in allTenants)
                 {
+                    // Add payment configs for older tenants
                     var hasPaymentConfigs = await _context.PaymentMethodConfigs
                         .AnyAsync(p => p.TenantId == tenant.Id, cancellationToken);
 
@@ -48,6 +49,42 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                     {
                         var defaultConfigs = DefaultPaymentMethods.GetConfigs(tenant.Id);
                         _context.PaymentMethodConfigs.AddRange(defaultConfigs);
+                    }
+
+                    // Add sl post courier for older tenants
+                    // Add SLPost as a courier
+                    if (!await _context.Couriers.AnyAsync(c => c.TenantId == tenant.Id && c.ProviderType == Core.Domain.Enums.CourierProviderType.SLPost, cancellationToken))
+                    {
+                        var name = "SL Post";
+
+                        var existing = await _context.Couriers.FirstOrDefaultAsync(c => c.TenantId == tenant.Id && c.Name == name, cancellationToken);
+                        if(existing == null)
+                        {
+                            var slPostResult = Courier.Create(
+                                tenant.Id,
+                                "SL Post",
+                                null, null, null,
+                                "https://slpost.gov.lk/cash-on-delivery-service/",
+                                null,
+                                Core.Domain.Enums.CourierProviderType.SLPost,
+                                true);
+
+                            if (slPostResult.IsSuccess)
+                                _context.Couriers.Add(slPostResult.Value);
+                        }
+                        else
+                        {
+                            existing.UpdateDetails(
+                                existing.Name,
+                                existing.ContactPerson,
+                                existing.PrimaryPhone,
+                                existing.SecondaryPhone,
+                                existing.WebsiteUrl,
+                                existing.TrackingUrlTemplate,
+                                Core.Domain.Enums.CourierProviderType.SLPost,
+                                true);
+                        }
+                        
                     }
                 }
 

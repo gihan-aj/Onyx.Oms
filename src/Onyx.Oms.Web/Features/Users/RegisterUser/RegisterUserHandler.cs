@@ -105,6 +105,23 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
         // Create sequences for "PROD" and "ORD"
         _appSequenceService.InitialzeDefaultSequences(tenant.Id);
 
+        // Add Payment Configs
+        var defaultConfigs = DefaultPaymentMethods.GetConfigs(tenant.Id);
+        _context.PaymentMethodConfigs.AddRange(defaultConfigs);
+
+        // Add default couriers
+        var slPostResult = Courier.Create(
+                            tenant.Id,
+                            "SL Post",
+                            null, null, null,
+                            "https://slpost.gov.lk/cash-on-delivery-service/",
+                            null,
+                            Core.Domain.Enums.CourierProviderType.SLPost,
+                            true);
+
+        if (slPostResult.IsSuccess)
+            _context.Couriers.Add(slPostResult.Value);
+
         // Commit all changes
         await _context.SaveChangesAsync(cancellationToken);
 

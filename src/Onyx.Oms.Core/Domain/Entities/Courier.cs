@@ -1,5 +1,6 @@
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Enums;
 using Onyx.Oms.Core.Domain.Models;
 
 namespace Onyx.Oms.Core.Domain.Entities;
@@ -13,6 +14,8 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
     public string? SecondaryPhone { get; private set; }
     public string? WebsiteUrl { get; private set; }
     public string? TrackingUrlTemplate { get; private set; }
+    public CourierProviderType ProviderType { get; private set; } = CourierProviderType.StandardCustom;
+    public bool IsSystemManaged { get; private set; } = false;
     public bool IsActive { get; private set; }
 
     private readonly List<CourierZoneRate> _zoneRates = new();
@@ -29,7 +32,8 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         string? secondaryPhone,
         string? websiteUrl,
         string? trackingUrlTemplate,
-        bool isActive) : base(Guid.NewGuid())
+        CourierProviderType providerType,
+        bool isSystemManaged) : base(Guid.NewGuid())
     {
         TenantId = tenantId;
         Name = name;
@@ -38,7 +42,9 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         SecondaryPhone = secondaryPhone;
         WebsiteUrl = websiteUrl;
         TrackingUrlTemplate = trackingUrlTemplate;
-        IsActive = isActive;
+        ProviderType = providerType;
+        IsSystemManaged = isSystemManaged;
+        IsActive = true;
     }
 
     public static Result<Courier> Create(
@@ -48,7 +54,9 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         string? primaryPhone,
         string? secondaryPhone,
         string? websiteUrl,
-        string? trackingUrlTemplate)
+        string? trackingUrlTemplate, 
+        CourierProviderType providerType = CourierProviderType.StandardCustom,
+        bool isSystemManaged = false)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -63,7 +71,8 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
             secondaryPhone,
             websiteUrl,
             trackingUrlTemplate,
-            isActive: true);
+            providerType,
+            isSystemManaged);
 
         return Result.Success(courier);
     }
@@ -121,7 +130,9 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         string? primaryPhone,
         string? secondaryPhone,
         string? websiteUrl,
-        string? trackingUrlTemplate)
+        string? trackingUrlTemplate,
+        CourierProviderType providerType = CourierProviderType.StandardCustom,
+        bool isSystemManaged = false)
     {
         // Add business logic/validation here if needed
         Name = name;
@@ -130,6 +141,8 @@ public class Courier : AuditableEntity<Guid>, IMustHaveTenant
         SecondaryPhone = secondaryPhone;
         WebsiteUrl = websiteUrl;
         TrackingUrlTemplate = trackingUrlTemplate;
+        ProviderType = providerType;
+        IsSystemManaged = isSystemManaged;
     }
 
     public Result UpdateZoneRate(

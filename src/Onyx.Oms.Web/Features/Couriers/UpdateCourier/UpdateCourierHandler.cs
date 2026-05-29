@@ -26,6 +26,9 @@ public class UpdateCourierHandler : ICommandHandler<UpdateCourierCommand>
 
         if (courier.Name != request.Name)
         {
+            if(courier.IsSystemManaged)
+                return Result.Failure(Error.Conflict("Courier.SystemManaged", "You cannot change the name for system managed couriers."));
+
             bool isNameUnique = !await _context.Couriers
                 .AnyAsync(c => c.Name == request.Name && c.Id != request.Id, cancellationToken);
 

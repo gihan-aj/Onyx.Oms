@@ -20,6 +20,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
                 var command = new UpdateOrderLogisticsCommand(
                     id, 
                     request.CourierId, 
+                    request.TrackingNumber,
                     request.ShippingAddress,
                     request.DeliveryInstructions);
                     
@@ -37,6 +38,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
 
     public record UpdateOrderLogisticsRequest(
         Guid? CourierId,
+        string? TrackingNumber,
         UpdateShippingAddressDto? ShippingAddress,
         string? DeliveryInstructions);
 }

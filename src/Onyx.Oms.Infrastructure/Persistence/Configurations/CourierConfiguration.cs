@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Onyx.Oms.Core.Domain.Entities;
+using Onyx.Oms.Core.Domain.Enums;
 
 namespace Onyx.Oms.Infrastructure.Persistence.Configurations;
 
@@ -32,13 +33,22 @@ public class CourierConfiguration : IEntityTypeConfiguration<Courier>
         builder.Property(c => c.TrackingUrlTemplate)
             .HasMaxLength(500);
 
+        builder.Property(c => c.ProviderType)
+            .IsRequired()
+            .HasDefaultValue(CourierProviderType.StandardCustom);
+
+        builder.Property(c => c.IsSystemManaged)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.HasMany(c => c.ZoneRates)
             .WithOne(zr => zr.Courier)
             .HasForeignKey(zr => zr.CourierId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => x.TenantId);
-        builder.HasIndex(c => c.Name).IsUnique();
+        builder.HasIndex(c => new { c.TenantId, c.Name })
+            .IsUnique();
     }
 }
 

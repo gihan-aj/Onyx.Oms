@@ -5,6 +5,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
     public record UpdateOrderLogisticsCommand(
         Guid OrderId,
         Guid? CourierId,
+        string? TrackingNumber,
         UpdateShippingAddressDto? ShippingAddress,
         string? DeliveryInstructions) : ICommand;
 

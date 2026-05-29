@@ -21,7 +21,7 @@ namespace Onyx.Oms.Infrastructure.Services
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontFamily(Fonts.Lato).FontColor(Colors.Black));
 
-                    page.Content().Column(col =>
+                    page.Content().Border(3).BorderColor(Colors.Black).Padding(0.2f, Unit.Inch).Column(col =>
                     {
                         // --- SECTION 1: SENDER INFO (Top Left) ---
                         col.Item().BorderBottom(2).BorderColor(Colors.Black).PaddingBottom(5).Row(row =>
@@ -43,6 +43,12 @@ namespace Onyx.Oms.Infrastructure.Services
                             {
                                 ordCol.Item().Text("ORDER #").FontSize(8).Bold();
                                 ordCol.Item().Text(order.OrderNumber).FontSize(12).Bold();
+
+                                if (!string.IsNullOrWhiteSpace(order.TrackingNumber))
+                                {
+                                    ordCol.Item().PaddingTop(8).Text("TRACKING #").FontSize(8).Bold();
+                                    ordCol.Item().Text(order.TrackingNumber).FontSize(11).Bold().FontColor(Colors.Blue.Darken2);
+                                }
                             });
                         });
 
@@ -119,7 +125,7 @@ namespace Onyx.Oms.Infrastructure.Services
                         page.PageColor(Colors.White);
                         page.DefaultTextStyle(x => x.FontFamily(Fonts.Lato).FontColor(Colors.Black));
 
-                        page.Content().Column(col =>
+                        page.Content().Border(3).BorderColor(Colors.Black).Padding(0.2f, Unit.Inch).Column(col =>
                         {
                             // --- SECTION 1: SENDER INFO (Top Left) ---
                             col.Item().BorderBottom(2).BorderColor(Colors.Black).PaddingBottom(5).Row(row =>
@@ -141,6 +147,12 @@ namespace Onyx.Oms.Infrastructure.Services
                                 {
                                     ordCol.Item().Text("ORDER #").FontSize(8).Bold();
                                     ordCol.Item().Text(order.OrderNumber).FontSize(12).Bold();
+
+                                    if (!string.IsNullOrWhiteSpace(order.TrackingNumber))
+                                    {
+                                        ordCol.Item().PaddingTop(8).Text("TRACKING #").FontSize(8).Bold();
+                                        ordCol.Item().Text(order.TrackingNumber).FontSize(11).Bold().FontColor(Colors.Blue.Darken2);
+                                    }
                                 });
                             });
 

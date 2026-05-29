@@ -48,6 +48,9 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderLogistics
             if (result.IsFailure)
                 return result;
 
+            if(!string.IsNullOrWhiteSpace(request.TrackingNumber))
+                order.SetTrackingNumber(request.TrackingNumber);
+
             await _context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();

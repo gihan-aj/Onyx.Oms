@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Onyx.Oms.Core.Common.Interfaces;
+using Onyx.Oms.Infrastructure.External.Logistics;
 using Onyx.Oms.Infrastructure.External.Meta;
 using Onyx.Oms.Infrastructure.Identity;
 using Onyx.Oms.Infrastructure.Identity.IdP;
@@ -114,6 +115,8 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<ICryptoService, AesCryptoService>();
+
+        services.AddTransient<ISLPostPricingService, SLPostPricingService>();
 
         return services;
     }

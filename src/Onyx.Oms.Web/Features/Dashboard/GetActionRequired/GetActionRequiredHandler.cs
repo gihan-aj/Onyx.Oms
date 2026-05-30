@@ -55,7 +55,7 @@ namespace Onyx.Oms.Web.Features.Dashboard.GetActionRequired
                 .ToListAsync(cancellationToken);
             rawItems.AddRange(idleReady.Select(o => (o, "idle_ready_to_pack", "Ready to pack · Sitting idle")));
 
-            // 6. Processing (stalled > 24h)
+            // 6. Processing (stalled > 96h)
             var stalledProcessing = await _context.Orders
                 .Where(o => o.Status == OrderStatus.Processing && o.LastModifiedOnUtc.HasValue && o.LastModifiedOnUtc.Value < ninetySixHoursAgo)
                 .ToListAsync(cancellationToken);

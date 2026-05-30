@@ -22,7 +22,7 @@ namespace Onyx.Oms.Web.Features.Catalog.Dashboard.GetAlerts
             var outOfStock = await _context.ProductVariants
                 .Include(v => v.Product)
                 .Where(v => v.IsActive && (v.StockOnHand - v.ReservedQuantity) <= 0)
-                .OrderBy(v => v.Product.Name)
+                .OrderByDescending(v => v.OutOfStockSinceUtc)
                 .Take(safeLimit)
                 .ToListAsync(cancellationToken);
 
@@ -39,14 +39,16 @@ namespace Onyx.Oms.Web.Features.Catalog.Dashboard.GetAlerts
                     ProductName: v.Product.Name,
                     VariantId: v.Id,
                     VariantLabel: v.DisplayName,
-                    AvailableStock: v.StockOnHand - v.ReservedQuantity
+                    AvailableStock: v.StockOnHand - v.ReservedQuantity,
+                    OutOfStockSinceUtc: v.OutOfStockSinceUtc
                 )).ToList(),
                 LowStock: lowStock.Select(v => new StockAlertItemDto(
                     ProductId: v.ProductId,
                     ProductName: v.Product.Name,
                     VariantId: v.Id,
                     VariantLabel: v.DisplayName,
-                    AvailableStock: v.StockOnHand - v.ReservedQuantity
+                    AvailableStock: v.StockOnHand - v.ReservedQuantity,
+                    OutOfStockSinceUtc: v.OutOfStockSinceUtc
                 )).ToList()
             );
             return Result.Success(dto);

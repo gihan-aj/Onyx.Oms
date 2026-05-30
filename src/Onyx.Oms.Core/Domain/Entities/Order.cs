@@ -56,6 +56,11 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
     public Money TaxAmount { get; private set; } = Money.Zero();
     public Money GrandTotal { get; private set; } = Money.Zero();
 
+    public DateTimeOffset? PackedAtUtc { get; private set; }
+    public DateTimeOffset? ShippedAtUtc { get; private set; }
+    public DateTimeOffset? DeliveredAtUtc { get; private set; }
+    public DateTimeOffset? CancelledAtUtc { get; private set; }
+
     private readonly List<OrderItem> _items = new();
     public virtual IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
@@ -386,6 +391,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             return Result.Failure(Error.Validation("Order.ItemsNotReady", "Items should be ready before pack."));
 
         Status = OrderStatus.Packed;
+        PackedAtUtc = DateTimeOffset.UtcNow;
 
         return Result.Success();
     }
@@ -409,6 +415,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             return Result.Failure(Error.Validation("Order.ItemsNotReady", "Items should be ready before ship."));
 
         Status = OrderStatus.Shipped;
+        ShippedAtUtc = DateTimeOffset.UtcNow;
 
         return Result.Success();
     }
@@ -428,6 +435,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             return Result.Failure(Error.Validation("Order.ItemsNotReady", "Items should be ready before ship and deliver."));
 
         Status = OrderStatus.Delivered;
+        DeliveredAtUtc = DateTimeOffset.UtcNow;
 
         return Result.Success();
     }
@@ -438,7 +446,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
             return Result.Failure(Error.Validation("Order.InvalidStatus", "Cannot cancel an order that has already shipped or is further along."));
 
         Status = OrderStatus.Cancelled;
-
+        CancelledAtUtc = DateTimeOffset.UtcNow;
         //RaiseDomainEvent(new Onyx.Oms.Core.Domain.Events.OrderCancelledEvent(Id));
         return Result.Success();
     }

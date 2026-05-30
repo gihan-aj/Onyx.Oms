@@ -71,6 +71,8 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
 
     public bool IsActive { get; private set; }
 
+    public DateTimeOffset? OutOfStockSinceUtc { get; private set; }
+
     public bool IsDeleted => DeletedAtUtc is not null;
     public DateTimeOffset? DeletedAtUtc { get; private set; }
     public Guid? DeletedBy { get; private set; }
@@ -208,6 +210,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
         if (StockOnHand < 0)
             return Result.Failure(Error.Validation("Stock.NegativeValue", "Stock on hand cannot be negative."));
 
+        EvaluateStockStatus();
         return Result.Success();
     }
 
@@ -231,6 +234,7 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
 
         int unfulfilledQuantity = requestedQuantity - allocatableQuantity;
 
+        EvaluateStockStatus();
         return Result.Success(unfulfilledQuantity);
     }
 
@@ -251,6 +255,8 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
     {
         ReservedQuantity -= quantity;
         if (ReservedQuantity < 0) ReservedQuantity = 0;
+
+        EvaluateStockStatus();
     }
 
     public void MarkShipped(int quantity)
@@ -269,5 +275,13 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
         if (IsDeleted) return;
         DeletedAtUtc = DateTimeOffset.UtcNow;
         DeletedBy = userId;
+    }
+
+    private void EvaluateStockStatus()
+    {
+        if (AvailableQuantity <= 0 && OutOfStockSinceUtc == null)
+            OutOfStockSinceUtc = DateTimeOffset.UtcNow;
+        else if (AvailableQuantity > 0 && OutOfStockSinceUtc != null)
+            OutOfStockSinceUtc = null;
     }
 }

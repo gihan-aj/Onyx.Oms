@@ -48,8 +48,7 @@ namespace Onyx.Oms.Web.Features.Dashboard.GetMainSummary
 
             var shippedTodayCount = await _context.Orders
                 .CountAsync(o => o.Status == OrderStatus.Shipped &&
-                                 o.LastModifiedOnUtc.HasValue &&
-                                 o.LastModifiedOnUtc.Value >= startOfDay, cancellationToken);
+                                 o.ShippedAtUtc >= startOfDay, cancellationToken);
 
             var twelveHoursAgo = now.AddHours(-12);
             var ninetySixHoursAgo = now.AddHours(-96);

@@ -67,7 +67,7 @@ namespace Onyx.Oms.Web.Features.Dashboard.GetInMotion
             // Shipped Orders
             var shippedOrders = await _context.Orders
                 .Where(o => o.Status == OrderStatus.Shipped)
-                .OrderByDescending(o => o.LastModifiedOnUtc)
+                .OrderByDescending(o => o.ShippedAtUtc)
                 .Take(request.Limit)
                 .ToListAsync(cancellationToken);
 

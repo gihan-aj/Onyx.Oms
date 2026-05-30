@@ -12,5 +12,6 @@ namespace Onyx.Oms.Web.Features.Catalog.Dashboard.GetAlerts
         string ProductName,
         Guid VariantId,
         string VariantLabel,
-        int AvailableStock);
+        int AvailableStock,
+        DateTimeOffset? OutOfStockSinceUtc);
 }

@@ -58,6 +58,8 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
     public Guid? LinkedOrderItemId { get; private set; }
     public string? Notes { get; private set; }
     public DateTimeOffset? ExpectedCompletionDate { get; private set; }
+    public DateTimeOffset? StartedAtUtc { get; private set; }
+    public DateTimeOffset? CompletedAtUtc { get; private set; }
 
     public static Result<FulfillmentTask> Create(
         Guid tenantId,
@@ -111,6 +113,7 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
         if (Status == FulfillmentTaskStatus.Pending)
         {
             Status = FulfillmentTaskStatus.InProgress;
+            StartedAtUtc = DateTimeOffset.UtcNow;
         }
 
         return Result.Success();
@@ -130,6 +133,7 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
         StartedQuantity = issueQuantity;
 
         Status = FulfillmentTaskStatus.InProgress;
+        StartedAtUtc = DateTimeOffset.UtcNow;
         PurchaseOrderNumber = poNumber;
         Cost = cost;
 
@@ -189,7 +193,7 @@ public class FulfillmentTask : AuditableEntity<Guid>, IMustHaveTenant
         if (CompletedQuantity == RequestedQuantity)
         {
             Status = FulfillmentTaskStatus.Ready;
-            
+            CompletedAtUtc = DateTimeOffset.UtcNow;
             //if (LinkedOrderItemId.HasValue)
             //{
             //    RaiseDomainEvent(new Events.FulfillmentTaskCompletedEvent(Id, LinkedOrderItemId.Value, RequestedQuantity));

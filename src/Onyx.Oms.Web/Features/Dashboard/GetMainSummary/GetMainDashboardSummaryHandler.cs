@@ -44,7 +44,8 @@ namespace Onyx.Oms.Web.Features.Dashboard.GetMainSummary
                 .CountAsync(o => o.Status == OrderStatus.ReadyToPack, cancellationToken);
 
             var tasksCompletedUnallocatedCount = await _context.FulfillmentTasks
-                .CountAsync(t => t.Status == FulfillmentTaskStatus.Ready, cancellationToken);
+                .CountAsync(t => t.Status == FulfillmentTaskStatus.Ready &&
+                                 t.CompletedAtUtc >= startOfDay, cancellationToken);
 
             var shippedTodayCount = await _context.Orders
                 .CountAsync(o => o.Status == OrderStatus.Shipped &&

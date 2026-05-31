@@ -128,7 +128,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                 }
 
                 var orderItemsWithoutWeight = await _context.OrderItems
-                    .Where(oi => oi.UnitWeight == null)
+                    .Where(oi => oi.UnitWeight == null || oi.UnitCost == null)
                     .ToListAsync(cancellationToken);
 
                 foreach (var orderItem in orderItemsWithoutWeight)
@@ -137,7 +137,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                     var variant = await _context.ProductVariants
                         .FirstOrDefaultAsync(pv => pv.Id == orderItem.ProductVariantId, cancellationToken);
 
-                    if (variant?.Weight != null)
+                    if (variant?.Weight != null && orderItem.UnitWeight == null)
                     {
                         orderItem.UpdateWeight(new Weight(variant.Weight.Value, variant.Weight.Unit));
                     }
@@ -145,6 +145,10 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                     {
                         // Default to 0 kg if no weight available
                         orderItem.UpdateWeight(Weight.Zero());
+                    }
+                    if(variant?.Cost != null && orderItem.UnitCost == null)
+                    {
+                        orderItem.UpdateUnitCost(variant.Cost);
                     }
                 }
 

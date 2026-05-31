@@ -25,6 +25,12 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(i => i.DiscountReason)
             .HasMaxLength(500);
 
+        builder.ComplexProperty(i => i.UnitCost, pb =>
+        {
+            pb.Property(m => m.Amount).HasColumnName("UnitCostAmount").HasPrecision(18, 2);
+            pb.Property(m => m.Currency).HasColumnName("UnitCostCurrency").HasMaxLength(3);
+        });
+
         builder.ComplexProperty(i => i.UnitPrice, pb =>
         {
             pb.Property(m => m.Amount).HasColumnName("UnitPriceAmount").HasPrecision(18, 2);

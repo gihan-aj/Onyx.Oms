@@ -18,6 +18,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         string sku,
         int quantity,
         int allocatedQuantity,
+        Money unitCost,
         Money unitPrice,
         Weight weight,
         OrderItemStatus status) : base(Guid.NewGuid())
@@ -29,6 +30,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         Sku = sku;
         Quantity = quantity;
         AllocatedQuantity = allocatedQuantity;
+        UnitCost = unitCost;
         UnitPrice = unitPrice;
         UnitWeight = weight;
         Status = status;
@@ -43,6 +45,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
     public int Quantity { get; private set; }
     public int AllocatedQuantity { get; private set; }
     public int PendingQuantity => Quantity - AllocatedQuantity;
+    public Money? UnitCost { get; private set; } = Money.Zero();
     public Money UnitPrice { get; private set; } = Money.Zero();
     public Weight? UnitWeight { get; private set; }
     public Money DiscountAmount { get; private set; } = Money.Zero();
@@ -59,6 +62,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         string sku,
         int quantity,
         int allocatedQuantity,
+        Money unitCost,
         Money unitPrice,
         Weight unitWeight)
     {
@@ -89,6 +93,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
             sku,
             quantity,
             allocatedQuantity,
+            unitCost,
             unitPrice,
             unitWeight,
             status);
@@ -208,4 +213,6 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
     {
         UnitWeight = productWeight;
     }
+
+    public void UpdateUnitCost(Money unitCost) => UnitCost = unitCost;
 }

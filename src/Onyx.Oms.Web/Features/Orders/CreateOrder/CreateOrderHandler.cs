@@ -101,6 +101,7 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrder
                         item.Quantity,
                         0,
                         variant.Weight ?? Weight.Zero(),
+                        variant.Cost,
                         variant.Price,
                         item.Discount?.Value,
                         item.Discount?.Type,

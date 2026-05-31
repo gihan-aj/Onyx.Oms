@@ -184,6 +184,7 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
                         item.Quantity,
                         allocatingQty,
                         variant.Weight ?? Weight.Zero(),
+                        variant.Cost,
                         variant.Price,
                         item.Discount?.Value,
                         item.Discount?.Type,

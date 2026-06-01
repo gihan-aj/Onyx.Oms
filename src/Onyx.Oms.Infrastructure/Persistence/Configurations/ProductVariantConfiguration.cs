@@ -60,6 +60,6 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
         builder.HasIndex(v => new { v.TenantId, v.ProductId });
 
         // Soft-delete global query filter — uses DeletedAtUtc directly (IsDeleted is a computed property)
-        builder.HasQueryFilter(v => v.DeletedAtUtc == null);
+        //builder.HasQueryFilter(v => v.DeletedAtUtc == null);
     }
 }

@@ -73,8 +73,17 @@ public class AppDbContext : DbContext, IApplicationDbContext
     private void ApplyTenantFilter<TEntity>(ModelBuilder builder)
         where TEntity : class, IMustHaveTenant
     {
-        builder.Entity<TEntity>().HasQueryFilter(e => 
-            _bypass.IsBypassEnabled ||
-            e.TenantId == _currentUserService.ActiveTenantId);
+        if (typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
+        {
+            builder.Entity<TEntity>().HasQueryFilter(e => 
+                (_bypass.IsBypassEnabled || e.TenantId == _currentUserService.ActiveTenantId)
+                && EF.Property<DateTimeOffset?>(e, "DeletedAtUtc") == null);
+        }
+        else
+        {
+            builder.Entity<TEntity>().HasQueryFilter(e => 
+                _bypass.IsBypassEnabled ||
+                e.TenantId == _currentUserService.ActiveTenantId);
+        }
     }
 }

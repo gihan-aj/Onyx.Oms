@@ -38,7 +38,7 @@ namespace Onyx.Oms.Infrastructure.Persistence.Configurations
             builder.HasIndex(e => new { e.TenantId, e.Category })
                 .HasDatabaseName("IX_Expenses_TenantId_Category");
 
-            builder.HasQueryFilter(v => v.DeletedAtUtc == null);
+            //builder.HasQueryFilter(v => v.DeletedAtUtc == null);
         }
     }
 }

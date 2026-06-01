@@ -20,7 +20,6 @@ public class GetExpenseCategoriesHandler : IQueryHandler<GetExpenseCategoriesQue
         // Fetch distinct categories already used by this tenant
         var usedCategories = await _context.Expenses
             .AsNoTracking()
-            .Where(e => !e.IsDeleted)
             .Select(e => e.Category)
             .Distinct()
             .ToListAsync(cancellationToken);

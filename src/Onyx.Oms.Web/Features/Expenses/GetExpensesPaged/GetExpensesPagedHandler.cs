@@ -17,8 +17,7 @@ public class GetExpensesPagedHandler : IQueryHandler<GetExpensesPagedQuery, Page
     public async Task<Result<PagedResult<ExpenseDto>>> Handle(GetExpensesPagedQuery request, CancellationToken cancellationToken)
     {
         var query = _context.Expenses
-            .AsNoTracking()
-            .Where(e => !e.IsDeleted);
+            .AsNoTracking();
 
         // 1. Filtering
 

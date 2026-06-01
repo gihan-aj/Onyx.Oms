@@ -40,6 +40,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<TenantWhatsAppSettings> TenantWhatsAppSettings => Set<TenantWhatsAppSettings>();
     public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<Expense> Expenses => Set<Expense>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

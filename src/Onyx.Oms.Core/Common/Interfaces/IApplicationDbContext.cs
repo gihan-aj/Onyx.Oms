@@ -24,6 +24,7 @@ public interface IApplicationDbContext
     DbSet<TenantWhatsAppSettings> TenantWhatsAppSettings { get; }
     DbSet<TenantSubscription> TenantSubscriptions { get; }
     DbSet<SubscriptionPlan> SubscriptionPlans { get; }
+    DbSet<Expense> Expenses { get; }
     Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

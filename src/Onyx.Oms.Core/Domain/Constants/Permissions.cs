@@ -102,6 +102,10 @@ public static class Permissions
         public const string Edit = "tenant:expenses:edit";
         public const string Delete = "tenant:expenses:delete";
     }
+    public static class Reports
+    {
+        public const string MonthlyFinancialsView = "tenant:reports:monthlyfinancials";
+    }
 
     public static class AppSequences
     {

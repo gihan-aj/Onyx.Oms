@@ -8,6 +8,12 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+string sharedConfigPath = Path.Combine(appData, "OnyxOms", "system_config.json");
+
+// Add the shared JSON file to the configuration pipeline.
+builder.Configuration.AddJsonFile(sharedConfigPath, optional: true, reloadOnChange: true);
+
 // Add services to the container.
 builder.Services
     .AddCore(typeof(Program).Assembly)

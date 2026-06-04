@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core;
 using Onyx.Oms.Infrastructure;
 using Onyx.Oms.Web.Extensions;
@@ -81,5 +82,17 @@ app.UseAuthorization();
 app.UseMiddleware<Onyx.Oms.Infrastructure.Security.TenantResolutionMiddleware>();
 
 app.MapEndpoints();
+
+app.MapPost("api/system/shutdown", (IHostApplicationLifetime lifetime, HttpContext context) =>
+{
+    // Security check: Only allow requests originating from the local machine
+    if (!context.Connection.IsLocal())
+    {
+        return Results.Unauthorized();
+    }
+
+    Task.Run(() => lifetime.StopApplication());
+    return Results.Ok();
+}).ExcludeFromDescription();
 
 app.Run();

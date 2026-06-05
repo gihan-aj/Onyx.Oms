@@ -46,6 +46,10 @@ namespace Onyx.Oms.Web.Features.Reports.GetMonthlyFinancialReport
             decimal grossSales = orders.SelectMany(o => o.Items).Sum(i => i.UnitPrice.Amount * i.Quantity);
             decimal totalDiscounts = orders.Sum(o => o.DiscountAmount.Amount) + orders.SelectMany(o => o.Items).Sum(i => i.DiscountAmount.Amount);
             decimal shippingRevenue = orders.Sum(o => o.ShippingCost.Amount);
+            decimal totalGatewayFees = orders
+                .SelectMany(o => o.Payments)
+                .Where(p => p.Method == PaymentMethod.CashOnDelivery)
+                .Sum(p => p.GatewayFee.Amount);
 
             decimal netRevenue = (grossSales + shippingRevenue) - totalDiscounts;
 
@@ -59,13 +63,20 @@ namespace Onyx.Oms.Web.Features.Reports.GetMonthlyFinancialReport
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
-            decimal totalExpenses = expenses.Sum(e => e.Amount.Amount);
+            decimal totalExpenses = expenses.Sum(e => e.Amount.Amount) + totalGatewayFees;
 
             var expensesByCategory = expenses
                 .GroupBy(e => e.Category)
                 .Select(g => new ExpenseCategorySummaryDto(g.Key, g.Sum(e => e.Amount.Amount)))
                 .OrderByDescending(x => x.TotalAmount)
                 .ToList();
+
+            if (totalGatewayFees > 0)
+            {
+                expensesByCategory.Add(new ExpenseCategorySummaryDto("Payment Gateway Fees", totalGatewayFees));
+                expensesByCategory = expensesByCategory.OrderByDescending(x => x.TotalAmount).ToList();
+            }
+
 
             decimal netProfit = grossProfit - totalExpenses;
             decimal netMargin = netRevenue > 0 ? (netProfit / netRevenue) * 100m : 0m;

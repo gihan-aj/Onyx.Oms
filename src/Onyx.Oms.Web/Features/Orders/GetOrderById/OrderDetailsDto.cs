@@ -31,6 +31,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
         string BaseCurrency,
         DateTimeOffset? OrderDate,
         DateTimeOffset CreatedOnUtc,
+        string? RollbackReason,
         List<OrderItemDetailsDto> Items,
         List<OrderPaymentDetailsDto> Payments
     );

@@ -99,6 +99,7 @@ namespace Onyx.Oms.Web.Features.Orders.GetOrderById
                 order.GrandTotal.Currency,
                 order.OrderDate,
                 order.CreatedOnUtc,
+                order.RollbackReason,
                 order.Items.Select(i =>
                 {
                     var variantInfo = variantDataDict.GetValueOrDefault(i.ProductVariantId);

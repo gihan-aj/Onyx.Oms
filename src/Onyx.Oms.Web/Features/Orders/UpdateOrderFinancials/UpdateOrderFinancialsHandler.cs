@@ -204,30 +204,37 @@ namespace Onyx.Oms.Web.Features.Orders.UpdateOrderFinancials
                 }
             }
 
-            if(order.Status == OrderStatus.Confirmed ||
+            bool isOrderReday = order.Items.All(i => i.Status == OrderItemStatus.Ready || i.Status == OrderItemStatus.Allocated);
+            if (order.Status == OrderStatus.Confirmed ||
                 order.Status == OrderStatus.Processing)
             {
-                bool orderReady = order.Items.All(i => i.Status == OrderItemStatus.Ready || i.Status == OrderItemStatus.Allocated);
-                if (orderReady)
-                    order.UpdateStatus(OrderStatus.ReadyToPack);
+                order.MarkIfReady();
             }
 
-            else if (order.Status == OrderStatus.ReadyToPack ||
-                order.Status == OrderStatus.Packed)
+            //else if (order.Status == OrderStatus.ReadyToPack ||
+            //    order.Status == OrderStatus.Packed)
+            //{
+            //    bool orderReady = order.Items.All(i => i.Status == OrderItemStatus.Ready || i.Status == OrderItemStatus.Allocated);
+            //    if (!orderReady)
+            //    {
+            //        var oldStatus = order.Status;
+            //        order.UpdateStatus(OrderStatus.Confirmed);
+
+            //        string regressNote = $"[{DateTimeOffset.UtcNow:g}] (UTC) System Note: Order status reverted from {oldStatus} to {order.Status.ToString()} due to item modifications.";
+            //        string updatedNotes = string.IsNullOrWhiteSpace(order.Notes)
+            //            ? regressNote
+            //            : order.Notes + Environment.NewLine + regressNote;
+
+            //        order.UpdateNotes(updatedNotes);
+            //    }
+            //}
+
+            if (!isOrderReday)
             {
-                bool orderReady = order.Items.All(i => i.Status == OrderItemStatus.Ready || i.Status == OrderItemStatus.Allocated);
-                if (!orderReady)
-                {
-                    var oldStatus = order.Status;
-                    order.UpdateStatus(OrderStatus.Confirmed);
-
-                    string regressNote = $"[{DateTimeOffset.UtcNow:g}] (UTC) System Note: Order status reverted from {oldStatus} to {order.Status.ToString()} due to item modifications.";
-                    string updatedNotes = string.IsNullOrWhiteSpace(order.Notes)
-                        ? regressNote
-                        : order.Notes + Environment.NewLine + regressNote;
-
-                    order.UpdateNotes(updatedNotes);
-                }
+                if (order.Status == OrderStatus.ReadyToPack)
+                    order.RevertReadyToPack("Due to item modifications");
+                else if (order.Status == OrderStatus.Packed)
+                    order.RevertPacked("Due to item modifications");
             }
 
             var shippingFee = request.ShippingFee != null 

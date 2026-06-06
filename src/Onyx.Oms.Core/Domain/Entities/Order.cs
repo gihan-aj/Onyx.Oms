@@ -541,11 +541,67 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         TrackingNumber = null;
         ShippedAtUtc = null;
 
-        if(string.IsNullOrWhiteSpace(RollbackReason))
-            RollbackReason = $"{DateTimeOffset.UtcNow} (UTC): {reason}";
-        else
-            RollbackReason += $" | {DateTimeOffset.UtcNow} (UTC): {reason}";
+        UpdateRollbackReason(reason, OrderStatus.Shipped, OrderStatus.Packed);
 
         return Result.Success();
+    }
+
+    public Result RevertPacked(string reason)
+    {
+        if (Status != OrderStatus.Packed)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Packed orders can be reverted back to Ready to Pack or Confirmed status."));
+
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure(Error.Validation("Order.ReasonRequired", "A reason is required to rollback an order status."));
+
+        bool itemsReady = Items.All(i => i.Status == OrderItemStatus.Ready || i.Status == OrderItemStatus.Allocated);
+        var status = OrderStatus.Packed;
+        if (itemsReady)
+            status = OrderStatus.ReadyToPack;
+        else
+            status = OrderStatus.Confirmed;
+
+        Status = status;
+        PackedAtUtc = null;
+
+        UpdateRollbackReason(reason, OrderStatus.Packed, status);
+
+        return Result.Success();
+    }
+
+    public Result RevertReadyToPack(string reason)
+    {
+        if (Status != OrderStatus.ReadyToPack)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Ready To Pack or Packed orders can be reverted back to Ready to Confirmed status."));
+
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure(Error.Validation("Order.ReasonRequired", "A reason is required to rollback an order status."));
+
+        bool itemsReady = Items.All(i => i.Status == OrderItemStatus.Ready || i.Status == OrderItemStatus.Allocated);
+        var status = OrderStatus.ReadyToPack;
+        if (!itemsReady)
+            status = OrderStatus.Confirmed;
+
+        if(status != Status)
+        {
+            Status = status;
+            UpdateRollbackReason(reason, OrderStatus.ReadyToPack, status);
+        }
+        
+        return Result.Success();
+    }
+
+    private void UpdateRollbackReason(string reason, OrderStatus oldStatus, OrderStatus newStatus)
+    {
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            //var note = $"[{DateTimeOffset.UtcNow:g}] (UTC): {reason}";
+            var note = $"[{DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}] (UTC): Status changed from {oldStatus} to {newStatus}. Reason: {reason}";
+
+            if (string.IsNullOrWhiteSpace(RollbackReason))
+                RollbackReason = note;
+            else
+                RollbackReason = RollbackReason + Environment.NewLine + note;
+        }
     }
 }

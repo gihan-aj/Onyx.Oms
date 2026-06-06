@@ -48,6 +48,7 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
     public string? TrackingNumber { get; private set; }
     public string? Notes { get; private set; }
     public string? DeliveryInstructions { get; private set; }
+    public string? RollbackReason { get; private set; }
 
     public Money SubTotal { get; private set; } = Money.Zero();
     public Money DiscountAmount { get; private set; } = Money.Zero();
@@ -525,6 +526,26 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
     public Result UpdateNotes(string? notes)
     {
         Notes = string.IsNullOrWhiteSpace(notes) ? null : notes;
+        return Result.Success();
+    }
+
+    public Result RevertShipment(string reason)
+    {
+        if (Status != OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only Shipped orders can be reverted back to Packed status."));
+
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure(Error.Validation("Order.ReasonRequired", "A reason is required to rollback an order status."));
+
+        Status = OrderStatus.Packed;
+        TrackingNumber = null;
+        ShippedAtUtc = null;
+
+        if(string.IsNullOrWhiteSpace(RollbackReason))
+            RollbackReason = $"{DateTimeOffset.UtcNow} (UTC): {reason}";
+        else
+            RollbackReason += $" | {DateTimeOffset.UtcNow} (UTC): {reason}";
+
         return Result.Success();
     }
 }

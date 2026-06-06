@@ -23,6 +23,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.Notes)
             .HasMaxLength(4000);
 
+        builder.Property(o => o.RollbackReason)
+            .HasMaxLength(1000);
+
         builder.Property(o => o.DeliveryInstructions)
             .HasMaxLength(500);
 

@@ -267,6 +267,18 @@ public class ProductVariant : AuditableEntity<Guid>, ISoftDeletable, IMustHaveTe
         if (ReservedQuantity < 0) ReservedQuantity = 0;
     }
 
+    public Result RevertShipment(int quantity)
+    {
+        // Put the stock back on the shelf AND back into the reserved pool
+        StockOnHand += quantity;
+        ReservedQuantity += quantity;
+
+        // Evaluate if this brought the item back in stock
+        EvaluateStockStatus();
+
+        return Result.Success();
+    }
+
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 

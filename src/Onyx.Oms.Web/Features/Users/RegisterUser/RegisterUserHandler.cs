@@ -14,117 +14,118 @@ public class RegisterUserHandler : ICommandHandler<RegisterUserCommand, Guid>
     private readonly IApplicationDbContext _context;
     private readonly IIdentityProviderApi _idpApi;
     private readonly IAppSequenceService _appSequenceService;
+    private readonly ITenantSecurityBypass _bypass;
 
-    public RegisterUserHandler(IApplicationDbContext context, IIdentityProviderApi idpApi, IAppSequenceService appSequenceService)
+    public RegisterUserHandler(IApplicationDbContext context, IIdentityProviderApi idpApi, IAppSequenceService appSequenceService, ITenantSecurityBypass bypass)
     {
         _context = context;
         _idpApi = idpApi;
         _appSequenceService = appSequenceService;
+        _bypass = bypass;
     }
 
     public async Task<Result<Guid>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        // Get the requested SubscriptionPlan
-        var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == request.SubscriptionDetails.SubscriptionId, cancellationToken);
-        if (plan == null)
-            return Result.Failure<Guid>(Error.NotFound("SubscriptionPlan.NotFound", "The selected subscription plan was not found."));
-
-        // Validate "Admin" role exists locally
-        var tenantOwnerRole = await _context.Roles
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(r => r.Name == Core.Domain.Constants.Roles.Oms.TenantOwner, cancellationToken);
-        if (tenantOwnerRole == null)
-            return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "The Tenant Owner role could not be found. Please ensure it is seeded."));
-
-        // Create Tenant
-        var tenantResult = Tenant.Create(request.CompanyDetails.CompanyName, request.CompanyDetails.ContactEmail, null);
-        if (tenantResult.IsFailure)
-            return Result.Failure<Guid>(tenantResult.Error);
-
-        var tenant = tenantResult.Value;
-
-        var defaultPaymentConfigs = DefaultPaymentMethods.GetConfigs(tenant.Id);
-        _context.PaymentMethodConfigs.AddRange(defaultPaymentConfigs);
-
-        // Create TenantSubscription
-        var trialEnd = plan.TrialPeriodInDays > 0 ? DateTimeOffset.UtcNow.AddDays(plan.TrialPeriodInDays) : (DateTimeOffset?)null;
-        
-        var subscriptionResult = TenantSubscription.Create(
-            tenant.Id, 
-            Guid.NewGuid(), 
-            plan, 
-            trialEnd
-        );
-        if (subscriptionResult.IsFailure)
-            return Result.Failure<Guid>(subscriptionResult.Error);
-
-        tenant.SetSubscription(subscriptionResult.Value);
-        _context.Tenants.Add(tenant);
-
-        // Register User in IdP
-        Guid identityUserId;
-        try
+        using (_bypass.EnableBypass())
         {
-            var registerRequest = new RegisterUserRequest(
-                request.UserDetails.FirstName,
-                request.UserDetails.LastName,
-                request.UserDetails.Email,
-                request.UserDetails.Password,
-                tenant.Id
-            );
+            // Get the requested SubscriptionPlan
+            var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == request.SubscriptionDetails.SubscriptionId, cancellationToken);
+            if (plan == null)
+                return Result.Failure<Guid>(Error.NotFound("SubscriptionPlan.NotFound", "The selected subscription plan was not found."));
 
-            var idpResponse = await _idpApi.RegisterUserAsync(registerRequest);
-            
-            if (!idpResponse.IsSuccessStatusCode || idpResponse.Content == null)
+            // Validate "Admin" role exists locally
+            var tenantOwnerRole = await _context.Roles
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(r => r.Name == Core.Domain.Constants.Roles.Oms.TenantOwner, cancellationToken);
+            if (tenantOwnerRole == null)
+                return Result.Failure<Guid>(Error.NotFound("Role.NotFound", "The Tenant Owner role could not be found. Please ensure it is seeded."));
+
+            // Create Tenant
+            var tenantResult = Tenant.Create(request.CompanyDetails.CompanyName, request.CompanyDetails.ContactEmail, null);
+            if (tenantResult.IsFailure)
+                return Result.Failure<Guid>(tenantResult.Error);
+
+            var tenant = tenantResult.Value;
+
+            // Create TenantSubscription
+            var trialEnd = plan.TrialPeriodInDays > 0 ? DateTimeOffset.UtcNow.AddDays(plan.TrialPeriodInDays) : (DateTimeOffset?)null;
+        
+            var subscriptionResult = TenantSubscription.Create(
+                tenant.Id, 
+                Guid.NewGuid(), 
+                plan, 
+                trialEnd
+            );
+            if (subscriptionResult.IsFailure)
+                return Result.Failure<Guid>(subscriptionResult.Error);
+
+            tenant.SetSubscription(subscriptionResult.Value);
+            _context.Tenants.Add(tenant);
+
+            // Register User in IdP
+            Guid identityUserId;
+            try
             {
-                return Result.Failure<Guid>(Error.Failure("Identity.RegistrationFailed", $"Failed to register user in Identity Provider. Status: {idpResponse.StatusCode}. Message: {idpResponse.Error?.Content}"));
+                var registerRequest = new RegisterUserRequest(
+                    request.UserDetails.FirstName,
+                    request.UserDetails.LastName,
+                    request.UserDetails.Email,
+                    request.UserDetails.Password,
+                    tenant.Id
+                );
+
+                var idpResponse = await _idpApi.RegisterUserAsync(registerRequest);
+            
+                if (!idpResponse.IsSuccessStatusCode || idpResponse.Content == null)
+                {
+                    return Result.Failure<Guid>(Error.Failure("Identity.RegistrationFailed", $"Failed to register user in Identity Provider. Status: {idpResponse.StatusCode}. Message: {idpResponse.Error?.Content}"));
+                }
+
+                identityUserId = idpResponse.Content.UserId;
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<Guid>(Error.Failure("Identity.Connection", $"Failed to connect to IdP: {ex.Message}"));
             }
 
-            identityUserId = idpResponse.Content.UserId;
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<Guid>(Error.Failure("Identity.Connection", $"Failed to connect to IdP: {ex.Message}"));
-        }
+            // Create AppUser locally
+            var appUserResult = AppUser.Create(identityUserId, tenant.Id, request.UserDetails.Email, request.UserDetails.FirstName, request.UserDetails.LastName);
+            if (appUserResult.IsFailure)
+                return Result.Failure<Guid>(appUserResult.Error);
 
-        // Create AppUser locally
-        var appUserResult = AppUser.Create(identityUserId, tenant.Id, request.UserDetails.Email, request.UserDetails.FirstName, request.UserDetails.LastName);
-        if (appUserResult.IsFailure)
-            return Result.Failure<Guid>(appUserResult.Error);
-
-        var appUser = appUserResult.Value;
+            var appUser = appUserResult.Value;
         
-        // Assign Admin role locally
-        var roleAssignResult = appUser.AssignRole(tenantOwnerRole);
-        if (roleAssignResult.IsFailure)
-            return Result.Failure<Guid>(roleAssignResult.Error);
+            // Assign Admin role locally
+            var roleAssignResult = appUser.AssignRole(tenantOwnerRole);
+            if (roleAssignResult.IsFailure)
+                return Result.Failure<Guid>(roleAssignResult.Error);
 
-        tenant.AddUser(appUser);
-        _context.AppUsers.Add(appUser);
+            tenant.AddUser(appUser);
+            _context.AppUsers.Add(appUser);
 
-        // Create sequences for "PROD" and "ORD"
-        _appSequenceService.InitialzeDefaultSequences(tenant.Id);
+            // Create sequences for "PRD" and "ORD"
+            _appSequenceService.InitialzeDefaultSequences(tenant.Id);
 
-        // Add Payment Configs
-        var defaultConfigs = DefaultPaymentMethods.GetConfigs(tenant.Id);
-        _context.PaymentMethodConfigs.AddRange(defaultConfigs);
+            // Add Payment Configs
+            var defaultConfigs = DefaultPaymentMethods.GetConfigs(tenant.Id);
+            _context.PaymentMethodConfigs.AddRange(defaultConfigs);
 
-        // Add default couriers
-        var slPostResult = Courier.Create(
-                            tenant.Id,
-                            "SL Post",
-                            null, null, null,
-                            "https://slpost.gov.lk/cash-on-delivery-service/",
-                            null,
-                            Core.Domain.Enums.CourierProviderType.SLPost,
-                            true);
+            // Add default couriers
+            var slPostResult = Courier.Create(
+                                tenant.Id,
+                                "SL Post",
+                                null, null, null,
+                                "https://slpost.gov.lk/cash-on-delivery-service/",
+                                null,
+                                Core.Domain.Enums.CourierProviderType.SLPost,
+                                true);
 
-        if (slPostResult.IsSuccess)
-            _context.Couriers.Add(slPostResult.Value);
+            if (slPostResult.IsSuccess)
+                _context.Couriers.Add(slPostResult.Value);
 
-        // Commit all changes
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(appUser.Id);
+            // Commit all changes
+            await _context.SaveChangesAsync(cancellationToken);
+            return Result.Success(appUser.Id);
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Onyx.Oms.Core.Common.Interfaces;
 using Onyx.Oms.Core.Common.Models;
+using Onyx.Oms.Core.Domain.Constants;
 using Onyx.Oms.Core.Domain.Entities;
 using Onyx.Oms.Core.Domain.Models;
 using Onyx.Oms.Core.Domain.Services;
@@ -38,7 +39,7 @@ namespace Onyx.Oms.Web.Features.Products.CreateProduct
             string? baseSku = command.BaseSku;
             if (string.IsNullOrWhiteSpace(baseSku))
             {
-                var baseSkuResult = await _appSequenceService.GetNextNumberAsync("PRD", cancellationToken);
+                var baseSkuResult = await _appSequenceService.GetNextNumberAsync(Prefixes.Sku, cancellationToken);
                 if(baseSkuResult.IsFailure)
                     return Result.Failure<Guid>(baseSkuResult.Error);
 

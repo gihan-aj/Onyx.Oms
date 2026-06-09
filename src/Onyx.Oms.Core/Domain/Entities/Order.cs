@@ -591,6 +591,30 @@ public class Order : AuditableEntity<Guid>, IMustHaveTenant
         return Result.Success();
     }
 
+    public Result RevertToPending(string reason)
+    {
+        if (Status == OrderStatus.Pending)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Order is already in 'Pending' status."));
+
+        if (Status >= OrderStatus.Packed)
+            return Result.Failure(Error.Validation("Order.InvalidStatus", "Only 'Not Packed' orders can be reverted back to 'Pending' status."));
+
+        if (string.IsNullOrWhiteSpace(reason))
+            return Result.Failure(Error.Validation("Order.ReasonRequired", "A reason is required to rollback an order status."));
+
+        foreach (var item in Items)
+        {
+            var result = item.RevertToPending();
+            if (result.IsFailure)
+                return result;
+        }
+
+        UpdateRollbackReason(reason, Status, OrderStatus.Pending);
+        Status = OrderStatus.Pending;
+
+        return Result.Success();
+    }
+
     private void UpdateRollbackReason(string reason, OrderStatus oldStatus, OrderStatus newStatus)
     {
         if (!string.IsNullOrWhiteSpace(reason))

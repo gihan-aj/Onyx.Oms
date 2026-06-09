@@ -176,6 +176,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
         if (Order.Status >= OrderStatus.Shipped)
             return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Cannot change Order Item status after shipping."));
 
+        AllocatedQuantity = 0;
         Status = OrderItemStatus.Pending;
 
         return Result.Success();

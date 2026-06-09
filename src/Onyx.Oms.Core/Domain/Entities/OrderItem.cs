@@ -45,7 +45,7 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
     public int Quantity { get; private set; }
     public int AllocatedQuantity { get; private set; }
     public int PendingQuantity => Quantity - AllocatedQuantity;
-    public Money? UnitCost { get; private set; } = Money.Zero();
+    public Money? UnitCost { get; private set; }
     public Money UnitPrice { get; private set; } = Money.Zero();
     public Weight? UnitWeight { get; private set; }
     public Money DiscountAmount { get; private set; } = Money.Zero();
@@ -108,6 +108,76 @@ public class OrderItem : AuditableEntity<Guid>, IMustHaveTenant
             return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Cannot move a ready item backwards."));
 
         Status = newStatus;
+        return Result.Success();
+    }
+
+    public Result MarkAsToBeProduced()
+    {
+        if (Status != OrderItemStatus.Pending)
+            return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Only 'Pending' order items can be marked as 'To Be Produced'."));
+
+        Status = OrderItemStatus.ToBeProduced;
+
+        return Result.Success();
+    }
+
+    public Result MarkAsToBeProcured()
+    {
+        if (Status != OrderItemStatus.Pending)
+            return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Only 'Pending' order items can be marked as 'To Be Procured'."));
+
+        Status = OrderItemStatus.ToBeProcured;
+
+        return Result.Success();
+    }
+
+    public Result MarkAsInProduction()
+    {
+        if (Status != OrderItemStatus.ToBeProduced)
+            return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Only 'To Be Produced' order items can be marked as 'In Production'."));
+
+        Status = OrderItemStatus.InProduction;
+
+        return Result.Success();
+    }
+
+    public Result MarkAsOrdered()
+    {
+        if (Status != OrderItemStatus.ToBeProcured)
+            return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Only 'To Be Procured' order items can be marked as 'Ordered'."));
+
+        Status = OrderItemStatus.Ordered;
+
+        return Result.Success();
+    }
+
+    public Result RevertInProduction()
+    {
+        if (Status != OrderItemStatus.InProduction)
+            return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Only 'In Production' order items can be marked as 'To Be Produced'."));
+
+        Status = OrderItemStatus.ToBeProduced;
+
+        return Result.Success();
+    }
+
+    public Result RevertOrdered()
+    {
+        if (Status != OrderItemStatus.Ordered)
+            return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Only 'Ordered' order items can be marked as 'To Be Procured'."));
+
+        Status = OrderItemStatus.ToBeProcured;
+
+        return Result.Success();
+    }
+
+    public Result RevertToPending()
+    {
+        if (Order.Status >= OrderStatus.Shipped)
+            return Result.Failure(Error.Validation("OrderItem.InvalidStatusTransition", "Cannot change Order Item status after shipping."));
+
+        Status = OrderItemStatus.Pending;
+
         return Result.Success();
     }
 

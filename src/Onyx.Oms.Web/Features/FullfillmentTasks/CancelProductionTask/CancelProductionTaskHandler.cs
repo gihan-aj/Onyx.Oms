@@ -41,6 +41,33 @@ public class CancelProductionTaskHandler : ICommandHandler<CancelProductionTaskC
         if (variantUpdateResult.IsFailure)
             return Result.Failure(variantUpdateResult.Error);
 
+        if (task.LinkedOrderItemId.HasValue)
+        {
+            var orderItem = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .FirstOrDefaultAsync(oi => oi.Id == task.LinkedOrderItemId.Value, cancellationToken);
+            if (orderItem != null)
+            {
+                if (orderItem.Status != OrderItemStatus.Allocated || orderItem.Status != OrderItemStatus.Ready)
+                {
+                    var anyOtherTasksLInked = await _context.FulfillmentTasks
+                        .Where(t => t.LinkedOrderItemId == orderItem.Id &&
+                            (t.Status == FulfillmentTaskStatus.Pending || t.Status == FulfillmentTaskStatus.InProgress))
+                        .ToListAsync(cancellationToken);
+
+                    if (!anyOtherTasksLInked.Any())
+                    {
+                        orderItem.RevertToPending();
+                    }
+                    else if (!anyOtherTasksLInked.Any(t => t.Status == FulfillmentTaskStatus.InProgress) && orderItem.Status == OrderItemStatus.InProduction)
+                    {
+                        orderItem.RevertInProduction();
+                    }
+
+                }
+            }
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

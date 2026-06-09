@@ -127,9 +127,12 @@ namespace Onyx.Oms.Infrastructure.Persistence.Seeding
                     payment.TempUpdateReceived(config?.FeeRate ?? 0m);
                 }
 
-                var orderItemsWithoutWeight = await _context.OrderItems
-                    .Where(oi => oi.UnitWeight == null || oi.UnitWeight.Value == 0m || oi.UnitCost == null)
+                var orderItems = await _context.OrderItems     
                     .ToListAsync(cancellationToken);
+
+                var orderItemsWithoutWeight = orderItems
+                    .Where(oi => oi.UnitWeight == null || oi.UnitWeight.Value == 0m || oi.UnitCost == null)
+                    .ToList();
 
                 foreach (var orderItem in orderItemsWithoutWeight)
                 {

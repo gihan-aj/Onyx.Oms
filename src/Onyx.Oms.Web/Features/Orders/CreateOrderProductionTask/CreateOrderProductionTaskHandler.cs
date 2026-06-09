@@ -55,9 +55,9 @@ namespace Onyx.Oms.Web.Features.Orders.CreateOrderProductionTask
             if (taskResult.IsFailure)
                 return Result.Failure<Guid>(taskResult.Error);
 
-            //var updateItemResult = orderItem.UpdateStatus(OrderItemStatus.InProduction);
-            //if (updateItemResult.IsFailure)
-            //    return Result.Failure<Guid>(updateItemResult.Error);
+            var updateItemResult = orderItem.MarkAsToBeProduced();
+            if (updateItemResult.IsFailure)
+                return Result.Failure<Guid>(updateItemResult.Error);
 
             _context.FulfillmentTasks.Add(taskResult.Value);
             await _context.SaveChangesAsync(cancellationToken);
